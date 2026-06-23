@@ -48,8 +48,7 @@ export default function Carousel() {
   const touchStartX = useRef<number | null>(null);
   const touchEndX = useRef<number | null>(null);
 
-  // If on admin panel, do not render the carousel
-  if (pathname === "/admin-panel") return null;
+  const shouldHideCarousel = pathname === "/admin-panel" || pathname.startsWith("/product/");
 
   const prevSlide = () => {
     setCurrentIndex((prev) => (prev === 0 ? slides.length - 1 : prev - 1));
@@ -61,12 +60,17 @@ export default function Carousel() {
 
   // Bulletproof Autoplay: Starts on mount, runs every 3 seconds, cannot be paused or stuck by cursor hover/scroll state
   useEffect(() => {
+    if (shouldHideCarousel) return;
+
     const timer = setInterval(() => {
       nextSlide();
     }, 3000);
 
     return () => clearInterval(timer);
-  }, []);
+  }, [shouldHideCarousel]);
+
+  // If on admin panel or product details pages, do not render the carousel
+  if (shouldHideCarousel) return null;
 
   // Touch Swipe Handlers for Mobile responsiveness (advances slide without pausing timer)
   const handleTouchStart = (e: React.TouchEvent) => {

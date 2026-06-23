@@ -136,7 +136,7 @@ export default function AboutPage() {
             <ArrowRight className="w-3.5 h-3.5" />
           </Link>
           <a 
-            href="https://wa.me/923000000000?text=Hi%20Saleem%20Watch%20Center%2C%20I%20would%20like%20to%20connect%20with%20your%20private%20client%20concierge."
+            href="https://wa.me/923212200321?text=Hi%20Saleem%20Watch%20Center%2C%20I%20would%20like%20to%20connect%20with%20your%20private%20client%20concierge."
             target="_blank"
             rel="noopener noreferrer"
             className="border border-gold-500 text-gold-500 hover:bg-gold-500 hover:text-black transition-all px-6 py-3 text-xs font-bold uppercase tracking-widest text-center"

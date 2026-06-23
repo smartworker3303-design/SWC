@@ -42,7 +42,7 @@ export default function Home() {
 
   const getWhatsAppLink = (productName: string) => {
     const text = encodeURIComponent(`Hi Saleem Watch Center, I am highly interested in the "${productName}" from swc.com. Please share availability and delivery options!`);
-    return `https://wa.me/923000000000?text=${text}`;
+    return `https://wa.me/923212200321?text=${text}`;
   };
 
   return (
@@ -397,7 +397,7 @@ export default function Home() {
                 <ChevronRight className="w-4 h-4" />
               </Link>
               <a 
-                href="https://wa.me/923000000000?text=Hi%20Saleem%20Watch%20Center%2C%20I%20would%20like%20to%20inquire%20about%20your%20showroom%20location%20and%20timings."
+                href="https://wa.me/923212200321?text=Hi%20Saleem%20Watch%20Center%2C%20I%20would%20like%20to%20inquire%20about%20your%20showroom%20location%20and%20timings."
                 target="_blank"
                 rel="noopener noreferrer"
                 className="border border-gold-500 text-gold-500 hover:bg-gold-500 hover:text-black transition-colors px-6 py-3.5 font-bold text-xs uppercase tracking-widest text-center"

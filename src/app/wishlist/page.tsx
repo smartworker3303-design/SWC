@@ -32,7 +32,7 @@ export default function WishlistPage() {
 
   const getWhatsAppLink = (productName: string) => {
     const text = encodeURIComponent(`Hi Saleem Watch Center, I would like to inquire about the availability of "${productName}" from my swc.com wishlist.`);
-    return `https://wa.me/923000000000?text=${text}`;
+    return `https://wa.me/923212200321?text=${text}`;
   };
 
   return (

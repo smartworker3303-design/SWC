@@ -68,7 +68,7 @@ export default function ProductDetailPage({ params }: ProductPageProps) {
 
   const getWhatsAppLink = (productName: string) => {
     const text = encodeURIComponent(`Hi Saleem Watch Center, I am highly interested in purchasing the "${productName}" from swc.com. Please share availability details!`);
-    return `https://wa.me/923000000000?text=${text}`;
+    return `https://wa.me/923212200321?text=${text}`;
   };
 
   return (
@@ -201,7 +201,7 @@ export default function ProductDetailPage({ params }: ProductPageProps) {
             <button 
               onClick={() => {
                 const text = encodeURIComponent(`Hi Saleem Watch Center, I would like to schedule a phone consultation for the timepiece "${product.name}".`);
-                window.open(`https://wa.me/923000000000?text=${text}`, "_blank");
+                window.open(`https://wa.me/923212200321?text=${text}`, "_blank");
               }}
               className="border border-gold-500 text-gold-500 hover:bg-gold-500 hover:text-black transition-all px-6 py-4 text-xs font-bold uppercase tracking-widest flex items-center justify-center gap-2"
             >

@@ -38,45 +38,6 @@ export default function Footer() {
             <p className="text-gray-400 text-xs sm:text-sm font-light leading-relaxed max-w-sm">
               Curating exceptional hand watches and artful wall clocks since 2001. We provide horological precision wrapped in black & gold elegance. Experience over 25 years of trust and craftsmanship.
             </p>
-            
-            {/* Social Media Link Icons - Premium Gold Border Glow and Roll Hover */}
-            <div className="flex items-center gap-3 pt-3">
-              <a 
-                href="https://instagram.com" 
-                target="_blank" 
-                rel="noopener noreferrer" 
-                className="w-8 h-8 rounded-full border border-gold-500/20 hover:border-gold-500 bg-neutral-900/60 text-gold-500 hover:text-black hover:bg-gold-500 transition-all duration-300 flex items-center justify-center shadow-md shadow-black/50"
-                aria-label="Instagram"
-              >
-                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" xmlns="http://www.w3.org/2000/svg">
-                  <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
-                  <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/>
-                  <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/>
-                </svg>
-              </a>
-              <a 
-                href="https://facebook.com" 
-                target="_blank" 
-                rel="noopener noreferrer" 
-                className="w-8 h-8 rounded-full border border-gold-500/20 hover:border-gold-500 bg-neutral-900/60 text-gold-500 hover:text-black hover:bg-gold-500 transition-all duration-300 flex items-center justify-center shadow-md shadow-black/50"
-                aria-label="Facebook"
-              >
-                <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
-                </svg>
-              </a>
-              <a 
-                href="https://youtube.com" 
-                target="_blank" 
-                rel="noopener noreferrer" 
-                className="w-8 h-8 rounded-full border border-gold-500/20 hover:border-gold-500 bg-neutral-900/60 text-gold-500 hover:text-black hover:bg-gold-500 transition-all duration-300 flex items-center justify-center shadow-md shadow-black/50"
-                aria-label="YouTube"
-              >
-                <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M23.498 6.163a3.003 3.003 0 0 0-2.11-2.108C19.524 3.545 12 3.545 12 3.545s-7.525 0-9.388.51a3.002 3.002 0 0 0-2.11 2.108C0 8.025 0 12 0 12s0 3.975.502 5.837a3.003 3.003 0 0 0 2.11 2.108C4.474 20.455 12 20.455 12 20.455s7.524 0 9.388-.51a3.003 3.003 0 0 0 2.11-2.108C24 15.975 24 12 24 12s0-3.975-.502-5.837zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
-                </svg>
-              </a>
-            </div>
           </div>
 
           {/* Column 2: Quick Links (Grid span: 2) */}
@@ -109,12 +70,31 @@ export default function Footer() {
             <div className="space-y-3.5 text-xs text-gray-400 font-light">
               <div className="flex items-start gap-3">
                 <MapPin className="w-4 h-4 text-gold-500 flex-shrink-0 mt-0.5" />
-                <span className="leading-relaxed">Ground Floor, SWC Plaza, Mall Road, Lahore, Pakistan</span>
+                <div className="flex flex-col gap-2">
+                  <a 
+                    href="https://www.google.com/maps/place/Saleem+watch+Center/@24.9017659,67.1933494,17z/data=!3m1!4b1!4m6!3m5!1s0x3eb33700354c175b:0xebc964e9c1b0082a!8m2!3d24.9017659!4d67.1933494!16s%2Fg%2F11wwbq8sv7!18m1!1e1?entry=ttu&g_ep=EgoyMDI2MDYxNi4wIKXMDSoASAFQAw%3D%3D"
+                    target="_blank" 
+                    rel="noopener noreferrer" 
+                    className="hover:text-gold-500 transition-colors leading-relaxed"
+                  >
+                    <span className="text-white font-medium block text-[11px]">Model Colony Branch</span>
+                    Model Colony, Karachi
+                  </a>
+                  <a 
+                    href="https://www.google.com/maps/place/24%C2%B053'35.5%22N+67%C2%B011'40.9%22E/@24.8931852,67.1921059,17z/data=!3m1!4b1!4m4!3m3!8m2!3d24.8931852!4d67.1946808?hl=en&entry=ttu&g_ep=EgoyMDI2MDYxNi4wIKXMDSoASAFQAw%3D%3D"
+                    target="_blank" 
+                    rel="noopener noreferrer" 
+                    className="hover:text-gold-500 transition-colors leading-relaxed"
+                  >
+                    <span className="text-white font-medium block text-[11px]">Liaquat Market Branch</span>
+                    Liaquat Market, Malir, Karachi
+                  </a>
+                </div>
               </div>
               
               <div className="flex items-center gap-3">
                 <Phone className="w-4 h-4 text-gold-500 flex-shrink-0" />
-                <span>+92 300 1234567</span>
+                <a href="tel:+923212200321" className="hover:text-gold-500 transition-colors">+92 321 2200321</a>
               </div>
 
               <div className="flex items-center gap-3">
