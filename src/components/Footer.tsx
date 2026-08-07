@@ -36,7 +36,7 @@ export default function Footer() {
               </span>
             </div>
             <p className="text-gray-400 text-xs sm:text-sm font-light leading-relaxed max-w-sm">
-              Curating exceptional hand watches and artful wall clocks since 2001. We provide horological precision wrapped in black & gold elegance. Experience over 25 years of trust and craftsmanship.
+              Curating exceptional hand watches and artful wall clocks since 1984. We provide horological precision wrapped in black & gold elegance. Experience over 40 years of trust and craftsmanship.
             </p>
           </div>
 

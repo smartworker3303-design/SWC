@@ -31,7 +31,7 @@ export default function AboutPage() {
       <div className="space-y-4 max-w-3xl">
         <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-gold-500/20 bg-gold-500/5 text-gold-400 text-xs font-semibold uppercase tracking-wider">
           <Sparkles className="w-4 h-4" />
-          Established in 2001 (25 Years of Luxury)
+          Established in 1984 (40+ Years of Luxury)
         </span>
         <h1 className="font-serif text-3xl sm:text-5xl font-extrabold tracking-tight leading-tight">
           The Legacy of <br />
@@ -53,7 +53,7 @@ export default function AboutPage() {
           <div className="w-16 h-0.5 bg-gold-500" />
           
           <p className="text-gray-300 text-sm sm:text-base font-light leading-relaxed">
-            Founded in 2001 by Saleem Akhter, Saleem Watch Center (SWC) emerged from a passion for precision engineering and luxury aesthetics. Over the last 25 years, our boutique showroom has grown from a specialized restoration workshop into a grand sanctuary for horological enthusiasts, offering an unparalleled collection of premium timepieces.
+            Founded in 1984 by Saleem Akhter, Saleem Watch Center (SWC) emerged from a passion for precision engineering and luxury aesthetics. Over the last 40+ years, our boutique showroom has grown from a specialized restoration workshop into a grand sanctuary for horological enthusiasts, offering an unparalleled collection of premium timepieces.
           </p>
 
           <p className="text-gray-300 text-sm sm:text-base font-light leading-relaxed">

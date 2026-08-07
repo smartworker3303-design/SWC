@@ -34,7 +34,6 @@ export default function AdminPanelPage() {
     addProduct, 
     updateProduct, 
     deleteProduct, 
-    resetProducts, 
     isLoading,
     isSupabaseConnected 
   } = useProducts();
@@ -51,10 +50,13 @@ export default function AdminPanelPage() {
   // Admin Search & Sort State
   const [adminSearchQuery, setAdminSearchQuery] = useState("");
   const [adminSortBy, setAdminSortBy] = useState("featured");
+  const [adminSubcatFilter, setAdminSubcatFilter] = useState("all");
 
   // Reset search and sort when active tab changes
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setAdminSearchQuery("");
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setAdminSortBy("featured");
   }, [activeTab]);
 
@@ -67,6 +69,8 @@ export default function AdminPanelPage() {
   const [formId, setFormId] = useState("");
   const [formName, setFormName] = useState("");
   const [formCategory, setFormCategory] = useState<"hand-watches" | "wall-clocks">("hand-watches");
+  const [formSubcategory, setFormSubcategory] = useState<"mens" | "womens" | "">("");
+  const [formBrand, setFormBrand] = useState("");
   const [formPrice, setFormPrice] = useState(0);
   const [formImage, setFormImage] = useState("");
   const [formDescription, setFormDescription] = useState("");
@@ -75,11 +79,13 @@ export default function AdminPanelPage() {
   const [formTag, setFormTag] = useState("");
   const [formSpecs, setFormSpecs] = useState<{ key: string; value: string }[]>([]);
   const [formError, setFormError] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
 
   // Check login session on mount
   useEffect(() => {
     const session = sessionStorage.getItem("swc-admin-authenticated");
     if (session === "true") {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setIsAuthenticated(true);
     }
   }, []);
@@ -111,9 +117,37 @@ export default function AdminPanelPage() {
     const file = e.target.files?.[0];
     if (file) {
       const reader = new FileReader();
-      reader.onloadend = () => {
-        if (typeof reader.result === "string") {
-          setFormImage(reader.result);
+      reader.onload = (event) => {
+        const img = new window.Image();
+        img.onload = () => {
+          const MAX_SIZE = 800;
+          let width = img.width;
+          let height = img.height;
+          if (width > height) {
+            if (width > MAX_SIZE) {
+              height = Math.round((height * MAX_SIZE) / width);
+              width = MAX_SIZE;
+            }
+          } else {
+            if (height > MAX_SIZE) {
+              width = Math.round((width * MAX_SIZE) / height);
+              height = MAX_SIZE;
+            }
+          }
+          const canvas = document.createElement("canvas");
+          canvas.width = MAX_SIZE;
+          canvas.height = MAX_SIZE;
+          const ctx = canvas.getContext("2d");
+          if (ctx) {
+            ctx.clearRect(0, 0, MAX_SIZE, MAX_SIZE);
+            const offsetX = (MAX_SIZE - width) / 2;
+            const offsetY = (MAX_SIZE - height) / 2;
+            ctx.drawImage(img, offsetX, offsetY, width, height);
+            setFormImage(canvas.toDataURL("image/webp", 0.85));
+          }
+        };
+        if (event.target?.result && typeof event.target.result === "string") {
+          img.src = event.target.result;
         }
       };
       reader.readAsDataURL(file);
@@ -126,6 +160,8 @@ export default function AdminPanelPage() {
     setFormId("");
     setFormName("");
     setFormCategory(defaultCategory || "hand-watches");
+    setFormSubcategory("");
+    setFormBrand("");
     setFormPrice(1000);
     setFormImage("/images/hero_luxury_watch.png");
     setFormDescription("");
@@ -147,6 +183,8 @@ export default function AdminPanelPage() {
     setFormId(product.id);
     setFormName(product.name);
     setFormCategory(product.category);
+    setFormSubcategory(product.subcategory || "");
+    setFormBrand(product.brand || "");
     setFormPrice(product.price);
     setFormImage(product.image);
     setFormDescription(product.description);
@@ -186,6 +224,11 @@ export default function AdminPanelPage() {
       setFormError("Please fill in all required fields (ID, Name, Image Path, Description).");
       return;
     }
+    
+    if (formCategory === "hand-watches" && !formSubcategory) {
+      setFormError("Please select a subcategory (Men's or Women's) for hand watches.");
+      return;
+    }
 
     // Convert specs key-value back to object
     const specsObject: { [key: string]: string } = {};
@@ -199,6 +242,8 @@ export default function AdminPanelPage() {
       id: formId.trim(),
       name: formName.trim(),
       category: formCategory,
+      subcategory: formCategory === "hand-watches" && formSubcategory ? formSubcategory : undefined,
+      brand: formCategory === "hand-watches" && formBrand ? formBrand : undefined,
       price: Number(formPrice),
       rating: Number(formRating),
       reviews: Number(formReviews),
@@ -217,11 +262,14 @@ export default function AdminPanelPage() {
           return;
         }
         await addProduct(payload);
+        setSuccessMessage("Product added successfully!");
       } else {
         await updateProduct(payload);
+        setSuccessMessage("Product updated successfully!");
       }
       setIsModalOpen(false);
-    } catch (err) {
+      setTimeout(() => setSuccessMessage(""), 5000);
+    } catch {
       setFormError("Failed to persist data. Please check connection.");
     }
   };
@@ -229,12 +277,6 @@ export default function AdminPanelPage() {
   const handleDelete = async (id: string) => {
     if (confirm(`Are you sure you want to delete the product with ID: "${id}"?`)) {
       await deleteProduct(id);
-    }
-  };
-
-  const handleResetCatalog = async () => {
-    if (confirm("This will reset the catalog to Saleem Watch Center's original seed data, discarding all custom edits. Proceed?")) {
-      await resetProducts();
     }
   };
 
@@ -249,12 +291,15 @@ export default function AdminPanelPage() {
     // 1. Filter
     const filtered = products.filter(product => {
       const matchesCategory = product.category === category;
+      const matchesSubcat = category === "hand-watches" && adminSubcatFilter !== "all" 
+                            ? product.subcategory === adminSubcatFilter 
+                            : true;
       const matchesSearch = !adminSearchQuery.trim() || 
                             product.id.toLowerCase().includes(adminSearchQuery.toLowerCase()) ||
                             product.name.toLowerCase().includes(adminSearchQuery.toLowerCase()) ||
                             product.description.toLowerCase().includes(adminSearchQuery.toLowerCase()) ||
                             (product.tag && product.tag.toLowerCase().includes(adminSearchQuery.toLowerCase()));
-      return matchesCategory && matchesSearch;
+      return matchesCategory && matchesSubcat && matchesSearch;
     });
 
     // 2. Sort
@@ -390,9 +435,11 @@ export default function AdminPanelPage() {
               <h1 className="font-serif text-sm font-bold uppercase text-white tracking-widest flex items-center gap-1.5">
                 SWC Admin
               </h1>
-              <p className="text-[9px] text-gray-500 font-light">Control Center • EST. 2001</p>
+              <p className="text-[9px] text-gray-500 font-light">Control Center • EST. 1984</p>
             </div>
           </div>
+
+
 
           {/* Navigation Links */}
           <nav className="space-y-2">
@@ -478,7 +525,7 @@ export default function AdminPanelPage() {
               <h1 className="font-serif text-xs font-bold uppercase text-white tracking-widest">
                 SWC Admin
               </h1>
-              <p className="text-[8px] text-gray-500 font-light">EST. 2001</p>
+              <p className="text-[8px] text-gray-500 font-light">EST. 1984</p>
             </div>
           </div>
           
@@ -598,6 +645,16 @@ export default function AdminPanelPage() {
 
             </div>
 
+            {/* Success Message */}
+            {successMessage && (
+              <div className="p-4 bg-green-900/40 border border-green-500/50 rounded flex items-center justify-between">
+                <p className="text-green-400 text-xs font-semibold tracking-wide">{successMessage}</p>
+                <button onClick={() => setSuccessMessage("")} className="text-green-500 hover:text-green-300">
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            )}
+
             {/* Quick Actions Panel */}
             <div className="glass-panel p-6 border border-gold-500/10 space-y-4">
               <h3 className="font-serif text-md font-bold text-white uppercase tracking-wider border-b border-gray-900 pb-2">
@@ -623,13 +680,6 @@ export default function AdminPanelPage() {
                 >
                   View Wall Clocks
                 </button>
-                <button
-                  onClick={handleResetCatalog}
-                  className="border border-red-500/40 text-red-400 hover:bg-red-500 hover:text-white font-semibold text-xs tracking-widest uppercase px-5 py-3 transition-all flex items-center gap-1.5 cursor-pointer"
-                >
-                  <RefreshCw className="w-3.5 h-3.5" />
-                  Reset Data Catalog
-                </button>
               </div>
             </div>
           </div>
@@ -653,13 +703,6 @@ export default function AdminPanelPage() {
                 >
                   <Plus className="w-4 h-4" />
                   Add Watch
-                </button>
-                <button
-                  onClick={handleResetCatalog}
-                  className="border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white text-xs font-bold uppercase tracking-widest px-4 py-2.5 transition-all flex items-center gap-1 cursor-pointer"
-                >
-                  <RefreshCw className="w-3.5 h-3.5" />
-                  Reset Catalog
                 </button>
               </div>
             </div>
@@ -686,6 +729,25 @@ export default function AdminPanelPage() {
                     <X className="w-4 h-4" />
                   </button>
                 )}
+              </div>
+
+              {/* Subcategory Dropdown */}
+              <div className="relative w-full sm:w-48">
+                <select
+                  value={adminSubcatFilter}
+                  onChange={(e) => setAdminSubcatFilter(e.target.value)}
+                  className="w-full bg-black border border-gold-500/15 text-white py-2.5 px-4 focus:outline-none focus:border-gold-500 text-xs transition-all cursor-pointer appearance-none"
+                  style={{
+                    backgroundImage: `url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23D4AF37' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'></polyline></svg>")`,
+                    backgroundRepeat: 'no-repeat',
+                    backgroundPosition: 'right 12px center',
+                    backgroundSize: '16px'
+                  }}
+                >
+                  <option value="all">All Subcategories</option>
+                  <option value="mens">Men&apos;s Watches</option>
+                  <option value="womens">Women&apos;s Watches</option>
+                </select>
               </div>
 
               {/* Sort Dropdown */}
@@ -829,13 +891,6 @@ export default function AdminPanelPage() {
                 >
                   <Plus className="w-4 h-4" />
                   Add Clock
-                </button>
-                <button
-                  onClick={handleResetCatalog}
-                  className="border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white text-xs font-bold uppercase tracking-widest px-4 py-2.5 transition-all flex items-center gap-1 cursor-pointer"
-                >
-                  <RefreshCw className="w-3.5 h-3.5" />
-                  Reset Catalog
                 </button>
               </div>
             </div>
@@ -1051,13 +1106,50 @@ export default function AdminPanelPage() {
                   <select
                     id="form-category"
                     value={formCategory}
-                    onChange={(e) => setFormCategory(e.target.value as any)}
+                    onChange={(e) => setFormCategory(e.target.value as "hand-watches" | "wall-clocks")}
                     className="w-full bg-black border border-gold-500/15 text-white py-2 px-3 focus:outline-none focus:border-gold-500 text-xs"
                   >
                     <option value="hand-watches">Hand Watch</option>
                     <option value="wall-clocks">Wall Clock</option>
                   </select>
                 </div>
+
+                {/* Subcategory select (only for hand-watches) */}
+                {formCategory === "hand-watches" && (
+                  <>
+                    <div className="space-y-1">
+                      <label htmlFor="form-subcategory" className="text-[9px] text-gray-400 uppercase tracking-widest font-semibold block">Subcategory</label>
+                      <select
+                        id="form-subcategory"
+                        value={formSubcategory}
+                        onChange={(e) => setFormSubcategory(e.target.value as "mens" | "womens" | "")}
+                        className="w-full bg-black border border-gold-500/15 text-white py-2 px-3 focus:outline-none focus:border-gold-500 text-xs"
+                      >
+                        <option value="">None / Unisex</option>
+                        <option value="mens">Men&apos;s Watches</option>
+                        <option value="womens">Women&apos;s Watches</option>
+                      </select>
+                    </div>
+
+                    {/* Brand select (only for hand-watches) */}
+                    <div className="space-y-1">
+                      <label htmlFor="form-brand" className="text-[9px] text-gray-400 uppercase tracking-widest font-semibold block">Brand</label>
+                      <select
+                        id="form-brand"
+                        value={formBrand}
+                        onChange={(e) => setFormBrand(e.target.value)}
+                        className="w-full bg-black border border-gold-500/15 text-white py-2 px-3 focus:outline-none focus:border-gold-500 text-xs"
+                      >
+                        <option value="">None / Unbranded</option>
+                        <option value="Rolex">Rolex</option>
+                        <option value="Patek Philippe">Patek Philippe</option>
+                        <option value="Cartier">Cartier</option>
+                        <option value="Audemars Piguet">Audemars Piguet</option>
+                        <option value="Omega">Omega</option>
+                      </select>
+                    </div>
+                  </>
+                )}
 
                 {/* Price input */}
                 <div className="space-y-1">

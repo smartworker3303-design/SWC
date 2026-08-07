@@ -160,7 +160,7 @@ export default function WallClockPage() {
         <div className="text-center py-20 border border-dashed border-gold-500/10 rounded-lg max-w-xl mx-auto space-y-4">
           <p className="text-gold-500 text-lg font-medium font-serif">No Designs Match</p>
           <p className="text-gray-400 text-sm max-w-md mx-auto">
-            We couldn't find any models matching "{searchQuery}" in this collection.
+            We couldn&apos;t find any models matching &quot;{searchQuery}&quot; in this collection.
           </p>
           <button 
             onClick={() => setSearchQuery("")}

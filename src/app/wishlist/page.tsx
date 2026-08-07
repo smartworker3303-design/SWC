@@ -7,9 +7,7 @@ import {
   Trash2, 
   MessageSquare, 
   Eye, 
-  ArrowRight,
-  ChevronLeft,
-  ShoppingBag
+  ChevronLeft
 } from "lucide-react";
 import { useProducts } from "../../context/ProductsContext";
 import { useWishlist } from "../../context/WishlistContext";

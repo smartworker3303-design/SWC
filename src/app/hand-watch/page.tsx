@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, Suspense } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import Image from "next/image";
 import { 
   Search, 
@@ -16,11 +17,25 @@ import {
 import { useProducts } from "../../context/ProductsContext";
 import { useWishlist } from "../../context/WishlistContext";
 
-export default function HandWatchPage() {
+function HandWatchContent() {
   const { products, isLoading } = useProducts();
   const { toggleWishlist, isInWishlist } = useWishlist();
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState("featured");
+  const [subcatFilter, setSubcatFilter] = useState("all");
+  const [brandFilter, setBrandFilter] = useState("all");
+
+  const searchParams = useSearchParams();
+  const subcatQuery = searchParams.get("subcat");
+
+  useEffect(() => {
+    if (subcatQuery === "mens" || subcatQuery === "womens") {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setSubcatFilter(subcatQuery);
+    } else {
+      setSubcatFilter("all");
+    }
+  }, [subcatQuery]);
 
   const category = "hand-watches";
   const title = "Executive Hand Watches";
@@ -32,10 +47,12 @@ export default function HandWatchPage() {
     // 1. Filter
     const filtered = products.filter(product => {
       const matchesCategory = product.category === category;
+      const matchesSubcat = subcatFilter === "all" || product.subcategory === subcatFilter;
+      const matchesBrand = brandFilter === "all" || product.brand === brandFilter;
       const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                             product.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
                             (product.tag && product.tag.toLowerCase().includes(searchQuery.toLowerCase()));
-      return matchesCategory && matchesSearch;
+      return matchesCategory && matchesSubcat && matchesBrand && matchesSearch;
     });
 
     // 2. Sort
@@ -61,7 +78,7 @@ export default function HandWatchPage() {
       }
       return 0; // "featured" or default
     });
-  }, [products, searchQuery, sortBy]);
+  }, [products, searchQuery, sortBy, subcatFilter, brandFilter]);
 
   if (isLoading) {
     return (
@@ -101,6 +118,28 @@ export default function HandWatchPage() {
         </p>
       </div>
 
+      {/* Subcategory Tabs */}
+      <div className="flex flex-wrap justify-center gap-4 mb-4">
+        <button 
+          onClick={() => setSubcatFilter("all")}
+          className={`px-6 py-2.5 rounded-full text-xs font-bold tracking-widest uppercase transition-all ${subcatFilter === "all" ? "gold-gradient-bg text-black shadow-lg shadow-gold-500/20" : "bg-neutral-900 border border-gold-500/20 text-gray-400 hover:text-gold-400"}`}
+        >
+          All Collections
+        </button>
+        <button 
+          onClick={() => setSubcatFilter("mens")}
+          className={`px-6 py-2.5 rounded-full text-xs font-bold tracking-widest uppercase transition-all ${subcatFilter === "mens" ? "gold-gradient-bg text-black shadow-lg shadow-gold-500/20" : "bg-neutral-900 border border-gold-500/20 text-gray-400 hover:text-gold-400"}`}
+        >
+          Men&apos;s Watches
+        </button>
+        <button 
+          onClick={() => setSubcatFilter("womens")}
+          className={`px-6 py-2.5 rounded-full text-xs font-bold tracking-widest uppercase transition-all ${subcatFilter === "womens" ? "gold-gradient-bg text-black shadow-lg shadow-gold-500/20" : "bg-neutral-900 border border-gold-500/20 text-gray-400 hover:text-gold-400"}`}
+        >
+          Women&apos;s Watches
+        </button>
+      </div>
+
       {/* Product list section controls */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 border-b border-gray-900 pb-6">
         <div>
@@ -132,6 +171,28 @@ export default function HandWatchPage() {
             )}
           </div>
 
+          {/* Brand Dropdown */}
+          <div className="relative w-full sm:w-48">
+            <select
+              value={brandFilter}
+              onChange={(e) => setBrandFilter(e.target.value)}
+              className="w-full bg-luxury-charcoal border border-gold-500/15 text-white py-2.5 px-4 focus:outline-none focus:border-gold-500 text-sm transition-all cursor-pointer appearance-none"
+              style={{
+                backgroundImage: `url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23D4AF37' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'></polyline></svg>")`,
+                backgroundRepeat: 'no-repeat',
+                backgroundPosition: 'right 12px center',
+                backgroundSize: '16px'
+              }}
+            >
+              <option value="all">All Brands</option>
+              <option value="Rolex">Rolex</option>
+              <option value="Patek Philippe">Patek Philippe</option>
+              <option value="Cartier">Cartier</option>
+              <option value="Audemars Piguet">Audemars Piguet</option>
+              <option value="Omega">Omega</option>
+            </select>
+          </div>
+
           {/* Sort Dropdown */}
           <div className="relative w-full sm:w-48">
             <select
@@ -160,7 +221,7 @@ export default function HandWatchPage() {
         <div className="text-center py-20 border border-dashed border-gold-500/10 rounded-lg max-w-xl mx-auto space-y-4">
           <p className="text-gold-500 text-lg font-medium font-serif">No Designs Match</p>
           <p className="text-gray-400 text-sm max-w-md mx-auto">
-            We couldn't find any models matching "{searchQuery}" in this collection.
+            We couldn&apos;t find any models matching &quot;{searchQuery}&quot; in this collection.
           </p>
           <button 
             onClick={() => setSearchQuery("")}
@@ -184,6 +245,11 @@ export default function HandWatchPage() {
               {product.tag && (
                 <span className="absolute top-4 left-4 bg-gold-600/90 backdrop-blur-sm text-black text-[9px] font-black tracking-widest uppercase px-2.5 py-1 z-20">
                   {product.tag}
+                </span>
+              )}
+              {product.subcategory && (
+                <span className="absolute top-4 left-[4.5rem] bg-black/60 border border-gold-500/30 backdrop-blur-sm text-gold-500 text-[9px] font-bold tracking-widest uppercase px-2 py-1 z-20">
+                  {product.subcategory === 'mens' ? "Men's" : "Women's"}
                 </span>
               )}
 
@@ -262,5 +328,13 @@ export default function HandWatchPage() {
       </div>
 
     </div>
+  );
+}
+
+export default function HandWatchPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-luxury-black flex items-center justify-center"><div className="w-12 h-12 rounded-full border-t-2 border-r-2 border-gold-500 animate-spin" /></div>}>
+      <HandWatchContent />
+    </Suspense>
   );
 }

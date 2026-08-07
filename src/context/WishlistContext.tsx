@@ -16,6 +16,7 @@ export function WishlistProvider({ children }: { children: React.ReactNode }) {
 
   // Load wishlist from localStorage on client side mount
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setIsMounted(true);
     const saved = localStorage.getItem("swc-wishlist");
     if (saved) {

@@ -14,7 +14,6 @@ interface ProductsContextType {
   addProduct: (product: Product) => Promise<void>;
   updateProduct: (product: Product) => Promise<void>;
   deleteProduct: (id: string) => Promise<void>;
-  resetProducts: () => Promise<void>;
   isLoading: boolean;
   isSupabaseConnected: boolean;
 }
@@ -41,15 +40,21 @@ export function ProductsProvider({ children }: { children: React.ReactNode }) {
       
       // Local storage fallback
       const stored = localStorage.getItem("swc-products");
-      if (stored) {
+      const isInitialized = localStorage.getItem("swc-products-initialized");
+      
+      if (stored && isInitialized === "true") {
         try {
-          setProducts(JSON.parse(stored));
-        } catch (e) {
+          const parsed = JSON.parse(stored);
+          setProducts(parsed);
+        } catch {
           setProducts(initialProducts);
+          localStorage.setItem("swc-products", JSON.stringify(initialProducts));
+          localStorage.setItem("swc-products-initialized", "true");
         }
       } else {
         setProducts(initialProducts);
         localStorage.setItem("swc-products", JSON.stringify(initialProducts));
+        localStorage.setItem("swc-products-initialized", "true");
       }
       setIsLoading(false);
     }
@@ -86,25 +91,6 @@ export function ProductsProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const resetProducts = async () => {
-    saveProductsLocally(initialProducts);
-    if (isSupabaseConnected) {
-      // Upsert all initial products to Supabase
-      for (const p of initialProducts) {
-        await upsertSupabaseProduct(p);
-      }
-      // Also delete any other products from database that aren't in initial list
-      const dbProducts = await fetchSupabaseProducts();
-      if (dbProducts) {
-        const initialIds = new Set(initialProducts.map(p => p.id));
-        for (const dbP of dbProducts) {
-          if (!initialIds.has(dbP.id)) {
-            await deleteSupabaseProduct(dbP.id);
-          }
-        }
-      }
-    }
-  };
 
   return (
     <ProductsContext.Provider value={{ 
@@ -112,7 +98,6 @@ export function ProductsProvider({ children }: { children: React.ReactNode }) {
       addProduct, 
       updateProduct, 
       deleteProduct, 
-      resetProducts, 
       isLoading,
       isSupabaseConnected
     }}>

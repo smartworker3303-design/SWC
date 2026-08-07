@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, Suspense } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
 interface Slide {
@@ -15,7 +15,7 @@ interface Slide {
   tag: string;
 }
 
-const slides: Slide[] = [
+const homeSlides: Slide[] = [
   {
     id: "hw-royale",
     title: "SWC Royale Chrono",
@@ -42,11 +42,111 @@ const slides: Slide[] = [
   }
 ];
 
-export default function Carousel() {
+const mensSlides: Slide[] = [
+  {
+    id: "mens-hero-1",
+    title: "Men's Executive Chrono",
+    subtitle: "Precision engineering meets masculine elegance in our latest men's collection.",
+    image: "/images/products/swc_product_11.webp",
+    link: "/hand-watch?subcat=mens",
+    tag: "MEN's COLLECTION"
+  },
+  {
+    id: "mens-hero-2",
+    title: "The Aviator Series",
+    subtitle: "Dark, bold dials combined with premium metallic bands.",
+    image: "/images/products/swc_product_13.webp",
+    link: "/hand-watch?subcat=mens",
+    tag: "SIGNATURE TIMEPIECE"
+  },
+  {
+    id: "mens-hero-3",
+    title: "Midnight Stealth",
+    subtitle: "Built for endurance, styled for the boardroom.",
+    image: "/images/products/swc_product_14.webp",
+    link: "/hand-watch?subcat=mens",
+    tag: "ELITE COLLECTION"
+  }
+];
+
+const womensSlides: Slide[] = [
+  {
+    id: "womens-hero-1",
+    title: "The Rose Gold Elegance",
+    subtitle: "Delicate proportions and jewel-encrusted bezels for her.",
+    image: "/images/products/swc_product_20.webp",
+    link: "/hand-watch?subcat=womens",
+    tag: "WOMEN's COLLECTION"
+  },
+  {
+    id: "womens-hero-2",
+    title: "Diamond Halo",
+    subtitle: "Feminine sophistication radiating with timeless grace.",
+    image: "/images/products/swc_product_21.webp",
+    link: "/hand-watch?subcat=womens",
+    tag: "LUXURY TIMEPIECE"
+  },
+  {
+    id: "womens-hero-3",
+    title: "Slimline Classic",
+    subtitle: "Minimalist design crafted from the finest materials.",
+    image: "/images/products/swc_product_24.webp",
+    link: "/hand-watch?subcat=womens",
+    tag: "ELITE COLLECTION"
+  }
+];
+
+const wallClockSlides: Slide[] = [
+  {
+    id: "clock-hero-1",
+    title: "Grand Masterpiece",
+    subtitle: "Elevate your living space with our premium wall clocks.",
+    image: "/images/products/swc_product_1.webp",
+    link: "/wall-clock",
+    tag: "WALL CLOCKS"
+  },
+  {
+    id: "clock-hero-2",
+    title: "Solaris Sunburst",
+    subtitle: "A modern classic that captures the eye in any room.",
+    image: "/images/products/swc_product_2.webp",
+    link: "/wall-clock",
+    tag: "LUXURY WALL ART"
+  },
+  {
+    id: "clock-hero-3",
+    title: "Minimalist Pendulum",
+    subtitle: "Sleek metallic finish with silent sweep technology.",
+    image: "/images/products/swc_product_3.webp",
+    link: "/wall-clock",
+    tag: "ELITE COLLECTION"
+  }
+];
+
+function CarouselContent() {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const subcat = searchParams.get('subcat');
+
+  let activeSlides = homeSlides;
+  if (pathname === '/wall-clock') {
+    activeSlides = wallClockSlides;
+  } else if (pathname === '/hand-watch') {
+    if (subcat === 'mens') activeSlides = mensSlides;
+    else if (subcat === 'womens') activeSlides = womensSlides;
+  }
+
+  const slides = activeSlides;
+
   const [currentIndex, setCurrentIndex] = useState(0);
   const touchStartX = useRef<number | null>(null);
   const touchEndX = useRef<number | null>(null);
+
+  // Reset index when slides change
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setCurrentIndex(0);
+  }, [slides]);
 
   const shouldHideCarousel = pathname === "/admin-panel" || pathname.startsWith("/product/");
 
@@ -58,21 +158,19 @@ export default function Carousel() {
     setCurrentIndex((prev) => (prev === slides.length - 1 ? 0 : prev + 1));
   };
 
-  // Bulletproof Autoplay: Starts on mount, runs every 3 seconds, cannot be paused or stuck by cursor hover/scroll state
+  // Bulletproof Autoplay
   useEffect(() => {
     if (shouldHideCarousel) return;
-
     const timer = setInterval(() => {
       nextSlide();
     }, 3000);
-
     return () => clearInterval(timer);
-  }, [shouldHideCarousel]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [shouldHideCarousel, slides.length]);
 
-  // If on admin panel or product details pages, do not render the carousel
   if (shouldHideCarousel) return null;
 
-  // Touch Swipe Handlers for Mobile responsiveness (advances slide without pausing timer)
+  // Touch Swipe Handlers
   const handleTouchStart = (e: React.TouchEvent) => {
     touchStartX.current = e.touches[0].clientX;
   };
@@ -97,7 +195,6 @@ export default function Carousel() {
     touchEndX.current = null;
   };
 
-  // Helper to determine inline styles for smooth direction-aware horizontal sliding
   const getSlideStyles = (index: number): React.CSSProperties => {
     const isActive = index === currentIndex;
     const isLeft = index === (currentIndex - 1 + slides.length) % slides.length;
@@ -132,12 +229,10 @@ export default function Carousel() {
       className="relative w-full overflow-hidden h-[300px] sm:h-[400px] md:h-[480px] lg:h-[550px] border-b border-gold-500/10 bg-black group"
       aria-label="Luxury Collections Carousel"
     >
-      {/* CSS Styles block for custom horizontal slide transition & slide-specific animations */}
       <style dangerouslySetInnerHTML={{ __html: `
         .slide-transition {
           transition: transform 1.7s cubic-bezier(0.16, 1, 0.3, 1), opacity 1.7s cubic-bezier(0.16, 1, 0.3, 1);
         }
-
         .animate-royale-zoom {
           animation: royaleZoom 3s cubic-bezier(0.25, 1, 0.5, 1) forwards;
         }
@@ -147,7 +242,6 @@ export default function Carousel() {
         .animate-sovereign-reveal {
           animation: sovereignReveal 3s cubic-bezier(0.25, 1, 0.5, 1) forwards;
         }
-
         @keyframes royaleZoom {
           0% { transform: scale(1); filter: blur(3px); }
           100% { transform: scale(1.06); filter: blur(0); }
@@ -162,7 +256,6 @@ export default function Carousel() {
         }
       `}} />
 
-      {/* Stacked Slides Track */}
       <div 
         className="relative w-full h-full"
         onTouchStart={handleTouchStart}
@@ -172,7 +265,6 @@ export default function Carousel() {
         {slides.map((slide, index) => {
           const isActive = currentIndex === index;
           
-          // Determine the unique class for each slide image when it is active
           let animationClass = "";
           if (isActive) {
             if (index === 0) animationClass = "animate-royale-zoom";
@@ -186,7 +278,6 @@ export default function Carousel() {
               className="absolute inset-0 w-full h-full slide-transition"
               style={getSlideStyles(index)}
             >
-              {/* Slide Background Image */}
               <div className="absolute inset-0 w-full h-full bg-neutral-950">
                 <Image 
                   src={slide.image} 
@@ -198,11 +289,9 @@ export default function Carousel() {
                 />
               </div>
 
-              {/* Premium Black and Gold Gradient Overlays for High Text Contrast */}
               <div className="absolute inset-0 bg-gradient-to-r from-black via-black/60 to-transparent z-10" />
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/20 z-10" />
 
-              {/* Slide Content Overlay */}
               <div className="absolute inset-0 z-20 flex items-center px-6 sm:px-12 md:px-20 lg:px-32 max-w-7xl mx-auto w-full h-full">
                 <div className="max-w-2xl text-left space-y-3 sm:space-y-5 animate-fade-in-up">
                   <span className="inline-block text-[10px] sm:text-xs font-semibold tracking-[0.25em] text-gold-500 uppercase">
@@ -233,7 +322,6 @@ export default function Carousel() {
         })}
       </div>
 
-      {/* Navigation Arrows */}
       <button 
         onClick={prevSlide}
         className="absolute left-4 top-1/2 -translate-y-1/2 z-30 p-2 sm:p-3 rounded-full border border-gold-500/20 bg-black/40 text-gold-500 hover:bg-gold-500 hover:text-black hover:border-gold-500 transition-all duration-300 opacity-75 md:opacity-0 md:group-hover:opacity-100 cursor-pointer shadow-md"
@@ -250,7 +338,6 @@ export default function Carousel() {
         <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5" />
       </button>
 
-      {/* Navigation Dots / Indicators */}
       <div className="absolute bottom-4 sm:bottom-6 left-1/2 -translate-x-1/2 z-30 flex items-center gap-2">
         {slides.map((_, index) => (
           <button
@@ -266,5 +353,13 @@ export default function Carousel() {
         ))}
       </div>
     </section>
+  );
+}
+
+export default function Carousel() {
+  return (
+    <Suspense fallback={<div className="h-[300px] sm:h-[400px] md:h-[480px] lg:h-[550px] bg-black border-b border-gold-500/10"></div>}>
+      <CarouselContent />
+    </Suspense>
   );
 }

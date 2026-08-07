@@ -19,10 +19,12 @@ export async function fetchSupabaseProducts(): Promise<Product[] | null> {
       
     if (error) throw error;
     
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return (data || []).map((p: any) => ({
       id: p.id,
       name: p.name,
       category: p.category,
+      brand: p.brand || undefined,
       price: Number(p.price),
       rating: Number(p.rating),
       reviews: Number(p.reviews),
@@ -48,6 +50,7 @@ export async function upsertSupabaseProduct(product: Product): Promise<boolean> 
         id: product.id,
         name: product.name,
         category: product.category,
+        brand: product.brand || null,
         price: product.price,
         rating: product.rating,
         reviews: product.reviews,

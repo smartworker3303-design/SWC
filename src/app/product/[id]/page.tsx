@@ -46,7 +46,7 @@ export default function ProductDetailPage({ params }: ProductPageProps) {
       <div className="min-h-[70vh] flex flex-col items-center justify-center p-4 text-center space-y-6">
         <h1 className="font-serif text-3xl font-bold text-gold-500">Timepiece Not Found</h1>
         <p className="text-gray-400 text-sm max-w-md">
-          The requested timepiece model ID "{id}" could not be located in Saleem Watch Center's catalog.
+          The requested timepiece model ID &quot;{id}&quot; could not be located in Saleem Watch Center&apos;s catalog.
         </p>
         <Link 
           href="/" 

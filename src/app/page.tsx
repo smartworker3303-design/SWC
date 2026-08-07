@@ -1,24 +1,18 @@
 "use client";
 
-import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { 
   ArrowRight, 
   Star, 
   Clock, 
-  Sparkles, 
   ShieldCheck, 
   Award, 
-  ShoppingBag, 
   Eye, 
-  MessageSquare,
   ChevronRight,
-  RefreshCw,
-  Heart,
-  Smartphone
+  Heart
 } from "lucide-react";
-import { reviews, Product } from "../data";
+import { reviews } from "../data";
 import { useProducts } from "../context/ProductsContext";
 import { useWishlist } from "../context/WishlistContext";
 
@@ -39,12 +33,6 @@ export default function Home() {
   }
 
 
-
-  const getWhatsAppLink = (productName: string) => {
-    const text = encodeURIComponent(`Hi Saleem Watch Center, I am highly interested in the "${productName}" from swc.com. Please share availability and delivery options!`);
-    return `https://wa.me/923212200321?text=${text}`;
-  };
-
   return (
     <div className="min-h-screen bg-luxury-black text-white font-sans relative">
       
@@ -60,7 +48,7 @@ export default function Home() {
             
             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-gold-500/20 bg-gold-500/5 text-gold-400 text-xs sm:text-sm tracking-wider font-semibold uppercase animate-pulse">
               <Award className="w-4 h-4" />
-              Pakistan's Premier Luxury Watch Dealer
+              Pakistan&apos;s Premier Luxury Watch Dealer
             </div>
 
             <h1 className="font-serif text-4xl sm:text-5xl lg:text-7xl leading-tight font-extrabold tracking-tight">
@@ -352,7 +340,7 @@ export default function Home() {
               </div>
               <div className="glass-panel p-6 text-center space-y-1">
                 <Award className="w-6 h-6 text-gold-500 mx-auto" />
-                <p className="font-serif text-lg font-bold text-gold-400">Est. 2001</p>
+                <p className="font-serif text-lg font-bold text-gold-400">Est. 1984</p>
                 <p className="text-[10px] text-gray-400 uppercase tracking-widest">Heritage & Pride</p>
               </div>
             </div>
@@ -385,7 +373,7 @@ export default function Home() {
             <div className="w-16 h-0.5 bg-gold-500 mt-2" />
             
             <p className="text-gray-300 text-sm sm:text-base font-light leading-relaxed">
-              Founded on the pillars of authenticity, precision, and luxury, Saleem Watch Center has served generations of discerning watch collectors and decorators. What began as a boutique repair workshop in 2001 has blossomed into Pakistan’s premier destination for luxury wristwatches and artful wall clocks.
+              Founded on the pillars of authenticity, precision, and luxury, Saleem Watch Center has served generations of discerning watch collectors and decorators. What began as a boutique repair workshop in 1984 has blossomed into Pakistan’s premier destination for luxury wristwatches and artful wall clocks.
             </p>
             
             <div className="flex gap-4 pt-2">
@@ -439,7 +427,7 @@ export default function Home() {
                 </div>
 
                 <p className="text-gray-300 text-xs sm:text-sm leading-relaxed italic font-light flex-grow">
-                  "{rev.text}"
+                  &quot;{rev.text}&quot;
                 </p>
 
                 <div className="border-t border-gray-900 pt-4 flex items-center gap-3">

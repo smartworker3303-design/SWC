@@ -34,7 +34,7 @@ export default function Header() {
               Saleem Watch Center
             </span>
             <span className="text-[10px] text-gray-400 tracking-widest font-light -mt-1">
-              EST. 2001 • SWC.COM
+              EST. 1984 • SWC.COM
             </span>
           </div>
         </Link>
@@ -47,12 +47,28 @@ export default function Header() {
           >
             Home
           </Link>
-          <Link 
-            href="/hand-watch" 
-            className={`transition-colors ${isLinkActive("/hand-watch") ? "text-gold-500" : "text-gray-300 hover:text-gold-500"}`}
-          >
-            Hand Watches
-          </Link>
+          <div className="relative group py-2">
+            <Link 
+              href="/hand-watch" 
+              className={`transition-colors ${isLinkActive("/hand-watch") ? "text-gold-500" : "text-gray-300 hover:text-gold-500"}`}
+            >
+              Hand Watches
+            </Link>
+            <div className="absolute top-full left-0 mt-0 w-48 bg-black/95 backdrop-blur-md border border-gold-500/20 py-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all flex flex-col z-50">
+              <Link 
+                href="/hand-watch?subcat=mens" 
+                className="px-4 py-2.5 text-xs text-gray-300 hover:text-gold-400 hover:bg-gold-500/10 transition-colors"
+              >
+                Men Watches
+              </Link>
+              <Link 
+                href="/hand-watch?subcat=womens" 
+                className="px-4 py-2.5 text-xs text-gray-300 hover:text-gold-400 hover:bg-gold-500/10 transition-colors"
+              >
+                Women Watches
+              </Link>
+            </div>
+          </div>
           <Link 
             href="/wall-clock" 
             className={`transition-colors ${isLinkActive("/wall-clock") ? "text-gold-500" : "text-gray-300 hover:text-gold-500"}`}
@@ -112,6 +128,23 @@ export default function Header() {
           >
             Hand Watches
           </Link>
+          <div className="flex justify-center gap-4 pb-2 border-b border-gray-800">
+            <Link 
+              href="/hand-watch?subcat=mens" 
+              onClick={() => setMobileMenuOpen(false)}
+              className="text-xs text-gray-400 hover:text-gold-500 tracking-widest uppercase font-medium"
+            >
+              Men Watches
+            </Link>
+            <span className="text-gray-600">|</span>
+            <Link 
+              href="/hand-watch?subcat=womens" 
+              onClick={() => setMobileMenuOpen(false)}
+              className="text-xs text-gray-400 hover:text-gold-500 tracking-widest uppercase font-medium"
+            >
+              Women Watches
+            </Link>
+          </div>
           <Link 
             href="/wall-clock" 
             onClick={() => setMobileMenuOpen(false)}
