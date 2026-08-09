@@ -20,10 +20,34 @@ const playfair = Playfair_Display({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://saleemwatchcenter.com"),
   title: "Saleem Watch Center | Luxury Hand Watches & Wall Clocks",
-  description: "Discover Saleem Watch Center's (SWC) exclusive collection of luxury hand watches and elegant wall clocks. Experience timeless craftsmanship, premium black & gold design, and exquisite precision.",
-  keywords: "watches, wall clocks, hand watches, luxury watches, premium clocks, Saleem Watch Center, SWC, swc.com, gold watches, black watches",
+  description: "Discover Saleem Watch Center's (SWC) exclusive collection of luxury hand watches and elegant wall clocks. Experience timeless craftsmanship, premium black & gold design, and exquisite precision in Karachi and beyond.",
+  keywords: "Saleem Watch Center, saleem watch center, watches, wall clocks, hand watches, luxury watches, premium clocks, SWC, swc.com, gold watches, black watches, Karachi watch center",
   authors: [{ name: "Saleem Watch Center" }],
+  openGraph: {
+    title: "Saleem Watch Center | Luxury Hand Watches",
+    description: "Discover Saleem Watch Center's (SWC) exclusive collection of luxury hand watches and elegant wall clocks.",
+    url: "https://saleemwatchcenter.com",
+    siteName: "Saleem Watch Center",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Saleem Watch Center",
+    description: "Luxury hand watches and elegant wall clocks.",
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
+  },
 };
 
 export default function RootLayout({
