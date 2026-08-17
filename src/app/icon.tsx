@@ -5,8 +5,8 @@ export const runtime = 'edge';
  
 // Image metadata
 export const size = {
-  width: 32,
-  height: 32,
+  width: 48,
+  height: 48,
 };
 export const contentType = 'image/png';
  
@@ -17,7 +17,7 @@ export default function Icon() {
       // ImageResponse JSX element
       <div
         style={{
-          fontSize: 14,
+          fontSize: 20,
           background: 'black',
           width: '100%',
           height: '100%',
@@ -25,7 +25,7 @@ export default function Icon() {
           alignItems: 'center',
           justifyContent: 'center',
           color: '#d4af37', // gold-500
-          border: '2px solid #d4af37',
+          border: '3px solid #d4af37',
           borderRadius: '50%',
           fontWeight: 'bold',
           fontFamily: 'serif',

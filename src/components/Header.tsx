@@ -6,8 +6,6 @@ import { usePathname } from "next/navigation";
 import { 
   ShoppingCart,
   ShoppingBag,
-  Menu, 
-  X,
   User,
   LogOut
 } from "lucide-react";
@@ -15,7 +13,6 @@ import { useWishlist } from "../context/WishlistContext";
 import { useAuth } from "../context/AuthContext";
 
 export default function Header() {
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const { wishlist } = useWishlist();
   const { user, logout } = useAuth();
@@ -28,10 +25,10 @@ export default function Header() {
 
   return (
     <header className="sticky top-0 z-40 w-full glass-panel border-b border-gold-500/10 transition-all duration-300">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 md:py-0 md:h-20 flex flex-wrap md:flex-nowrap items-center justify-between">
         
         {/* Logo */}
-        <Link href="/" className="flex items-center gap-3 group">
+        <Link href="/" className="flex items-center gap-2 sm:gap-3 group order-1">
           <div className="w-10 h-10 rounded-full border border-gold-500 flex items-center justify-center bg-black/60 shadow-[0_0_10px_rgba(212,175,55,0.2)] group-hover:shadow-[0_0_15px_rgba(212,175,55,0.5)] transition-all">
             <span className="font-serif text-lg font-bold text-gold-500 tracking-wider">SWC</span>
           </div>
@@ -45,8 +42,8 @@ export default function Header() {
           </div>
         </Link>
 
-        {/* Desktop Navigation Links */}
-        <nav className="hidden md:flex items-center gap-8 text-sm uppercase tracking-widest font-medium">
+        {/* Desktop & Mobile Navigation Links */}
+        <nav className="flex items-center justify-between sm:justify-center gap-2 sm:gap-6 text-[10px] sm:text-xs md:text-sm uppercase tracking-widest font-medium order-3 md:order-2 w-full md:w-auto mt-4 md:mt-0 pb-1 md:pb-0 overflow-x-auto whitespace-nowrap">
           <Link 
             href="/" 
             className={`transition-colors ${isLinkActive("/") ? "text-gold-500" : "text-gray-300 hover:text-gold-500"}`}
@@ -89,8 +86,8 @@ export default function Header() {
           </Link>
         </nav>
 
-        {/* Actions (Wishlist & Hamburger) */}
-        <div className="flex items-center gap-4">
+        {/* Actions (Wishlist & Profile) */}
+        <div className="flex items-center gap-2 sm:gap-4 order-2 md:order-3">
           
           {/* Cart Link (formerly Wishlist) */}
           <Link 
@@ -163,89 +160,8 @@ export default function Header() {
             </Link>
           )}
 
-          {/* Mobile Menu Button */}
-          <button 
-            onClick={() => setMobileMenuOpen(prev => !prev)}
-            className="md:hidden p-2 rounded-full hover:bg-gold-500/10 text-gold-500 transition-colors"
-            aria-label="Toggle Navigation Menu"
-          >
-            {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-          </button>
         </div>
       </div>
-
-      {/* Mobile Navigation Drawer */}
-      {mobileMenuOpen && (
-        <div className="md:hidden glass-panel border-t border-gold-500/10 absolute top-20 left-0 w-full animate-fade-in-up py-6 px-4 flex flex-col gap-4 shadow-2xl">
-          <Link 
-            href="/" 
-            onClick={() => setMobileMenuOpen(false)}
-            className={`py-2 border-b border-gray-800 text-center tracking-widest font-medium text-sm ${isLinkActive("/") ? "text-gold-500" : "text-gray-300 hover:text-gold-500"}`}
-          >
-            Home
-          </Link>
-          <Link 
-            href="/hand-watch" 
-            onClick={() => setMobileMenuOpen(false)}
-            className={`py-2 border-b border-gray-800 text-center tracking-widest font-medium text-sm ${isLinkActive("/hand-watch") ? "text-gold-500" : "text-gray-300 hover:text-gold-500"}`}
-          >
-            Hand Watches
-          </Link>
-          <div className="flex justify-center gap-4 pb-2 border-b border-gray-800">
-            <Link 
-              href="/hand-watch?subcat=mens" 
-              onClick={() => setMobileMenuOpen(false)}
-              className="text-xs text-gray-400 hover:text-gold-500 tracking-widest uppercase font-medium"
-            >
-              Men Watches
-            </Link>
-            <span className="text-gray-600">|</span>
-            <Link 
-              href="/hand-watch?subcat=womens" 
-              onClick={() => setMobileMenuOpen(false)}
-              className="text-xs text-gray-400 hover:text-gold-500 tracking-widest uppercase font-medium"
-            >
-              Women Watches
-            </Link>
-          </div>
-          <Link 
-            href="/wall-clock" 
-            onClick={() => setMobileMenuOpen(false)}
-            className={`py-2 border-b border-gray-800 text-center tracking-widest font-medium text-sm ${isLinkActive("/wall-clock") ? "text-gold-500" : "text-gray-300 hover:text-gold-500"}`}
-          >
-            Wall Clocks
-          </Link>
-          <Link 
-            href="/about" 
-            onClick={() => setMobileMenuOpen(false)}
-            className={`py-2 text-center tracking-widest font-medium text-sm ${isLinkActive("/about") ? "text-gold-500" : "text-gray-300 hover:text-gold-500"}`}
-          >
-            Our Legacy
-          </Link>
-          
-          {/* Mobile Auth */}
-          <div className="pt-4 border-t border-gray-800 flex justify-center">
-            {user ? (
-              <button 
-                onClick={() => { logout(); setMobileMenuOpen(false); }}
-                className="flex items-center gap-2 text-xs text-gray-400 hover:text-gold-500 tracking-widest uppercase font-medium"
-              >
-                <LogOut className="w-4 h-4" />
-                Sign Out
-              </button>
-            ) : (
-              <Link 
-                href="/login"
-                onClick={() => setMobileMenuOpen(false)}
-                className="flex items-center gap-2 text-xs text-gray-400 hover:text-gold-500 tracking-widest uppercase font-medium"
-              >
-                <User className="w-4 h-4" />
-                Client Sign In
-              </Link>
-            )}
-          </div>
-        </div>
-      )}
     </header>
   );
 }
