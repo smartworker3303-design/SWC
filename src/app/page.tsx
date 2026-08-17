@@ -15,6 +15,7 @@ import {
 import { reviews } from "../data";
 import { useProducts } from "../context/ProductsContext";
 import { useWishlist } from "../context/WishlistContext";
+import MouseTrail from "../components/MouseTrail";
 
 export default function Home() {
   const { products, isLoading } = useProducts();
@@ -34,13 +35,20 @@ export default function Home() {
 
 
   return (
-    <div className="min-h-screen bg-luxury-black text-white font-sans relative">
+    <div className="min-h-screen bg-transparent text-white font-sans relative">
+      <MouseTrail />
       
+
+
       {/* 1. Hero Section */}
-      <section className="relative min-h-[calc(100vh-80px)] flex items-center py-20 px-4 sm:px-6 lg:px-8 overflow-hidden">
+      <section className="relative min-h-[calc(100vh-80px)] flex items-center py-20 px-4 sm:px-6 lg:px-8 overflow-hidden z-10">
+        
+        {/* Dark overlay for text readability */}
+        <div className="absolute inset-0 bg-black/60 z-0 pointer-events-none" />
+
         {/* Abstract gold dust backdrop */}
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_50%,rgba(212,175,55,0.08),rgba(0,0,0,0))] pointer-events-none" />
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 rounded-full bg-gold-500/5 blur-3xl pointer-events-none" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_50%,rgba(212,175,55,0.08),rgba(0,0,0,0))] pointer-events-none z-0" />
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 rounded-full bg-gold-500/5 blur-3xl pointer-events-none z-0" />
         
         <div className="max-w-7xl mx-auto w-full grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8 items-center z-10">
           {/* Left Text Column */}

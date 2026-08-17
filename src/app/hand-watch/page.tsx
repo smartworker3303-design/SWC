@@ -22,7 +22,7 @@ function HandWatchContent() {
   const { toggleWishlist, isInWishlist } = useWishlist();
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState("featured");
-  const [subcatFilter, setSubcatFilter] = useState("all");
+  const [subcatFilter, setSubcatFilter] = useState("mens");
   const [brandFilter, setBrandFilter] = useState("all");
 
   const searchParams = useSearchParams();
@@ -33,7 +33,7 @@ function HandWatchContent() {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setSubcatFilter(subcatQuery);
     } else {
-      setSubcatFilter("all");
+      setSubcatFilter("mens");
     }
   }, [subcatQuery]);
 
@@ -47,7 +47,7 @@ function HandWatchContent() {
     // 1. Filter
     const filtered = products.filter(product => {
       const matchesCategory = product.category === category;
-      const matchesSubcat = subcatFilter === "all" || product.subcategory === subcatFilter;
+      const matchesSubcat = product.subcategory === subcatFilter;
       const matchesBrand = brandFilter === "all" || product.brand === brandFilter;
       const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                             product.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -90,7 +90,7 @@ function HandWatchContent() {
   }
 
   return (
-    <div className="min-h-screen bg-luxury-black text-white font-sans py-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-12">
+    <div className="min-h-screen bg-transparent text-white font-sans py-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-12">
       
       {/* Back button */}
       <div className="text-left">
@@ -120,12 +120,6 @@ function HandWatchContent() {
 
       {/* Subcategory Tabs */}
       <div className="flex flex-wrap justify-center gap-4 mb-4">
-        <button 
-          onClick={() => setSubcatFilter("all")}
-          className={`px-6 py-2.5 rounded-full text-xs font-bold tracking-widest uppercase transition-all ${subcatFilter === "all" ? "gold-gradient-bg text-black shadow-lg shadow-gold-500/20" : "bg-neutral-900 border border-gold-500/20 text-gray-400 hover:text-gold-400"}`}
-        >
-          All Collections
-        </button>
         <button 
           onClick={() => setSubcatFilter("mens")}
           className={`px-6 py-2.5 rounded-full text-xs font-bold tracking-widest uppercase transition-all ${subcatFilter === "mens" ? "gold-gradient-bg text-black shadow-lg shadow-gold-500/20" : "bg-neutral-900 border border-gold-500/20 text-gray-400 hover:text-gold-400"}`}
@@ -333,7 +327,7 @@ function HandWatchContent() {
 
 export default function HandWatchPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-luxury-black flex items-center justify-center"><div className="w-12 h-12 rounded-full border-t-2 border-r-2 border-gold-500 animate-spin" /></div>}>
+    <Suspense fallback={<div className="min-h-screen bg-transparent flex items-center justify-center"><div className="w-12 h-12 rounded-full border-t-2 border-r-2 border-gold-500 animate-spin" /></div>}>
       <HandWatchContent />
     </Suspense>
   );

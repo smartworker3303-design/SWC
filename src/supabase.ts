@@ -20,20 +20,30 @@ export async function fetchSupabaseProducts(): Promise<Product[] | null> {
     if (error) throw error;
     
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return (data || []).map((p: any) => ({
-      id: p.id,
-      name: p.name,
-      category: p.category,
-      brand: p.brand || undefined,
-      price: Number(p.price),
-      rating: Number(p.rating),
-      reviews: Number(p.reviews),
-      image: p.image,
-      description: p.description,
-      specs: typeof p.specs === "string" ? JSON.parse(p.specs) : p.specs,
-      featured: p.featured,
-      tag: p.tag || undefined
-    }));
+    return (data || []).map((p: any) => {
+      const rawSpecs = typeof p.specs === "string" ? JSON.parse(p.specs) : p.specs;
+      const cleanSpecs = { ...rawSpecs };
+      const subcat = cleanSpecs.__subcategory;
+      const brand = cleanSpecs.__brand;
+      delete cleanSpecs.__subcategory;
+      delete cleanSpecs.__brand;
+      
+      return {
+        id: p.id,
+        name: p.name,
+        category: p.category,
+        subcategory: subcat || undefined,
+        brand: brand || undefined,
+        price: Number(p.price),
+        rating: Number(p.rating),
+        reviews: Number(p.reviews),
+        image: p.image,
+        description: p.description,
+        specs: cleanSpecs,
+        featured: p.featured,
+        tag: p.tag || undefined
+      };
+    });
   } catch (err) {
     console.error("Error fetching from Supabase:", err);
     return null;
@@ -50,13 +60,12 @@ export async function upsertSupabaseProduct(product: Product): Promise<boolean> 
         id: product.id,
         name: product.name,
         category: product.category,
-        brand: product.brand || null,
         price: product.price,
         rating: product.rating,
         reviews: product.reviews,
         image: product.image,
         description: product.description,
-        specs: product.specs,
+        specs: { ...product.specs, __brand: product.brand, __subcategory: product.subcategory },
         featured: product.featured,
         tag: product.tag || null
       });
@@ -81,6 +90,76 @@ export async function deleteSupabaseProduct(id: string): Promise<boolean> {
     return true;
   } catch (err) {
     console.error("Error deleting from Supabase:", err);
+    return false;
+  }
+}
+
+// --- Orders & Users Management ---
+
+export interface Profile {
+  id: string;
+  email: string;
+  phone?: string;
+  full_name?: string;
+  created_at: string;
+}
+
+export type OrderStatus = 'Pending' | 'Processing' | 'Shipped' | 'Delivered' | 'Cancelled';
+
+export interface OrderItem {
+  product_id: string;
+  quantity: number;
+  price: number;
+  name: string;
+}
+
+export interface Order {
+  id: string;
+  user_id: string;
+  items: OrderItem[];
+  total_amount: number;
+  status: OrderStatus;
+  shipping_address: string;
+  phone: string;
+  created_at: string;
+}
+
+export async function fetchSupabaseProfiles(): Promise<Profile[]> {
+  if (!supabase) return [];
+  try {
+    const { data, error } = await supabase.from('profiles').select('*').order('created_at', { ascending: false });
+    if (error) {
+      console.warn("Could not fetch profiles. User may need to run SUPABASE_SETUP SQL.");
+      return [];
+    }
+    return data || [];
+  } catch {
+    return [];
+  }
+}
+
+export async function fetchSupabaseOrders(): Promise<Order[]> {
+  if (!supabase) return [];
+  try {
+    const { data, error } = await supabase.from('orders').select('*').order('created_at', { ascending: false });
+    if (error) {
+      console.warn("Could not fetch orders. User may need to run SUPABASE_SETUP SQL.");
+      return [];
+    }
+    return data || [];
+  } catch {
+    return [];
+  }
+}
+
+export async function updateSupabaseOrderStatus(orderId: string, status: OrderStatus): Promise<boolean> {
+  if (!supabase) return false;
+  try {
+    const { error } = await supabase.from('orders').update({ status }).eq('id', orderId);
+    if (error) throw error;
+    return true;
+  } catch (err) {
+    console.error("Error updating order status:", err);
     return false;
   }
 }

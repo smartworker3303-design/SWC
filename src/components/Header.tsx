@@ -4,15 +4,21 @@ import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { 
-  Heart, 
+  ShoppingCart,
+  ShoppingBag,
   Menu, 
-  X
+  X,
+  User,
+  LogOut
 } from "lucide-react";
 import { useWishlist } from "../context/WishlistContext";
+import { useAuth } from "../context/AuthContext";
 
 export default function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
   const { wishlist } = useWishlist();
+  const { user, logout } = useAuth();
   const pathname = usePathname();
   if (pathname === "/admin-panel") return null;
 
@@ -86,19 +92,76 @@ export default function Header() {
         {/* Actions (Wishlist & Hamburger) */}
         <div className="flex items-center gap-4">
           
-          {/* Wishlist Link */}
+          {/* Cart Link (formerly Wishlist) */}
           <Link 
             href="/wishlist" 
             className="relative cursor-pointer group p-2 rounded-full hover:bg-gold-500/10 transition-colors"
-            aria-label="View Wishlist"
+            aria-label="View Cart"
           >
-            <Heart className={`w-5 h-5 transition-transform group-hover:scale-110 ${wishlist.length > 0 ? "fill-gold-500 text-gold-500" : "text-gray-300"}`} />
+            <ShoppingCart className={`w-5 h-5 transition-transform group-hover:scale-110 ${wishlist.length > 0 ? "text-gold-500" : "text-gray-300"}`} />
             {wishlist.length > 0 && (
               <span className="absolute -top-1 -right-1 bg-gold-600 text-black text-[10px] font-extrabold w-5 h-5 rounded-full flex items-center justify-center animate-bounce shadow-md">
                 {wishlist.length}
               </span>
             )}
           </Link>
+
+          {/* Auth & Orders Buttons */}
+          {user ? (
+            <div className="flex items-center gap-1">
+              <Link 
+                href="/my-orders"
+                className="relative cursor-pointer group p-2 rounded-full hover:bg-gold-500/10 transition-colors"
+                aria-label="My Orders"
+                title="My Orders"
+              >
+                <ShoppingBag className="w-5 h-5 text-gray-300 group-hover:text-gold-500 transition-colors" />
+              </Link>
+              
+              <div className="relative">
+                <button 
+                  onClick={() => setProfileOpen(!profileOpen)}
+                  className="relative cursor-pointer group p-2 rounded-full hover:bg-gold-500/10 transition-colors"
+                  aria-label="Profile"
+                >
+                  <User className="w-5 h-5 text-gray-300 group-hover:text-gold-500 transition-colors" />
+                </button>
+
+                {profileOpen && (
+                  <div className="absolute right-0 mt-2 w-56 bg-black/95 backdrop-blur-md border border-gold-500/20 shadow-2xl py-4 px-4 flex flex-col gap-3 z-50">
+                    <div className="flex flex-col border-b border-gray-800 pb-3">
+                      <span className="text-[10px] text-gray-500 uppercase tracking-wider mb-1">Email</span>
+                      <span className="text-xs text-gray-200 truncate font-medium">{user.email}</span>
+                    </div>
+                    {user.phone && (
+                      <div className="flex flex-col border-b border-gray-800 pb-3">
+                        <span className="text-[10px] text-gray-500 uppercase tracking-wider mb-1">Phone</span>
+                        <span className="text-xs text-gray-200 font-medium">{user.phone}</span>
+                      </div>
+                    )}
+                    <button 
+                      onClick={() => {
+                        logout();
+                        setProfileOpen(false);
+                      }}
+                      className="flex items-center justify-center gap-2 mt-1 w-full py-2 bg-gold-500/10 text-gold-500 hover:bg-gold-500 hover:text-black transition-colors text-xs font-bold uppercase tracking-widest rounded-sm"
+                    >
+                      <LogOut className="w-3 h-3" />
+                      Sign Out
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          ) : (
+            <Link 
+              href="/login"
+              className="relative cursor-pointer group p-2 rounded-full hover:bg-gold-500/10 transition-colors"
+              aria-label="Sign In"
+            >
+              <User className="w-5 h-5 text-gray-300 group-hover:text-gold-500 transition-colors" />
+            </Link>
+          )}
 
           {/* Mobile Menu Button */}
           <button 
@@ -159,6 +222,28 @@ export default function Header() {
           >
             Our Legacy
           </Link>
+          
+          {/* Mobile Auth */}
+          <div className="pt-4 border-t border-gray-800 flex justify-center">
+            {user ? (
+              <button 
+                onClick={() => { logout(); setMobileMenuOpen(false); }}
+                className="flex items-center gap-2 text-xs text-gray-400 hover:text-gold-500 tracking-widest uppercase font-medium"
+              >
+                <LogOut className="w-4 h-4" />
+                Sign Out
+              </button>
+            ) : (
+              <Link 
+                href="/login"
+                onClick={() => setMobileMenuOpen(false)}
+                className="flex items-center gap-2 text-xs text-gray-400 hover:text-gold-500 tracking-widest uppercase font-medium"
+              >
+                <User className="w-4 h-4" />
+                Client Sign In
+              </Link>
+            )}
+          </div>
         </div>
       )}
     </header>

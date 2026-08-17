@@ -2,6 +2,7 @@
 
 import { use } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { 
   Heart, 
@@ -19,6 +20,7 @@ import {
 } from "lucide-react";
 import { useProducts } from "../../../context/ProductsContext";
 import { useWishlist } from "../../../context/WishlistContext";
+import { useAuth } from "../../../context/AuthContext";
 
 interface ProductPageProps {
   params: Promise<{ id: string }>;
@@ -28,6 +30,8 @@ export default function ProductDetailPage({ params }: ProductPageProps) {
   const { id } = use(params);
   const { products, isLoading } = useProducts();
   const { toggleWishlist, isInWishlist } = useWishlist();
+  const { user } = useAuth();
+  const router = useRouter();
 
   // Find the product
   const product = products.find(p => p.id === id);
@@ -72,7 +76,7 @@ export default function ProductDetailPage({ params }: ProductPageProps) {
   };
 
   return (
-    <div className="min-h-screen bg-luxury-black text-white font-sans py-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-12 text-left">
+    <div className="min-h-screen bg-transparent text-white font-sans py-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-12 text-left">
       
       {/* Navigation breadcrumbs */}
       <div>
@@ -200,12 +204,16 @@ export default function ProductDetailPage({ params }: ProductPageProps) {
             </a>
             <button 
               onClick={() => {
-                const text = encodeURIComponent(`Hi Saleem Watch Center, I would like to schedule a phone consultation for the timepiece "${product.name}".`);
-                window.open(`https://wa.me/923212200321?text=${text}`, "_blank");
+                if (!user) {
+                  router.push('/login');
+                } else {
+                  const text = encodeURIComponent(`Hi Saleem Watch Center, I am a verified client (${user.email}) and I would like to place an order for the timepiece "${product.name}".`);
+                  window.open(`https://wa.me/923212200321?text=${text}`, "_blank");
+                }
               }}
               className="border border-gold-500 text-gold-500 hover:bg-gold-500 hover:text-black transition-all px-6 py-4 text-xs font-bold uppercase tracking-widest flex items-center justify-center gap-2"
             >
-              Request Consultation
+              Order Now
             </button>
           </div>
 

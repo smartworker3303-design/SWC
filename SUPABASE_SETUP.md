@@ -38,17 +38,47 @@ create table products (
   tag text
 );
 
+-- Create the profiles table to track users
+create table profiles (
+  id uuid references auth.users on delete cascade primary key,
+  email text not null,
+  phone text,
+  full_name text,
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null
+);
+
+-- Create the orders table
+create table orders (
+  id uuid default gen_random_uuid() primary key,
+  user_id uuid references profiles(id) on delete cascade not null,
+  items jsonb not null,
+  total_amount numeric not null,
+  status text not null check (status in ('Pending', 'Processing', 'Shipped', 'Delivered', 'Cancelled')) default 'Pending',
+  shipping_address text not null,
+  phone text not null,
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null
+);
+
 -- Enable Row Level Security (RLS)
 alter table products enable row level security;
+alter table profiles enable row level security;
+alter table orders enable row level security;
 
--- Create policy to allow public read access
-create policy "Allow public read access" on products
-  for select using (true);
+-- Products Policies
+create policy "Allow public read access" on products for select using (true);
+create policy "Allow anonymous write access" on products for all using (true) with check (true);
 
--- Create policy to allow anonymous write access
--- Note: In production, consider restricting this policy to authenticated users if you integrate Supabase Auth
-create policy "Allow anonymous write access" on products
-  for all using (true) with check (true);
+-- Profiles Policies
+create policy "Users can view their own profile" on profiles for select using (auth.uid() = id);
+create policy "Users can update their own profile" on profiles for update using (auth.uid() = id);
+create policy "Allow anonymous profile creation" on profiles for insert with check (true);
+
+-- Orders Policies
+create policy "Users can view their own orders" on orders for select using (auth.uid() = user_id);
+create policy "Users can create their own orders" on orders for insert with check (auth.uid() = user_id);
+-- Admin override (for simplicity, we allow all for now, but in production use an admin role)
+create policy "Allow admin full access to orders" on orders for all using (true) with check (true);
+create policy "Allow admin full access to profiles" on profiles for all using (true) with check (true);
 ```
 
 4. Click the **Run** button at the bottom-right of the SQL editor. You should see a success message indicating the query returned 0 rows successfully.

@@ -148,7 +148,7 @@ function CarouselContent() {
     setCurrentIndex(0);
   }, [slides]);
 
-  const shouldHideCarousel = pathname === "/admin-panel" || pathname.startsWith("/product/");
+  const shouldHideCarousel = pathname === "/" || pathname === "/admin-panel" || pathname.startsWith("/product/");
 
   const prevSlide = () => {
     setCurrentIndex((prev) => (prev === 0 ? slides.length - 1 : prev - 1));

@@ -26,6 +26,7 @@ import {
   Search
 } from "lucide-react";
 import { useProducts } from "../../context/ProductsContext";
+import { useOrders } from "../../context/OrdersContext";
 import { Product } from "../../data";
 
 export default function AdminPanelPage() {
@@ -34,9 +35,17 @@ export default function AdminPanelPage() {
     addProduct, 
     updateProduct, 
     deleteProduct, 
-    isLoading,
+    isLoading: isProductsLoading,
     isSupabaseConnected 
   } = useProducts();
+
+  const {
+    orders,
+    profiles,
+    updateStatus,
+    isLoading: isOrdersLoading,
+    refreshData
+  } = useOrders();
 
   // Authentication State
   const [email, setEmail] = useState("");
@@ -45,7 +54,8 @@ export default function AdminPanelPage() {
   const [loginError, setLoginError] = useState("");
 
   // UI Tabs State
-  const [activeTab, setActiveTab] = useState<"dashboard" | "hand-watches" | "wall-clocks">("dashboard");
+  const [activeTab, setActiveTab] = useState<"dashboard" | "hand-watches" | "wall-clocks" | "users-orders">("dashboard");
+  const [localProfiles, setLocalProfiles] = useState<any[]>([]);
 
   // Admin Search & Sort State
   const [adminSearchQuery, setAdminSearchQuery] = useState("");
@@ -58,6 +68,12 @@ export default function AdminPanelPage() {
     setAdminSearchQuery("");
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setAdminSortBy("featured");
+    
+    // Fetch mock users for admin view
+    const stored = localStorage.getItem("mock_users_db_v2");
+    if (stored) {
+      setLocalProfiles(JSON.parse(stored));
+    }
   }, [activeTab]);
 
   // CRUD Modal States
@@ -327,9 +343,9 @@ export default function AdminPanelPage() {
     });
   };
 
-  if (isLoading) {
+  if (isProductsLoading || isOrdersLoading) {
     return (
-      <div className="min-h-screen bg-luxury-black flex flex-col items-center justify-center space-y-4">
+      <div className="min-h-screen bg-transparent flex flex-col items-center justify-center space-y-4">
         <div className="w-12 h-12 rounded-full border-t-2 border-r-2 border-gold-500 animate-spin" />
         <p className="text-gray-400 text-xs tracking-widest uppercase">Loading SWC Admin Console...</p>
       </div>
@@ -339,7 +355,7 @@ export default function AdminPanelPage() {
   // 1. LOGIN GATE VIEW
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen bg-luxury-black flex items-center justify-center px-4 sm:px-6 lg:px-8 relative overflow-hidden text-left">
+      <div className="min-h-screen bg-transparent flex items-center justify-center px-4 sm:px-6 lg:px-8 relative overflow-hidden text-left">
         {/* Decorative backdrop */}
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(212,175,55,0.04),transparent_60%)] pointer-events-none" />
         <div className="absolute top-1/3 left-1/3 w-80 h-80 rounded-full bg-gold-500/5 blur-3xl pointer-events-none" />
@@ -421,7 +437,7 @@ export default function AdminPanelPage() {
 
   // 2. ADMIN PANEL CONSOLE VIEW
   return (
-    <div className="min-h-screen bg-luxury-black text-white font-sans text-left flex flex-col lg:flex-row">
+    <div className="min-h-screen bg-transparent text-white font-sans text-left flex flex-col lg:flex-row">
       
       {/* Sidebar for Desktop */}
       <aside className="hidden lg:flex w-80 bg-neutral-950 border-r border-gold-500/10 flex-col justify-between p-8 sticky top-0 h-screen flex-shrink-0">
@@ -477,6 +493,18 @@ export default function AdminPanelPage() {
             >
               <Clock className="w-4 h-4" />
               Wall Clocks
+            </button>
+
+            <button
+              onClick={() => setActiveTab("users-orders")}
+              className={`w-full py-3 px-4 text-xs font-bold uppercase tracking-wider flex items-center gap-3 transition-all rounded cursor-pointer ${
+                activeTab === "users-orders"
+                  ? "gold-gradient-bg text-black font-extrabold shadow-md shadow-gold-500/10"
+                  : "bg-transparent border border-transparent text-gray-400 hover:text-gold-400 hover:border-gold-500/15"
+              }`}
+            >
+              <User className="w-4 h-4" />
+              Users & Orders
             </button>
           </nav>
         </div>
@@ -582,6 +610,17 @@ export default function AdminPanelPage() {
             <Clock className="w-3.5 h-3.5" />
             Clocks
           </button>
+          <button
+            onClick={() => setActiveTab("users-orders")}
+            className={`flex-grow py-2 px-3 text-[10px] font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-all rounded whitespace-nowrap cursor-pointer ${
+              activeTab === "users-orders"
+                ? "gold-gradient-bg text-black font-extrabold"
+                : "bg-neutral-900 border border-gold-500/5 text-gray-400"
+            }`}
+          >
+            <User className="w-3.5 h-3.5" />
+            Orders
+          </button>
         </div>
 
         {/* Small Active Session Text for Mobile */}
@@ -661,13 +700,6 @@ export default function AdminPanelPage() {
                 Quick Management Operations
               </h3>
               <div className="flex flex-wrap gap-4">
-                <button
-                  onClick={() => openAddModal()}
-                  className="gold-gradient-bg text-black font-extrabold text-xs tracking-widest uppercase px-5 py-3 hover:opacity-90 transition-all flex items-center gap-1.5 cursor-pointer"
-                >
-                  <Plus className="w-4 h-4" />
-                  Insert New Product
-                </button>
                 <button
                   onClick={() => setActiveTab("hand-watches")}
                   className="border border-gold-500 text-gold-500 hover:bg-gold-500 hover:text-black font-bold text-xs tracking-widest uppercase px-5 py-3 transition-all flex items-center gap-1.5 cursor-pointer"
@@ -1039,6 +1071,134 @@ export default function AdminPanelPage() {
               ))}
             </div>
 
+          </div>
+        )}
+
+        {/* TAB 4: USERS & ORDERS */}
+        {activeTab === "users-orders" && (
+          <div className="space-y-6 animate-fade-in-up">
+            
+            {/* Header row */}
+            <div className="space-y-1">
+              <h2 className="font-serif text-2xl font-bold">Users & Orders Management</h2>
+              <p className="text-xs text-gray-400 font-light">Monitor registered customers, track order status, and update fulfillments.</p>
+            </div>
+
+            {/* Orders Data Grid */}
+            <div className="glass-panel border border-gold-500/10 p-6 space-y-6">
+              
+              <div className="flex items-center justify-between border-b border-gray-900 pb-4">
+                <h3 className="font-serif text-lg font-bold">Recent Orders ({orders.length})</h3>
+                <button
+                  onClick={() => refreshData()}
+                  className="text-xs flex items-center gap-1.5 text-gray-400 hover:text-gold-500 transition-colors"
+                >
+                  <RefreshCw className="w-3.5 h-3.5" />
+                  Refresh Sync
+                </button>
+              </div>
+
+              {orders.length === 0 ? (
+                <div className="text-center py-12 border border-dashed border-gold-500/10 rounded bg-black/20">
+                  <p className="text-gold-500 text-sm font-bold font-serif uppercase tracking-wider">No Orders Found</p>
+                  <p className="text-gray-500 text-xs mt-1">Customers have not placed any orders yet.</p>
+                </div>
+              ) : (
+                <div className="overflow-x-auto scrollbar-none">
+                  <table className="w-full text-left text-xs whitespace-nowrap">
+                    <thead className="bg-black/40 text-gray-400 uppercase tracking-widest text-[9px]">
+                      <tr>
+                        <th className="px-4 py-3 font-semibold">Order ID / Date</th>
+                        <th className="px-4 py-3 font-semibold">Customer Details</th>
+                        <th className="px-4 py-3 font-semibold">Items</th>
+                        <th className="px-4 py-3 font-semibold">Total Amount</th>
+                        <th className="px-4 py-3 font-semibold text-right">Fulfillment Status</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-900/50">
+                      {orders.map((order) => {
+                        const profile = localProfiles.find(p => p.id === order.user_id) || profiles.find(p => p.id === order.user_id);
+                        return (
+                          <tr key={order.id} className="hover:bg-gold-500/5 transition-colors group">
+                            <td className="px-4 py-4">
+                              <div className="font-mono text-gold-500">{order.id.slice(0, 8).toUpperCase()}</div>
+                              <div className="text-[9px] text-gray-500 mt-1">{new Date(order.created_at).toLocaleDateString()}</div>
+                            </td>
+                            <td className="px-4 py-4">
+                              <div className="font-bold text-white">{profile?.full_name || 'Anonymous User'}</div>
+                              <div className="text-[9px] text-gray-500">{profile?.email || 'N/A'}</div>
+                              <div className="text-[9px] text-gray-500">{order.phone}</div>
+                            </td>
+                            <td className="px-4 py-4">
+                              <div className="space-y-1 max-w-[200px] overflow-hidden">
+                                {order.items.map((item, idx) => (
+                                  <div key={idx} className="flex justify-between gap-4 text-[10px] bg-black/30 px-2 py-1 rounded border border-gold-500/10">
+                                    <span className="truncate" title={item.name}>{item.quantity}x {item.name}</span>
+                                    <span className="text-gold-400">Rs. {(item.price * item.quantity).toLocaleString()}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            </td>
+                            <td className="px-4 py-4 font-bold text-gold-400 font-sans">
+                              Rs. {order.total_amount.toLocaleString()}
+                            </td>
+                            <td className="px-4 py-4 text-right">
+                              <select
+                                value={order.status}
+                                onChange={(e) => updateStatus(order.id, e.target.value as any)}
+                                className={`text-[10px] font-bold uppercase tracking-wider px-3 py-1.5 rounded outline-none border cursor-pointer transition-colors ${
+                                  order.status === 'Pending' ? 'bg-orange-500/10 text-orange-400 border-orange-500/20 hover:border-orange-500/50' :
+                                  order.status === 'Processing' ? 'bg-blue-500/10 text-blue-400 border-blue-500/20 hover:border-blue-500/50' :
+                                  order.status === 'Shipped' ? 'bg-purple-500/10 text-purple-400 border-purple-500/20 hover:border-purple-500/50' :
+                                  order.status === 'Delivered' ? 'bg-green-500/10 text-green-400 border-green-500/20 hover:border-green-500/50' :
+                                  'bg-red-500/10 text-red-400 border-red-500/20 hover:border-red-500/50'
+                                }`}
+                              >
+                                <option value="Pending">Pending</option>
+                                <option value="Processing">Processing</option>
+                                <option value="Shipped">Shipped</option>
+                                <option value="Delivered">Delivered</option>
+                                <option value="Cancelled">Cancelled</option>
+                              </select>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+
+            {/* Registered Profiles Grid */}
+            <div className="glass-panel border border-gold-500/10 p-6 space-y-4">
+              <div className="border-b border-gray-900 pb-2">
+                <h3 className="font-serif text-lg font-bold">Registered Profiles ({localProfiles.length})</h3>
+              </div>
+              
+              {localProfiles.length === 0 ? (
+                <p className="text-gray-500 text-xs italic">No user profiles synced yet.</p>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {localProfiles.map(p => (
+                    <div key={p.id} className="bg-black/30 border border-gold-500/5 p-4 rounded flex flex-col gap-2 relative">
+                      <div className="w-8 h-8 rounded-full bg-gold-500/10 text-gold-500 flex items-center justify-center font-serif font-bold text-sm absolute top-4 right-4">
+                        {(p.full_name || p.email)?.[0]?.toUpperCase() || 'U'}
+                      </div>
+                      <div className="space-y-1">
+                        <p className="font-bold text-sm text-white">{p.full_name || 'Customer'}</p>
+                        <p className="text-xs text-gray-400">Email: {p.email}</p>
+                        {p.phone && <p className="text-[10px] text-gray-500 font-mono">Phone: {p.phone}</p>}
+                        {p.password && <p className="text-[10px] text-red-400 font-mono mt-1">Pass: {p.password}</p>}
+                      </div>
+                      <p className="text-[9px] text-gray-600 mt-2 uppercase tracking-widest">
+                        Joined {p.created_at ? new Date(p.created_at).toLocaleDateString() : new Date().toLocaleDateString()}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         )}
 

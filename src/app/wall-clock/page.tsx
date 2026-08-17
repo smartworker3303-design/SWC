@@ -73,7 +73,7 @@ export default function WallClockPage() {
   }
 
   return (
-    <div className="min-h-screen bg-luxury-black text-white font-sans py-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-12">
+    <div className="min-h-screen bg-transparent text-white font-sans py-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-12">
       
       {/* Back button */}
       <div className="text-left">

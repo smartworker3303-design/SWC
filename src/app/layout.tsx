@@ -3,9 +3,10 @@ import { Outfit, Playfair_Display } from "next/font/google";
 import "./globals.css";
 import { WishlistProvider } from "../context/WishlistContext";
 import { ProductsProvider } from "../context/ProductsContext";
+import { AuthProvider } from "../context/AuthContext";
+import { OrdersProvider } from "../context/OrdersContext";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
-import Carousel from "../components/Carousel";
 
 const outfit = Outfit({
   subsets: ["latin"],
@@ -86,15 +87,31 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
       </head>
-      <body className="antialiased bg-luxury-black text-white flex flex-col min-h-screen">
-        <ProductsProvider>
-          <WishlistProvider>
-            <Header />
-            <Carousel />
-            <main className="flex-grow">{children}</main>
-            <Footer />
-          </WishlistProvider>
-        </ProductsProvider>
+      <body className="antialiased bg-luxury-black text-white flex flex-col min-h-screen relative">
+        {/* Fixed Full-Page Background Video */}
+        <video 
+          autoPlay 
+          loop 
+          muted 
+          playsInline
+          poster="/images/hero_luxury_watch.png"
+          className="fixed inset-0 w-full h-full object-cover z-0 opacity-40 pointer-events-none"
+        >
+          <source src="/videos/watch-bg.mp4" type="video/mp4" />
+        </video>
+        <div className="relative z-10 flex flex-col min-h-screen">
+          <AuthProvider>
+            <ProductsProvider>
+              <OrdersProvider>
+                <WishlistProvider>
+                  <Header />
+                  <main className="flex-grow">{children}</main>
+                  <Footer />
+                </WishlistProvider>
+              </OrdersProvider>
+            </ProductsProvider>
+          </AuthProvider>
+        </div>
       </body>
     </html>
   );

@@ -14,7 +14,7 @@ import {
 
 export default function AboutPage() {
   return (
-    <div className="min-h-screen bg-luxury-black text-white font-sans py-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-16 text-left">
+    <div className="min-h-screen bg-transparent text-white font-sans py-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-16 text-left">
       
       {/* Back button */}
       <div>
@@ -66,12 +66,12 @@ export default function AboutPage() {
         </div>
 
         {/* Story visuals */}
-        <div className="lg:col-span-5 relative h-96 w-full bg-black border border-gold-500/15 overflow-hidden flex items-center justify-center shadow-2xl">
+        <div className="lg:col-span-5 relative h-[500px] w-full bg-black border border-gold-500/15 overflow-hidden flex items-center justify-center shadow-2xl p-4">
           <Image 
-            src="/images/hero_luxury_watch.png"
-            alt="SWC Watchmaking Heritage"
+            src="/images/certificate.jpg"
+            alt="SWC Watchmaking Heritage Certificate"
             fill
-            className="object-cover hover:scale-105 transition-transform duration-700"
+            className="object-contain hover:scale-105 transition-transform duration-700"
             sizes="(max-w-1024px) 100vw, 500px"
           />
         </div>

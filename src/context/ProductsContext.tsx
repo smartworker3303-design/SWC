@@ -28,34 +28,49 @@ export function ProductsProvider({ children }: { children: React.ReactNode }) {
   // Load products on mount
   useEffect(() => {
     async function load() {
-      if (isSupabaseConnected) {
-        const dbProducts = await fetchSupabaseProducts();
-        if (dbProducts) {
-          setProducts(dbProducts);
-          localStorage.setItem("swc-products", JSON.stringify(dbProducts));
-          setIsLoading(false);
-          return;
-        }
-      }
-      
-      // Local storage fallback
+      let localProducts = initialProducts;
       const stored = localStorage.getItem("swc-products");
       const isInitialized = localStorage.getItem("swc-products-initialized");
       
       if (stored && isInitialized === "true") {
         try {
-          const parsed = JSON.parse(stored);
-          setProducts(parsed);
+          localProducts = JSON.parse(stored);
+          if (!localProducts || localProducts.length < 10) {
+            localProducts = initialProducts;
+          }
         } catch {
-          setProducts(initialProducts);
-          localStorage.setItem("swc-products", JSON.stringify(initialProducts));
-          localStorage.setItem("swc-products-initialized", "true");
+          localProducts = initialProducts;
         }
-      } else {
-        setProducts(initialProducts);
-        localStorage.setItem("swc-products", JSON.stringify(initialProducts));
-        localStorage.setItem("swc-products-initialized", "true");
       }
+
+      if (isSupabaseConnected) {
+        const dbProducts = await fetchSupabaseProducts();
+        if (dbProducts && dbProducts.length > 0) {
+          // Supabase has data, use it as truth
+          setProducts(dbProducts);
+          localStorage.setItem("swc-products", JSON.stringify(dbProducts));
+          localStorage.setItem("swc-products-initialized", "true");
+          setIsLoading(false);
+          return;
+        } else if (dbProducts && dbProducts.length === 0) {
+          // Supabase is empty! Seed it with local products.
+          setProducts(localProducts);
+          localStorage.setItem("swc-products", JSON.stringify(localProducts));
+          localStorage.setItem("swc-products-initialized", "true");
+          setIsLoading(false);
+          
+          // Seed Supabase in the background
+          for (const p of localProducts) {
+             await upsertSupabaseProduct(p);
+          }
+          return;
+        }
+      }
+      
+      // Fallback if not connected or error
+      setProducts(localProducts);
+      localStorage.setItem("swc-products", JSON.stringify(localProducts));
+      localStorage.setItem("swc-products-initialized", "true");
       setIsLoading(false);
     }
     load();
