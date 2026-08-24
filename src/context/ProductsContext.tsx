@@ -29,8 +29,8 @@ export function ProductsProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     async function load() {
       let localProducts = initialProducts;
-      const stored = localStorage.getItem("swc-products");
-      const isInitialized = localStorage.getItem("swc-products-initialized");
+      const stored = localStorage.getItem("swc-products-v2");
+      const isInitialized = localStorage.getItem("swc-products-initialized-v2");
       
       if (stored && isInitialized === "true") {
         try {
@@ -48,15 +48,15 @@ export function ProductsProvider({ children }: { children: React.ReactNode }) {
         if (dbProducts && dbProducts.length > 0) {
           // Supabase has data, use it as truth
           setProducts(dbProducts);
-          localStorage.setItem("swc-products", JSON.stringify(dbProducts));
-          localStorage.setItem("swc-products-initialized", "true");
+          localStorage.setItem("swc-products-v2", JSON.stringify(dbProducts));
+          localStorage.setItem("swc-products-initialized-v2", "true");
           setIsLoading(false);
           return;
         } else if (dbProducts && dbProducts.length === 0) {
           // Supabase is empty! Seed it with local products.
           setProducts(localProducts);
-          localStorage.setItem("swc-products", JSON.stringify(localProducts));
-          localStorage.setItem("swc-products-initialized", "true");
+          localStorage.setItem("swc-products-v2", JSON.stringify(localProducts));
+          localStorage.setItem("swc-products-initialized-v2", "true");
           setIsLoading(false);
           
           // Seed Supabase in the background
@@ -69,8 +69,8 @@ export function ProductsProvider({ children }: { children: React.ReactNode }) {
       
       // Fallback if not connected or error
       setProducts(localProducts);
-      localStorage.setItem("swc-products", JSON.stringify(localProducts));
-      localStorage.setItem("swc-products-initialized", "true");
+      localStorage.setItem("swc-products-v2", JSON.stringify(localProducts));
+      localStorage.setItem("swc-products-initialized-v2", "true");
       setIsLoading(false);
     }
     load();
@@ -79,7 +79,7 @@ export function ProductsProvider({ children }: { children: React.ReactNode }) {
   // Helper to save products state and local storage cache
   const saveProductsLocally = (updatedProducts: Product[]) => {
     setProducts(updatedProducts);
-    localStorage.setItem("swc-products", JSON.stringify(updatedProducts));
+    localStorage.setItem("swc-products-v2", JSON.stringify(updatedProducts));
   };
 
   const addProduct = async (newProduct: Product) => {
