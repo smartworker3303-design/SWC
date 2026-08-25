@@ -96,6 +96,7 @@ export default function AdminPanelPage() {
   const [formSpecs, setFormSpecs] = useState<{ key: string; value: string }[]>([]);
   const [formError, setFormError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
 
   // Check login session on mount
   useEffect(() => {
@@ -271,24 +272,27 @@ export default function AdminPanelPage() {
     };
 
     try {
+      setIsSaving(true);
       if (modalType === "add") {
         // Check for duplicate ID
         if (products.some(p => p.id === payload.id)) {
           setFormError(`Product with ID "${payload.id}" already exists.`);
+          setIsSaving(false);
           return;
         }
         await addProduct(payload);
-        setSuccessMessage("Product added successfully and saved to database!");
+        setSuccessMessage("✅ Product added and saved to database!");
       } else {
         await updateProduct(payload);
-        setSuccessMessage("Product updated successfully and saved to database!");
+        setSuccessMessage("✅ Product updated and saved to database!");
       }
       setIsModalOpen(false);
       setTimeout(() => setSuccessMessage(""), 6000);
     } catch (err: unknown) {
-      // Show the actual error from Supabase so we know what went wrong
       const msg = err instanceof Error ? err.message : "Failed to save product. Please try again.";
       setFormError(msg);
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -296,7 +300,7 @@ export default function AdminPanelPage() {
     if (confirm(`Are you sure you want to delete the product with ID: "${id}"?`)) {
       try {
         await deleteProduct(id);
-        setSuccessMessage("Product deleted successfully!");
+        setSuccessMessage("✅ Product deleted successfully!");
         setTimeout(() => setSuccessMessage(""), 4000);
       } catch (err: unknown) {
         const msg = err instanceof Error ? err.message : "Failed to delete product.";
@@ -447,7 +451,25 @@ export default function AdminPanelPage() {
   // 2. ADMIN PANEL CONSOLE VIEW
   return (
     <div className="min-h-screen bg-transparent text-white font-sans text-left flex flex-col lg:flex-row">
-      
+
+      {/* ===== GLOBAL TOAST NOTIFICATION (fixed, always visible on all tabs) ===== */}
+      {successMessage && (
+        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[9999] flex items-center gap-3 bg-green-950 border border-green-500 text-green-300 text-sm font-semibold px-6 py-4 rounded-lg shadow-2xl shadow-green-900/40 animate-fade-in-up max-w-[90vw]">
+          <span className="text-green-400 text-lg">✅</span>
+          <span>{successMessage.replace('✅ ', '')}</span>
+          <button onClick={() => setSuccessMessage("")} className="ml-2 text-green-500 hover:text-green-200 transition-colors">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
+
+      {/* ===== SUPABASE DISCONNECTED BANNER ===== */}
+      {!isSupabaseConnected && (
+        <div className="fixed top-0 left-0 right-0 z-[9998] bg-red-900 border-b-2 border-red-500 text-red-100 text-xs font-bold px-4 py-2.5 text-center tracking-wide">
+          ⚠️ DATABASE NOT CONNECTED — Products will NOT be saved. Supabase environment variables are missing from this deployment.
+        </div>
+      )}
+
       {/* Sidebar for Desktop */}
       <aside className="hidden lg:flex w-80 bg-neutral-950 border-r border-gold-500/10 flex-col justify-between p-8 sticky top-0 h-screen flex-shrink-0">
         <div className="space-y-8">
@@ -692,16 +714,6 @@ export default function AdminPanelPage() {
               </div>
 
             </div>
-
-            {/* Success Message */}
-            {successMessage && (
-              <div className="p-4 bg-green-900/40 border border-green-500/50 rounded flex items-center justify-between">
-                <p className="text-green-400 text-xs font-semibold tracking-wide">{successMessage}</p>
-                <button onClick={() => setSuccessMessage("")} className="text-green-500 hover:text-green-300">
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-            )}
 
             {/* Quick Actions Panel */}
             <div className="glass-panel p-6 border border-gold-500/10 space-y-4">
@@ -1515,10 +1527,20 @@ export default function AdminPanelPage() {
                 </button>
                 <button
                   type="submit"
-                  className="gold-gradient-bg text-black font-extrabold text-xs tracking-widest uppercase px-5 py-2.5 hover:opacity-90 flex items-center gap-1.5 shadow-md"
+                  disabled={isSaving}
+                  className="gold-gradient-bg text-black font-extrabold text-xs tracking-widest uppercase px-5 py-2.5 hover:opacity-90 flex items-center gap-1.5 shadow-md disabled:opacity-60 disabled:cursor-not-allowed"
                 >
-                  <Save className="w-4 h-4" />
-                  Save Changes
+                  {isSaving ? (
+                    <>
+                      <span className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin" />
+                      Saving to Database...
+                    </>
+                  ) : (
+                    <>
+                      <Save className="w-4 h-4" />
+                      Save Changes
+                    </>
+                  )}
                 </button>
               </div>
 

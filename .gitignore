@@ -30,8 +30,9 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# env files (can opt-in for committing if needed)
-.env*
+# env files — .env.local is private (never commit), .env.production is public keys for Vercel
+.env.local
+.env*.local
 
 # vercel
 .vercel
