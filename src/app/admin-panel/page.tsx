@@ -136,7 +136,9 @@ export default function AdminPanelPage() {
       reader.onload = (event) => {
         const img = new window.Image();
         img.onload = () => {
-          const MAX_SIZE = 800;
+          // Keep images small to stay within Supabase's request size limit.
+          // 400px max dimension at 60% webp quality ≈ 50-100KB base64 — safe for DB storage.
+          const MAX_SIZE = 400;
           let width = img.width;
           let height = img.height;
           if (width > height) {
@@ -150,16 +152,14 @@ export default function AdminPanelPage() {
               height = MAX_SIZE;
             }
           }
+          // Use actual image dimensions for the canvas (no padding/letterboxing)
           const canvas = document.createElement("canvas");
-          canvas.width = MAX_SIZE;
-          canvas.height = MAX_SIZE;
+          canvas.width = width;
+          canvas.height = height;
           const ctx = canvas.getContext("2d");
           if (ctx) {
-            ctx.clearRect(0, 0, MAX_SIZE, MAX_SIZE);
-            const offsetX = (MAX_SIZE - width) / 2;
-            const offsetY = (MAX_SIZE - height) / 2;
-            ctx.drawImage(img, offsetX, offsetY, width, height);
-            setFormImage(canvas.toDataURL("image/webp", 0.85));
+            ctx.drawImage(img, 0, 0, width, height);
+            setFormImage(canvas.toDataURL("image/webp", 0.6));
           }
         };
         if (event.target?.result && typeof event.target.result === "string") {
@@ -278,21 +278,30 @@ export default function AdminPanelPage() {
           return;
         }
         await addProduct(payload);
-        setSuccessMessage("Product added successfully!");
+        setSuccessMessage("Product added successfully and saved to database!");
       } else {
         await updateProduct(payload);
-        setSuccessMessage("Product updated successfully!");
+        setSuccessMessage("Product updated successfully and saved to database!");
       }
       setIsModalOpen(false);
-      setTimeout(() => setSuccessMessage(""), 5000);
-    } catch {
-      setFormError("Failed to persist data. Please check connection.");
+      setTimeout(() => setSuccessMessage(""), 6000);
+    } catch (err: unknown) {
+      // Show the actual error from Supabase so we know what went wrong
+      const msg = err instanceof Error ? err.message : "Failed to save product. Please try again.";
+      setFormError(msg);
     }
   };
 
   const handleDelete = async (id: string) => {
     if (confirm(`Are you sure you want to delete the product with ID: "${id}"?`)) {
-      await deleteProduct(id);
+      try {
+        await deleteProduct(id);
+        setSuccessMessage("Product deleted successfully!");
+        setTimeout(() => setSuccessMessage(""), 4000);
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : "Failed to delete product.";
+        alert(`Error: ${msg}`);
+      }
     }
   };
 

@@ -54,26 +54,36 @@ export async function fetchSupabaseProducts(): Promise<Product[] | null> {
 export async function upsertSupabaseProduct(product: Product): Promise<boolean> {
   if (!supabase) return false;
   try {
+    const payload = {
+      id: product.id,
+      name: product.name,
+      category: product.category,
+      price: product.price,
+      rating: product.rating,
+      reviews: product.reviews,
+      image: product.image,
+      description: product.description,
+      specs: { ...product.specs, __brand: product.brand, __subcategory: product.subcategory },
+      featured: product.featured,
+      tag: product.tag || null
+    };
+
     const { error } = await supabase
       .from("products")
-      .upsert({
-        id: product.id,
-        name: product.name,
-        category: product.category,
-        price: product.price,
-        rating: product.rating,
-        reviews: product.reviews,
-        image: product.image,
-        description: product.description,
-        specs: { ...product.specs, __brand: product.brand, __subcategory: product.subcategory },
-        featured: product.featured,
-        tag: product.tag || null
-      });
+      .upsert(payload);
       
-    if (error) throw error;
+    if (error) {
+      console.error("Supabase upsert error:", {
+        message: error.message,
+        code: error.code,
+        details: error.details,
+        hint: error.hint
+      });
+      return false;
+    }
     return true;
   } catch (err) {
-    console.error("Error upserting to Supabase:", err);
+    console.error("Unexpected error upserting to Supabase:", err);
     return false;
   }
 }
@@ -86,10 +96,18 @@ export async function deleteSupabaseProduct(id: string): Promise<boolean> {
       .delete()
       .eq("id", id);
       
-    if (error) throw error;
+    if (error) {
+      console.error("Supabase delete error:", {
+        message: error.message,
+        code: error.code,
+        details: error.details,
+        hint: error.hint
+      });
+      return false;
+    }
     return true;
   } catch (err) {
-    console.error("Error deleting from Supabase:", err);
+    console.error("Unexpected error deleting from Supabase:", err);
     return false;
   }
 }

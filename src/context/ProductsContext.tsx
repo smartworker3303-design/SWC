@@ -26,24 +26,20 @@ export function ProductsProvider({ children }: { children: React.ReactNode }) {
   const isSupabaseConnected = !!supabase;
 
   // Load products on mount — Supabase is the ONLY source of truth.
-  // localStorage is used as a short-lived display cache ONLY (never as a fallback source).
   useEffect(() => {
     async function load() {
       setIsLoading(true);
 
       if (isSupabaseConnected) {
-        // Always fetch fresh from Supabase — this ensures all devices see the same data.
         const dbProducts = await fetchSupabaseProducts();
         if (dbProducts !== null) {
-          // Supabase responded (even if empty). Use exactly what it returns.
           setProducts(dbProducts);
           setIsLoading(false);
           return;
         }
       }
 
-      // Supabase is not configured or failed completely — show empty catalog.
-      // We do NOT fall back to hardcoded data; admin must add products via the panel.
+      // No Supabase or connection failed — show empty catalog.
       setProducts([]);
       setIsLoading(false);
     }
@@ -53,28 +49,30 @@ export function ProductsProvider({ children }: { children: React.ReactNode }) {
   const addProduct = async (newProduct: Product) => {
     if (isSupabaseConnected) {
       const success = await upsertSupabaseProduct(newProduct);
-      if (success) {
-        // Refresh from Supabase to ensure all devices get the same state
-        const dbProducts = await fetchSupabaseProducts();
-        if (dbProducts !== null) {
-          setProducts(dbProducts);
-          return;
-        }
+      if (!success) {
+        throw new Error("Failed to save product to Supabase. The image may be too large — please use a smaller image.");
+      }
+      // Refresh from Supabase so all devices see the same state
+      const dbProducts = await fetchSupabaseProducts();
+      if (dbProducts !== null) {
+        setProducts(dbProducts);
+        return;
       }
     }
-    // Local-only fallback (no Supabase)
+    // Local-only fallback when Supabase not configured
     setProducts(prev => [...prev, newProduct]);
   };
 
   const updateProduct = async (updatedProduct: Product) => {
     if (isSupabaseConnected) {
       const success = await upsertSupabaseProduct(updatedProduct);
-      if (success) {
-        const dbProducts = await fetchSupabaseProducts();
-        if (dbProducts !== null) {
-          setProducts(dbProducts);
-          return;
-        }
+      if (!success) {
+        throw new Error("Failed to update product in Supabase. The image may be too large — please use a smaller image.");
+      }
+      const dbProducts = await fetchSupabaseProducts();
+      if (dbProducts !== null) {
+        setProducts(dbProducts);
+        return;
       }
     }
     // Local-only fallback
@@ -84,12 +82,13 @@ export function ProductsProvider({ children }: { children: React.ReactNode }) {
   const deleteProduct = async (id: string) => {
     if (isSupabaseConnected) {
       const success = await deleteSupabaseProduct(id);
-      if (success) {
-        const dbProducts = await fetchSupabaseProducts();
-        if (dbProducts !== null) {
-          setProducts(dbProducts);
-          return;
-        }
+      if (!success) {
+        throw new Error("Failed to delete product from Supabase.");
+      }
+      const dbProducts = await fetchSupabaseProducts();
+      if (dbProducts !== null) {
+        setProducts(dbProducts);
+        return;
       }
     }
     // Local-only fallback
