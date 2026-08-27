@@ -1,9 +1,8 @@
 "use client";
 
-import { useState, useMemo, useEffect, Suspense } from "react";
-import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useState, useMemo } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { 
   Search, 
   X, 
@@ -11,48 +10,48 @@ import {
   Star, 
   ArrowRight, 
   Eye, 
-  Smartphone,
-  ChevronLeft
+  Sparkles, 
+  ChevronLeft,
+  Award,
+  ShieldCheck
 } from "lucide-react";
 import { useProducts } from "../../context/ProductsContext";
 import { useWishlist } from "../../context/WishlistContext";
+import MouseTrail from "../../components/MouseTrail";
 
-function HandWatchContent() {
+export default function WomenWatchPage() {
   const { products, isLoading } = useProducts();
   const { toggleWishlist, isInWishlist } = useWishlist();
+
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState("featured");
-  const [subcatFilter, setSubcatFilter] = useState("mens");
   const [brandFilter, setBrandFilter] = useState("all");
 
-  const searchParams = useSearchParams();
-  const subcatQuery = searchParams.get("subcat");
+  // Dynamically extract all available brands for women's watches
+  const availableBrands = useMemo(() => {
+    const brandsSet = new Set<string>(["Rolex", "Cartier", "Omega", "Audemars Piguet", "SWC Royale"]);
+    products.forEach(p => {
+      if (p.category === "hand-watches" && p.subcategory === "womens" && p.brand && p.brand.trim()) {
+        brandsSet.add(p.brand.trim());
+      }
+    });
+    return Array.from(brandsSet).sort();
+  }, [products]);
 
-  useEffect(() => {
-    if (subcatQuery === "mens" || subcatQuery === "womens") {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setSubcatFilter(subcatQuery);
-    } else {
-      setSubcatFilter("mens");
-    }
-  }, [subcatQuery]);
-
-  const category = "hand-watches";
-  const title = "Executive Hand Watches";
-  const subtitle = "Sophisticated chronographs, mechanical skeletons, and mesh models designed for elite wrists.";
-  const icon = <Smartphone className="w-5 h-5 text-gold-500" />;
-
-  // Filter and sort products by category, search query, and sorting criteria
-  const categoryProducts = useMemo(() => {
+  // Filter and sort Women's Watches (category === 'hand-watches' and subcategory === 'womens')
+  const womensProducts = useMemo(() => {
     // 1. Filter
     const filtered = products.filter(product => {
-      const matchesCategory = product.category === category;
-      const matchesSubcat = product.subcategory === subcatFilter;
+      const isHandWatch = product.category === "hand-watches";
+      const isWomens = product.subcategory === "womens";
       const matchesBrand = brandFilter === "all" || product.brand === brandFilter;
-      const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                            product.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                            (product.tag && product.tag.toLowerCase().includes(searchQuery.toLowerCase()));
-      return matchesCategory && matchesSubcat && matchesBrand && matchesSearch;
+      const matchesSearch = 
+        product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        product.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (product.brand && product.brand.toLowerCase().includes(searchQuery.toLowerCase())) ||
+        (product.tag && product.tag.toLowerCase().includes(searchQuery.toLowerCase()));
+      
+      return isHandWatch && isWomens && matchesBrand && matchesSearch;
     });
 
     // 2. Sort
@@ -78,20 +77,21 @@ function HandWatchContent() {
       }
       return 0; // "featured" or default
     });
-  }, [products, searchQuery, sortBy, subcatFilter, brandFilter]);
+  }, [products, searchQuery, sortBy, brandFilter]);
 
   if (isLoading) {
     return (
       <div className="min-h-[70vh] flex flex-col items-center justify-center space-y-4">
         <div className="w-12 h-12 rounded-full border-t-2 border-r-2 border-gold-500 animate-spin" />
-        <p className="text-gray-400 text-xs tracking-widest uppercase">Loading Curation...</p>
+        <p className="text-gray-400 text-xs tracking-widest uppercase">Loading Women&apos;s Watches...</p>
       </div>
     );
   }
 
   return (
     <div className="min-h-screen bg-transparent text-white font-sans py-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-12">
-      
+      <MouseTrail />
+
       {/* Back button */}
       <div className="text-left">
         <Link 
@@ -99,46 +99,46 @@ function HandWatchContent() {
           className="inline-flex items-center gap-1 text-xs text-gray-500 hover:text-gold-400 font-bold uppercase transition-colors"
         >
           <ChevronLeft className="w-4 h-4" />
-          Back to Home
+          Back to Men&apos;s Watches
         </Link>
       </div>
 
-      {/* Header Banner */}
+      {/* Hero Header Banner */}
       <div className="glass-panel p-8 sm:p-12 relative overflow-hidden border border-gold-500/15 flex flex-col items-start justify-center space-y-4 text-left">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_90%_50%,rgba(212,175,55,0.06),transparent_50%)] pointer-events-none" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_90%_50%,rgba(212,175,55,0.08),transparent_50%)] pointer-events-none" />
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-gold-500/20 bg-gold-500/5 text-gold-400 text-xs font-semibold uppercase tracking-wider">
-          {icon}
-          Exclusive Curation
+          <Sparkles className="w-4 h-4 text-gold-400" />
+          Feminine Elegance & Grace
         </div>
         <h1 className="font-serif text-3xl sm:text-5xl font-bold tracking-tight text-white leading-tight">
-          {title}
+          Women&apos;s <span className="gold-gradient-text">Luxury Watches</span>
         </h1>
         <p className="text-gray-400 text-xs sm:text-base max-w-2xl font-light leading-relaxed">
-          {subtitle}
+          Discover our curated collection of delicate rose gold, diamond halo bezels, and timeless luxury wristwatches crafted for the sophisticated woman.
         </p>
+
+        {/* Quick Highlights */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 sm:gap-8 pt-4 border-t border-gray-800/80 w-full max-w-lg">
+          <div className="flex items-center gap-2">
+            <Award className="w-4 h-4 text-gold-500 flex-shrink-0" />
+            <span className="text-xs text-gray-300 font-medium">100% Genuine</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <ShieldCheck className="w-4 h-4 text-gold-500 flex-shrink-0" />
+            <span className="text-xs text-gray-300 font-medium">Bespoke Warranties</span>
+          </div>
+          <div className="flex items-center gap-2 col-span-2 sm:col-span-1">
+            <Sparkles className="w-4 h-4 text-gold-500 flex-shrink-0" />
+            <span className="text-xs text-gray-300 font-medium">Luxury Packaging</span>
+          </div>
+        </div>
       </div>
 
-      {/* Subcategory Navigation Links */}
-      <div className="flex flex-wrap justify-center gap-4 mb-4">
-        <Link 
-          href="/"
-          className={`px-6 py-2.5 rounded-full text-xs font-bold tracking-widest uppercase transition-all ${subcatFilter === "mens" ? "gold-gradient-bg text-black shadow-lg shadow-gold-500/20" : "bg-neutral-900 border border-gold-500/20 text-gray-400 hover:text-gold-400"}`}
-        >
-          Men&apos;s Watches
-        </Link>
-        <Link 
-          href="/women-watch"
-          className={`px-6 py-2.5 rounded-full text-xs font-bold tracking-widest uppercase transition-all ${subcatFilter === "womens" ? "gold-gradient-bg text-black shadow-lg shadow-gold-500/20" : "bg-neutral-900 border border-gold-500/20 text-gray-400 hover:text-gold-400"}`}
-        >
-          Women&apos;s Watches
-        </Link>
-      </div>
-
-      {/* Product list section controls */}
+      {/* Catalog Controls */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 border-b border-gray-900 pb-6">
         <div>
           <h2 className="font-serif text-xl sm:text-2xl font-semibold">
-            Catalog ({categoryProducts.length} designs)
+            Women&apos;s Collection ({womensProducts.length} designs)
           </h2>
         </div>
         
@@ -152,7 +152,7 @@ function HandWatchContent() {
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search watches..."
+              placeholder="Search women's watches..."
               className="w-full pl-10 pr-10 py-2.5 bg-luxury-charcoal border border-gold-500/15 text-white placeholder-gray-500 focus:outline-none focus:border-gold-500 text-sm transition-all"
             />
             {searchQuery && (
@@ -179,11 +179,9 @@ function HandWatchContent() {
               }}
             >
               <option value="all">All Brands</option>
-              <option value="Rolex">Rolex</option>
-              <option value="Patek Philippe">Patek Philippe</option>
-              <option value="Cartier">Cartier</option>
-              <option value="Audemars Piguet">Audemars Piguet</option>
-              <option value="Omega">Omega</option>
+              {availableBrands.map(brand => (
+                <option key={brand} value={brand}>{brand}</option>
+              ))}
             </select>
           </div>
 
@@ -211,24 +209,24 @@ function HandWatchContent() {
       </div>
 
       {/* Empty Search State */}
-      {categoryProducts.length === 0 && (
+      {womensProducts.length === 0 && (
         <div className="text-center py-20 border border-dashed border-gold-500/10 rounded-lg max-w-xl mx-auto space-y-4">
-          <p className="text-gold-500 text-lg font-medium font-serif">No Designs Match</p>
+          <p className="text-gold-500 text-lg font-medium font-serif">No Women&apos;s Watches Match</p>
           <p className="text-gray-400 text-sm max-w-md mx-auto">
-            We couldn&apos;t find any models matching &quot;{searchQuery}&quot; in this collection.
+            We couldn&apos;t find any women&apos;s models matching your search criteria.
           </p>
           <button 
-            onClick={() => setSearchQuery("")}
-            className="border border-gold-500 text-gold-500 hover:bg-gold-500 hover:text-black transition-colors px-6 py-2.5 font-bold text-xs uppercase tracking-widest"
+            onClick={() => { setSearchQuery(""); setBrandFilter("all"); setSortBy("featured"); }}
+            className="px-6 py-2.5 bg-gold-500/10 text-gold-500 border border-gold-500/30 text-xs font-bold uppercase tracking-wider hover:bg-gold-500 hover:text-black transition-colors"
           >
-            Clear Search
+            Reset Filters
           </button>
         </div>
       )}
 
-      {/* Product Grid */}
+      {/* Product Cards Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-        {categoryProducts.map((product) => {
+        {womensProducts.map((product) => {
           const favorite = isInWishlist(product.id);
           return (
             <div 
@@ -241,11 +239,6 @@ function HandWatchContent() {
                   {product.tag}
                 </span>
               )}
-              {product.subcategory && (
-                <span className="absolute top-4 left-[4.5rem] bg-black/60 border border-gold-500/30 backdrop-blur-sm text-gold-500 text-[9px] font-bold tracking-widest uppercase px-2 py-1 z-20">
-                  {product.subcategory === 'mens' ? "Men's" : "Women's"}
-                </span>
-              )}
 
               {/* Wishlist Toggle Button */}
               <button 
@@ -256,7 +249,7 @@ function HandWatchContent() {
                 <Heart className={`w-4 h-4 ${favorite ? "fill-gold-500" : ""}`} />
               </button>
 
-              {/* Product Image Link */}
+              {/* Product Image Container */}
               <Link href={`/product/${product.id}`} className="relative h-72 w-full overflow-hidden bg-black flex items-center justify-center border-b border-gold-500/10">
                 <Image 
                   src={product.image}
@@ -265,6 +258,8 @@ function HandWatchContent() {
                   className="object-cover scale-100 group-hover:scale-108 transition-transform duration-500 ease-out"
                   sizes="(max-w-768px) 100vw, 380px"
                 />
+                
+                {/* View Details Hover Card Overlay */}
                 <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                   <div className="bg-gold-500 text-black px-5 py-3 font-extrabold text-xs uppercase tracking-widest flex items-center gap-2 transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300">
                     <Eye className="w-4 h-4" />
@@ -274,11 +269,12 @@ function HandWatchContent() {
               </Link>
 
               {/* Product Metadata */}
-              <div className="p-6 flex flex-col flex-grow justify-between space-y-4">
+              <div className="p-6 flex flex-col flex-grow justify-between space-y-4 text-left">
                 <div className="space-y-1">
-                  <p className="text-[10px] text-gold-400 uppercase tracking-widest font-bold">
-                    Executive Wristwatch
-                  </p>
+                  <div className="flex items-center justify-between text-[10px] text-gold-400 uppercase tracking-widest font-bold">
+                    <span>Women&apos;s Hand Watch</span>
+                    {product.brand && <span className="text-gray-400 font-medium">{product.brand}</span>}
+                  </div>
                   <Link href={`/product/${product.id}`}>
                     <h3 className="font-serif text-lg font-bold group-hover:text-gold-400 transition-colors text-white">
                       {product.name}
@@ -286,7 +282,7 @@ function HandWatchContent() {
                   </Link>
                 </div>
 
-                {/* Rating */}
+                {/* Rating Reviews */}
                 <div className="flex items-center gap-1.5 text-xs text-gold-500">
                   <div className="flex items-center">
                     {[...Array(5)].map((_, i) => (
@@ -300,7 +296,7 @@ function HandWatchContent() {
                   <span className="text-gray-500">({product.reviews} reviews)</span>
                 </div>
 
-                {/* Price and Details */}
+                {/* Price and Action Button */}
                 <div className="flex items-center justify-between border-t border-gray-900 pt-4">
                   <div className="flex flex-col">
                     <span className="text-[10px] text-gray-500 uppercase tracking-widest">Price starting at</span>
@@ -322,13 +318,5 @@ function HandWatchContent() {
       </div>
 
     </div>
-  );
-}
-
-export default function HandWatchPage() {
-  return (
-    <Suspense fallback={<div className="min-h-screen bg-transparent flex items-center justify-center"><div className="w-12 h-12 rounded-full border-t-2 border-r-2 border-gold-500 animate-spin" /></div>}>
-      <HandWatchContent />
-    </Suspense>
   );
 }

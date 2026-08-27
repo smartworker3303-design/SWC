@@ -72,16 +72,22 @@ export default function WishlistPage() {
               Explore Saleem Watch Center collections and save hand watches or wall clocks that catch your eye.
             </p>
           </div>
-          <div className="flex justify-center gap-4 pt-2">
+          <div className="flex flex-wrap justify-center gap-4 pt-2">
             <Link 
-              href="/hand-watch" 
+              href="/" 
               className="gold-gradient-bg text-black font-extrabold text-xs uppercase tracking-widest px-6 py-3"
             >
-              Hand Watches
+              Men&apos;s Watches
+            </Link>
+            <Link 
+              href="/women-watch" 
+              className="border border-gold-500 text-gold-500 hover:bg-gold-500 hover:text-black transition-colors px-6 py-3 text-xs font-bold uppercase tracking-widest"
+            >
+              Women&apos;s Watches
             </Link>
             <Link 
               href="/wall-clock" 
-              className="border border-gold-500 text-gold-500 hover:bg-gold-500 hover:text-black transition-colors px-6 py-3 text-xs font-bold uppercase tracking-widest"
+              className="border border-gold-500/50 text-gray-300 hover:border-gold-500 hover:text-gold-400 transition-colors px-6 py-3 text-xs font-bold uppercase tracking-widest"
             >
               Wall Clocks
             </Link>

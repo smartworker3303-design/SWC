@@ -46,8 +46,11 @@ export default function Footer() {
               Collections
             </h4>
             <div className="flex flex-col gap-2.5 text-xs text-gray-400 font-light">
-              <Link href="/hand-watch" className="hover:text-gold-500 hover:pl-1 transition-all duration-200">
-                Premium Hand Watches
+              <Link href="/" className="hover:text-gold-500 hover:pl-1 transition-all duration-200">
+                Men&apos;s Watches
+              </Link>
+              <Link href="/women-watch" className="hover:text-gold-500 hover:pl-1 transition-all duration-200">
+                Women&apos;s Watches
               </Link>
               <Link href="/wall-clock" className="hover:text-gold-500 hover:pl-1 transition-all duration-200">
                 Luxury Wall Clocks

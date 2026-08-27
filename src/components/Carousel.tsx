@@ -48,7 +48,7 @@ const mensSlides: Slide[] = [
     title: "Men's Executive Chrono",
     subtitle: "Precision engineering meets masculine elegance in our latest men's collection.",
     image: "/images/products/swc_product_11.webp",
-    link: "/hand-watch?subcat=mens",
+    link: "/",
     tag: "MEN's COLLECTION"
   },
   {
@@ -56,7 +56,7 @@ const mensSlides: Slide[] = [
     title: "The Aviator Series",
     subtitle: "Dark, bold dials combined with premium metallic bands.",
     image: "/images/products/swc_product_13.webp",
-    link: "/hand-watch?subcat=mens",
+    link: "/",
     tag: "SIGNATURE TIMEPIECE"
   },
   {
@@ -64,7 +64,7 @@ const mensSlides: Slide[] = [
     title: "Midnight Stealth",
     subtitle: "Built for endurance, styled for the boardroom.",
     image: "/images/products/swc_product_14.webp",
-    link: "/hand-watch?subcat=mens",
+    link: "/",
     tag: "ELITE COLLECTION"
   }
 ];
@@ -75,7 +75,7 @@ const womensSlides: Slide[] = [
     title: "The Rose Gold Elegance",
     subtitle: "Delicate proportions and jewel-encrusted bezels for her.",
     image: "/images/products/swc_product_20.webp",
-    link: "/hand-watch?subcat=womens",
+    link: "/women-watch",
     tag: "WOMEN's COLLECTION"
   },
   {
@@ -83,7 +83,7 @@ const womensSlides: Slide[] = [
     title: "Diamond Halo",
     subtitle: "Feminine sophistication radiating with timeless grace.",
     image: "/images/products/swc_product_21.webp",
-    link: "/hand-watch?subcat=womens",
+    link: "/women-watch",
     tag: "LUXURY TIMEPIECE"
   },
   {
@@ -91,7 +91,7 @@ const womensSlides: Slide[] = [
     title: "Slimline Classic",
     subtitle: "Minimalist design crafted from the finest materials.",
     image: "/images/products/swc_product_24.webp",
-    link: "/hand-watch?subcat=womens",
+    link: "/women-watch",
     tag: "ELITE COLLECTION"
   }
 ];
@@ -131,9 +131,10 @@ function CarouselContent() {
   let activeSlides = homeSlides;
   if (pathname === '/wall-clock') {
     activeSlides = wallClockSlides;
-  } else if (pathname === '/hand-watch') {
-    if (subcat === 'mens') activeSlides = mensSlides;
-    else if (subcat === 'womens') activeSlides = womensSlides;
+  } else if (pathname === '/women-watch' || subcat === 'womens') {
+    activeSlides = womensSlides;
+  } else if (pathname === '/hand-watch' || pathname === '/') {
+    activeSlides = mensSlides;
   }
 
   const slides = activeSlides;

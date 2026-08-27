@@ -171,6 +171,23 @@ export default function AdminPanelPage() {
     }
   };
 
+  // Helper function to auto-generate clean, URL-safe unique product IDs
+  const generateUniqueProductId = (category: "hand-watches" | "wall-clocks", name?: string) => {
+    const prefix = category === "wall-clocks" ? "wc" : "hw";
+    const slug = name 
+      ? name.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 30) 
+      : "";
+    const randomSuffix = Math.random().toString(36).substring(2, 7);
+    let candidate = slug ? `${slug}-${randomSuffix}` : `${prefix}-${Date.now().toString(36)}-${randomSuffix}`;
+    
+    // Ensure absolute uniqueness against existing products
+    let counter = 1;
+    while (products.some(p => p.id.toLowerCase() === candidate.toLowerCase())) {
+      candidate = `${candidate}-${counter++}`;
+    }
+    return candidate;
+  };
+
   // Open Add Modal
   const openAddModal = (defaultCategory?: "hand-watches" | "wall-clocks") => {
     setModalType("add");
@@ -237,8 +254,8 @@ export default function AdminPanelPage() {
   // Submit CRUD Form
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formId || !formName || !formImage || !formDescription) {
-      setFormError("Please fill in all required fields (ID, Name, Image Path, Description).");
+    if (!formName.trim() || !formImage.trim() || !formDescription.trim()) {
+      setFormError("Please fill in all required fields (Timepiece Name, Image Path, Description).");
       return;
     }
     
@@ -255,8 +272,19 @@ export default function AdminPanelPage() {
       }
     });
 
+    // Determine clean URL-safe unique ID
+    let finalId: string;
+    if (modalType === "add") {
+      finalId = formId ? formId.toLowerCase().trim().replace(/[^a-z0-9-_]+/g, '-') : "";
+      if (!finalId || finalId === "-") {
+        finalId = generateUniqueProductId(formCategory, formName);
+      }
+    } else {
+      finalId = formId.trim();
+    }
+
     const payload: Product = {
-      id: formId.trim(),
+      id: finalId,
       name: formName.trim(),
       category: formCategory,
       subcategory: formCategory === "hand-watches" && formSubcategory ? formSubcategory : undefined,
@@ -275,13 +303,11 @@ export default function AdminPanelPage() {
       setIsSaving(true);
       if (modalType === "add") {
         // Check for duplicate ID
-        if (products.some(p => p.id === payload.id)) {
-          setFormError(`Product with ID "${payload.id}" already exists.`);
-          setIsSaving(false);
-          return;
+        if (products.some(p => p.id.toLowerCase() === payload.id.toLowerCase())) {
+          payload.id = generateUniqueProductId(formCategory, formName);
         }
         await addProduct(payload);
-        setSuccessMessage("✅ Product added and saved to database!");
+        setSuccessMessage(`✅ Product added with ID: "${payload.id}"`);
       } else {
         await updateProduct(payload);
         setSuccessMessage("✅ Product updated and saved to database!");
@@ -323,11 +349,15 @@ export default function AdminPanelPage() {
       const matchesSubcat = category === "hand-watches" && adminSubcatFilter !== "all" 
                             ? product.subcategory === adminSubcatFilter 
                             : true;
-      const matchesSearch = !adminSearchQuery.trim() || 
-                            product.id.toLowerCase().includes(adminSearchQuery.toLowerCase()) ||
-                            product.name.toLowerCase().includes(adminSearchQuery.toLowerCase()) ||
-                            product.description.toLowerCase().includes(adminSearchQuery.toLowerCase()) ||
-                            (product.tag && product.tag.toLowerCase().includes(adminSearchQuery.toLowerCase()));
+      const query = adminSearchQuery.toLowerCase().trim();
+      const decodedQuery = decodeURIComponent(adminSearchQuery).toLowerCase().trim();
+      const matchesSearch = !query || 
+                            product.id.toLowerCase().includes(query) ||
+                            product.id.toLowerCase().includes(decodedQuery) ||
+                            product.name.toLowerCase().includes(query) ||
+                            product.description.toLowerCase().includes(query) ||
+                            (product.brand && product.brand.toLowerCase().includes(query)) ||
+                            (product.tag && product.tag.toLowerCase().includes(query));
       return matchesCategory && matchesSubcat && matchesSearch;
     });
 
@@ -1250,20 +1280,27 @@ export default function AdminPanelPage() {
             <form onSubmit={handleFormSubmit} className="space-y-5">
               
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {/* ID input */}
-                <div className="space-y-1">
-                  <label htmlFor="form-id" className="text-[9px] text-gray-400 uppercase tracking-widest font-semibold block">Product ID (Required)</label>
-                  <input
-                    id="form-id"
-                    type="text"
-                    required
-                    disabled={modalType === "edit"}
-                    value={formId}
-                    onChange={(e) => setFormId(e.target.value)}
-                    placeholder="e.g. hw-navigator"
-                    className="w-full bg-black border border-gold-500/15 text-white py-2 px-3 focus:outline-none focus:border-gold-500 text-xs disabled:opacity-50 disabled:cursor-not-allowed"
-                  />
-                </div>
+                {modalType === "edit" ? (
+                  /* ID input (Read-only on edit) */
+                  <div className="space-y-1">
+                    <label htmlFor="form-id" className="text-[9px] text-gray-400 uppercase tracking-widest font-semibold block">Product ID (Read-Only)</label>
+                    <input
+                      id="form-id"
+                      type="text"
+                      disabled
+                      value={formId}
+                      className="w-full bg-neutral-900 border border-gold-500/15 text-gold-400 py-2 px-3 text-xs opacity-75 cursor-not-allowed font-mono"
+                    />
+                  </div>
+                ) : (
+                  /* Auto-generated ID Info badge for Add mode */
+                  <div className="space-y-1">
+                    <label className="text-[9px] text-gray-400 uppercase tracking-widest font-semibold block">Product ID</label>
+                    <div className="w-full bg-neutral-900/80 border border-gold-500/20 text-gold-400 py-2 px-3 text-xs italic flex items-center gap-1.5 rounded-sm">
+                      <span className="font-mono text-[10px] text-gold-500">✨ Auto-assigned upon save</span>
+                    </div>
+                  </div>
+                )}
 
                 {/* Name Input */}
                 <div className="space-y-1">

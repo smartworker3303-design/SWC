@@ -43,44 +43,28 @@ export default function Header() {
         </Link>
 
         {/* Desktop & Mobile Navigation Links */}
-        <nav className="flex items-center justify-between sm:justify-center gap-2 sm:gap-6 text-[10px] sm:text-xs md:text-sm uppercase tracking-widest font-medium order-3 md:order-2 w-full md:w-auto mt-4 md:mt-0 pb-1 md:pb-0 overflow-x-auto whitespace-nowrap">
+        <nav className="flex items-center justify-between sm:justify-center gap-3 sm:gap-6 text-[10px] sm:text-xs md:text-sm uppercase tracking-widest font-medium order-3 md:order-2 w-full md:w-auto mt-3 md:mt-0 pb-1 md:pb-0 overflow-x-auto md:overflow-visible no-scrollbar whitespace-nowrap">
           <Link 
             href="/" 
-            className={`transition-colors ${isLinkActive("/") ? "text-gold-500" : "text-gray-300 hover:text-gold-500"}`}
+            className={`transition-colors py-1 ${isLinkActive("/") ? "text-gold-500 font-bold" : "text-gray-300 hover:text-gold-500"}`}
           >
-            Home
+            Men&apos;s Watches
           </Link>
-          <div className="relative group py-2">
-            <Link 
-              href="/hand-watch" 
-              className={`transition-colors ${isLinkActive("/hand-watch") ? "text-gold-500" : "text-gray-300 hover:text-gold-500"}`}
-            >
-              Hand Watches
-            </Link>
-            <div className="absolute top-full left-0 mt-0 w-48 bg-black/95 backdrop-blur-md border border-gold-500/20 py-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all flex flex-col z-50">
-              <Link 
-                href="/hand-watch?subcat=mens" 
-                className="px-4 py-2.5 text-xs text-gray-300 hover:text-gold-400 hover:bg-gold-500/10 transition-colors"
-              >
-                Men Watches
-              </Link>
-              <Link 
-                href="/hand-watch?subcat=womens" 
-                className="px-4 py-2.5 text-xs text-gray-300 hover:text-gold-400 hover:bg-gold-500/10 transition-colors"
-              >
-                Women Watches
-              </Link>
-            </div>
-          </div>
+          <Link 
+            href="/women-watch" 
+            className={`transition-colors py-1 ${isLinkActive("/women-watch") ? "text-gold-500 font-bold" : "text-gray-300 hover:text-gold-500"}`}
+          >
+            Women&apos;s Watches
+          </Link>
           <Link 
             href="/wall-clock" 
-            className={`transition-colors ${isLinkActive("/wall-clock") ? "text-gold-500" : "text-gray-300 hover:text-gold-500"}`}
+            className={`transition-colors py-1 ${isLinkActive("/wall-clock") ? "text-gold-500 font-bold" : "text-gray-300 hover:text-gold-500"}`}
           >
             Wall Clocks
           </Link>
           <Link 
             href="/about" 
-            className={`transition-colors ${isLinkActive("/about") ? "text-gold-500" : "text-gray-300 hover:text-gold-500"}`}
+            className={`transition-colors py-1 ${isLinkActive("/about") ? "text-gold-500 font-bold" : "text-gray-300 hover:text-gold-500"}`}
           >
             Our Legacy
           </Link>

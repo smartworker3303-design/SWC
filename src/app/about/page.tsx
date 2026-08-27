@@ -129,10 +129,10 @@ export default function AboutPage() {
         </p>
         <div className="flex justify-center gap-4">
           <Link 
-            href="/hand-watch" 
+            href="/" 
             className="gold-gradient-bg text-black font-extrabold text-xs uppercase tracking-widest px-6 py-3 shadow-md hover:scale-105 transition-all flex items-center gap-1"
           >
-            Hand Watches
+            Men&apos;s Watches
             <ArrowRight className="w-3.5 h-3.5" />
           </Link>
           <a 

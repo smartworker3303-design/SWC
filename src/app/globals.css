@@ -59,23 +59,38 @@
     overflow-x: hidden;
   }
 
-  /* Custom gold scrollbar */
-  ::-webkit-scrollbar {
+  /* Custom gold scrollbar for main window only */
+  html::-webkit-scrollbar,
+  body::-webkit-scrollbar {
     width: 8px;
   }
   
-  ::-webkit-scrollbar-track {
+  html::-webkit-scrollbar-track,
+  body::-webkit-scrollbar-track {
     background: #050505;
   }
   
-  ::-webkit-scrollbar-thumb {
+  html::-webkit-scrollbar-thumb,
+  body::-webkit-scrollbar-thumb {
     background: #b59227;
     border-radius: 4px;
   }
   
-  ::-webkit-scrollbar-thumb:hover {
+  html::-webkit-scrollbar-thumb:hover,
+  body::-webkit-scrollbar-thumb:hover {
     background: #d4af37;
   }
+}
+
+/* Hide scrollbar utility */
+.no-scrollbar::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+.no-scrollbar {
+  -ms-overflow-style: none !important;
+  scrollbar-width: none !important;
 }
 
 /* Luxury Utility Classes */

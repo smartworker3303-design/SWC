@@ -102,7 +102,7 @@ export default function MyOrdersPage() {
           <p className="text-gray-400 text-xs max-w-sm mx-auto leading-relaxed">
             You haven&apos;t placed any orders yet. Once you make a purchase, your tracking details will appear here.
           </p>
-          <Link href="/hand-watch" className="inline-block mt-4 px-6 py-2 border border-gold-500 text-gold-500 hover:bg-gold-500 hover:text-black uppercase tracking-widest text-xs font-bold transition-colors">
+          <Link href="/" className="inline-block mt-4 px-6 py-2 border border-gold-500 text-gold-500 hover:bg-gold-500 hover:text-black uppercase tracking-widest text-xs font-bold transition-colors">
             Browse Watches
           </Link>
         </div>

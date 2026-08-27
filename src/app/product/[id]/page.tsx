@@ -27,14 +27,21 @@ interface ProductPageProps {
 }
 
 export default function ProductDetailPage({ params }: ProductPageProps) {
-  const { id } = use(params);
+  const { id: rawId } = use(params);
   const { products, isLoading } = useProducts();
   const { toggleWishlist, isInWishlist } = useWishlist();
   const { user } = useAuth();
   const router = useRouter();
 
-  // Find the product
-  const product = products.find(p => p.id === id);
+  // Decode URI component so spaces/special characters match correctly
+  const decodedId = decodeURIComponent(rawId).trim();
+
+  // Find the product by exact id, decoded id, or case-insensitive match
+  const product = products.find(p => 
+    p.id === rawId || 
+    p.id === decodedId || 
+    p.id.toLowerCase() === decodedId.toLowerCase()
+  );
 
   if (isLoading) {
     return (
@@ -50,7 +57,7 @@ export default function ProductDetailPage({ params }: ProductPageProps) {
       <div className="min-h-[70vh] flex flex-col items-center justify-center p-4 text-center space-y-6">
         <h1 className="font-serif text-3xl font-bold text-gold-500">Timepiece Not Found</h1>
         <p className="text-gray-400 text-sm max-w-md">
-          The requested timepiece model ID &quot;{id}&quot; could not be located in Saleem Watch Center&apos;s catalog.
+          The requested timepiece model ID &quot;{decodedId || rawId}&quot; could not be located in Saleem Watch Center&apos;s catalog.
         </p>
         <Link 
           href="/" 
@@ -81,11 +88,23 @@ export default function ProductDetailPage({ params }: ProductPageProps) {
       {/* Navigation breadcrumbs */}
       <div>
         <Link 
-          href={isHandWatch ? "/hand-watch" : "/wall-clock"} 
+          href={
+            product.category === "wall-clocks" 
+              ? "/wall-clock" 
+              : product.subcategory === "womens" 
+                ? "/women-watch" 
+                : "/"
+          } 
           className="inline-flex items-center gap-1 text-xs text-gray-500 hover:text-gold-400 font-bold uppercase transition-colors"
         >
           <ChevronLeft className="w-4 h-4" />
-          Back to {isHandWatch ? "Hand Watches" : "Wall Clocks"}
+          Back to {
+            product.category === "wall-clocks" 
+              ? "Wall Clocks" 
+              : product.subcategory === "womens" 
+                ? "Women's Watches" 
+                : "Men's Watches"
+          }
         </Link>
       </div>
 

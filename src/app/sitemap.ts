@@ -21,6 +21,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.9,
     },
     {
+      url: 'https://saleemwatchcenter.com/women-watch',
+      lastModified: new Date(),
+      changeFrequency: 'weekly',
+      priority: 0.9,
+    },
+    {
       url: 'https://saleemwatchcenter.com/wall-clock',
       lastModified: new Date(),
       changeFrequency: 'weekly',
