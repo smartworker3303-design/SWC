@@ -8,6 +8,7 @@ export interface Product {
   rating: number;
   reviews: number;
   image: string;
+  images?: string[];
   description: string;
   specs: { [key: string]: string };
   featured: boolean;

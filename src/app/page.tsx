@@ -92,120 +92,24 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-transparent text-white font-sans relative">
+    <div className="min-h-screen bg-transparent text-white font-sans py-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-12">
       <MouseTrail />
 
-      {/* 1. Hero Section - Men's Executive Timepieces */}
-      <section className="relative min-h-[80vh] flex items-center py-16 sm:py-20 px-4 sm:px-6 lg:px-8 overflow-hidden z-10">
-        
-        {/* Dark overlay */}
-        <div className="absolute inset-0 bg-black/60 z-0 pointer-events-none" />
-
-        {/* Abstract gold dust backdrop */}
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_50%,rgba(212,175,55,0.08),rgba(0,0,0,0))] pointer-events-none z-0" />
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 rounded-full bg-gold-500/5 blur-3xl pointer-events-none z-0" />
-        
-        <div className="max-w-7xl mx-auto w-full grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8 items-center z-10">
-          {/* Left Text Column */}
-          <div className="lg:col-span-7 flex flex-col items-start text-left space-y-6">
-            
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-gold-500/20 bg-gold-500/5 text-gold-400 text-xs sm:text-sm tracking-wider font-semibold uppercase animate-pulse">
-              <Award className="w-4 h-4" />
-              Men&apos;s Luxury Timepiece Collection
-            </div>
-
-            <h1 className="font-serif text-4xl sm:text-5xl lg:text-7xl leading-tight font-extrabold tracking-tight">
-              Executive <br className="hidden sm:inline" />
-              <span className="gold-gradient-text">Men&apos;s Watches</span> <br />
-              For Connoisseurs.
-            </h1>
-
-            <p className="text-gray-300 text-sm sm:text-base md:text-lg max-w-xl font-light leading-relaxed">
-              Explore our curation of world-class men&apos;s chronographs, automatic mechanical complications, and bespoke timepieces engineered for distinction and precision.
-            </p>
-
-            {/* CTA Buttons */}
-            <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
-              <a 
-                href="#catalog" 
-                className="gold-gradient-bg hover:opacity-90 text-black px-8 py-4 rounded-none font-bold text-sm tracking-widest uppercase transition-all duration-300 flex items-center justify-center gap-2 shadow-[0_4px_20px_rgba(212,175,55,0.3)] hover:shadow-[0_4px_30px_rgba(212,175,55,0.5)]"
-              >
-                Browse Men&apos;s Catalog
-                <ArrowRight className="w-4 h-4" />
-              </a>
-              <Link 
-                href="/women-watch" 
-                className="border border-gold-500 text-gold-500 hover:bg-gold-500 hover:text-black px-8 py-4 rounded-none font-bold text-sm tracking-widest uppercase transition-all duration-300 flex items-center justify-center gap-2"
-              >
-                View Women&apos;s Watches
-                <Sparkles className="w-4 h-4" />
-              </Link>
-            </div>
-
-            {/* Micro details stats */}
-            <div className="grid grid-cols-3 gap-6 sm:gap-12 pt-8 border-t border-gray-800 w-full max-w-lg">
-              <div>
-                <p className="font-serif text-2xl sm:text-3xl font-bold text-gold-400">25+</p>
-                <p className="text-xs text-gray-400 tracking-wider uppercase">Years of Trust</p>
-              </div>
-              <div>
-                <p className="font-serif text-2xl sm:text-3xl font-bold text-gold-400">100%</p>
-                <p className="text-xs text-gray-400 tracking-wider uppercase">Original Caliber</p>
-              </div>
-              <div>
-                <p className="font-serif text-2xl sm:text-3xl font-bold text-gold-400">4.9/5</p>
-                <p className="text-xs text-gray-400 tracking-wider uppercase">Client Rating</p>
-              </div>
-            </div>
-            
-          </div>
-
-          {/* Right Visual Image Column */}
-          <div className="lg:col-span-5 flex justify-center relative">
-            <div className="relative w-72 h-72 sm:w-96 sm:h-96 lg:w-[420px] lg:h-[420px]">
-              
-              {/* Outer decorative gold rings */}
-              <div className="absolute inset-0 rounded-full border border-dashed border-gold-500/20 animate-[spin_120s_linear_infinite]" />
-              <div className="absolute inset-4 rounded-full border border-gold-500/10 animate-[spin_80s_linear_infinite]" />
-              <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(212,175,55,0.1)_0%,transparent_70%)] animate-gold-glow rounded-full" />
-              
-              <div className="absolute inset-8 rounded-full overflow-hidden border-2 border-gold-500/30 bg-neutral-950 flex items-center justify-center shadow-[0_20px_50px_rgba(0,0,0,0.8)]">
-                <Image 
-                  src="/images/hero_luxury_watch.png"
-                  alt="SWC Royale Premium Men's Watch"
-                  fill
-                  priority
-                  className="object-cover scale-105 hover:scale-115 transition-transform duration-700"
-                  sizes="(max-w-768px) 280px, 420px"
-                />
-              </div>
-
-              {/* Floating micro accent card */}
-              <div className="absolute -bottom-4 -left-4 glass-panel py-3 px-4 flex items-center gap-3 animate-bounce">
-                <div className="w-8 h-8 rounded-full bg-gold-500/10 flex items-center justify-center text-gold-400">
-                  <Star className="w-4 h-4 fill-gold-400" />
-                </div>
-                <div>
-                  <p className="text-[10px] text-gray-400 uppercase tracking-widest">Featured Men&apos;s Model</p>
-                  <p className="text-xs font-bold text-gold-400">SWC Royale Chrono</p>
-                </div>
-              </div>
-              
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* 2. Men's Watches Catalog Section */}
-      <section id="catalog" className="py-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-12">
+      {/* Men's Watches Catalog Section */}
+      <section className="space-y-10 text-left">
         
         {/* Section Header */}
-        <div className="space-y-4 text-center">
-          <p className="text-gold-500 text-xs sm:text-sm tracking-widest uppercase font-semibold">Distinguished Horology</p>
-          <h2 className="font-serif text-3xl sm:text-4xl lg:text-5xl font-bold tracking-wider">
-            Men&apos;s Timepieces Catalog
-          </h2>
-          <div className="w-24 h-0.5 bg-gradient-to-r from-transparent via-gold-500 to-transparent mx-auto mt-2" />
+        <div className="space-y-3">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-gold-500/20 bg-gold-500/5 text-gold-400 text-xs tracking-wider font-semibold uppercase">
+            <Award className="w-3.5 h-3.5" />
+            Men&apos;s Luxury Timepiece Collection
+          </div>
+          <h1 className="font-serif text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight">
+            Executive <span className="gold-gradient-text">Men&apos;s Watches</span>
+          </h1>
+          <p className="text-gray-400 text-sm max-w-2xl font-light leading-relaxed">
+            Explore our curation of world-class men&apos;s chronographs, automatic mechanical calibers, and bespoke complications engineered for distinction and precision.
+          </p>
         </div>
 
         {/* Search, Filter & Sort Controls */}

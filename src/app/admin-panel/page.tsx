@@ -105,6 +105,8 @@ export default function AdminPanelPage() {
   const [formBrand, setFormBrand] = useState("");
   const [formPrice, setFormPrice] = useState(0);
   const [formImage, setFormImage] = useState("");
+  const [formImages, setFormImages] = useState<string[]>(["/images/hero_luxury_watch.png"]);
+  const [activeImageSlot, setActiveImageSlot] = useState<number>(0);
   const [formDescription, setFormDescription] = useState("");
   const [formRating, setFormRating] = useState(5.0);
   const [formReviews, setFormReviews] = useState(0);
@@ -176,7 +178,17 @@ export default function AdminPanelPage() {
           const ctx = canvas.getContext("2d");
           if (ctx) {
             ctx.drawImage(img, 0, 0, width, height);
-            setFormImage(canvas.toDataURL("image/webp", 0.6));
+            const dataUrl = canvas.toDataURL("image/webp", 0.6);
+            setFormImage(dataUrl);
+            setFormImages(prev => {
+              const copy = [...prev];
+              if (activeImageSlot < copy.length) {
+                copy[activeImageSlot] = dataUrl;
+              } else if (copy.length < 5) {
+                copy.push(dataUrl);
+              }
+              return copy;
+            });
           }
         };
         if (event.target?.result && typeof event.target.result === "string") {
@@ -184,6 +196,37 @@ export default function AdminPanelPage() {
         }
       };
       reader.readAsDataURL(file);
+    }
+  };
+
+  const handleAddImageSlot = () => {
+    if (formImages.length < 5) {
+      const nextIndex = formImages.length;
+      setFormImages([...formImages, ""]);
+      setActiveImageSlot(nextIndex);
+    }
+  };
+
+  const handleRemoveImageSlot = (index: number) => {
+    if (formImages.length <= 1) {
+      setFormImages([""]);
+      setFormImage("");
+      return;
+    }
+    const updated = formImages.filter((_, i) => i !== index);
+    setFormImages(updated);
+    if (activeImageSlot >= updated.length) {
+      setActiveImageSlot(Math.max(0, updated.length - 1));
+    }
+    setFormImage(updated[0] || "");
+  };
+
+  const handleImageSlotChange = (index: number, val: string) => {
+    const updated = [...formImages];
+    updated[index] = val;
+    setFormImages(updated);
+    if (index === 0) {
+      setFormImage(val);
     }
   };
 
@@ -214,6 +257,8 @@ export default function AdminPanelPage() {
     setFormBrand("");
     setFormPrice(1000);
     setFormImage("/images/hero_luxury_watch.png");
+    setFormImages(["/images/hero_luxury_watch.png"]);
+    setActiveImageSlot(0);
     setFormDescription("");
     setFormRating(5.0);
     setFormReviews(0);
@@ -237,6 +282,9 @@ export default function AdminPanelPage() {
     setFormBrand(product.brand || "");
     setFormPrice(product.price);
     setFormImage(product.image);
+    const existingImgs = product.images && product.images.length > 0 ? product.images : [product.image];
+    setFormImages(existingImgs);
+    setActiveImageSlot(0);
     setFormDescription(product.description);
     setFormRating(product.rating);
     setFormReviews(product.reviews);
@@ -270,8 +318,11 @@ export default function AdminPanelPage() {
   // Submit CRUD Form
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formName.trim() || !formImage.trim() || !formDescription.trim()) {
-      setFormError("Please fill in all required fields (Timepiece Name, Image Path, Description).");
+    const validImages = formImages.map(img => img.trim()).filter(img => img.length > 0);
+    const primaryImg = validImages[0] || formImage.trim();
+
+    if (!formName.trim() || !primaryImg || !formDescription.trim()) {
+      setFormError("Please fill in all required fields (Timepiece Name, at least 1 Image, Description).");
       return;
     }
     
@@ -308,7 +359,8 @@ export default function AdminPanelPage() {
       price: Number(formPrice),
       rating: Number(formRating),
       reviews: Number(formReviews),
-      image: formImage.trim(),
+      image: primaryImg,
+      images: validImages.length > 0 ? validImages : [primaryImg],
       description: formDescription.trim(),
       specs: specsObject,
       featured: true, // Default to true so it can show in collections and catalog
@@ -356,6 +408,7 @@ export default function AdminPanelPage() {
   const handWatchesCount = products.filter(p => p.category === "hand-watches").length;
   const wallClocksCount = products.filter(p => p.category === "wall-clocks").length;
   const totalAssetValue = products.reduce((acc, p) => acc + p.price, 0);
+  const pendingOrdersCount = orders.filter(o => o.status === 'Pending').length;
 
   // Filter and sort products for Admin Panel
   const getFilteredAndSortedProducts = (category: "hand-watches" | "wall-clocks") => {
@@ -574,14 +627,21 @@ export default function AdminPanelPage() {
 
             <button
               onClick={() => setActiveTab("users-orders")}
-              className={`w-full py-3 px-4 text-xs font-bold uppercase tracking-wider flex items-center gap-3 transition-all rounded cursor-pointer ${
+              className={`w-full py-3 px-4 text-xs font-bold uppercase tracking-wider flex items-center justify-between transition-all rounded cursor-pointer ${
                 activeTab === "users-orders"
                   ? "gold-gradient-bg text-black font-extrabold shadow-md shadow-gold-500/10"
                   : "bg-transparent border border-transparent text-gray-400 hover:text-gold-400 hover:border-gold-500/15"
               }`}
             >
-              <User className="w-4 h-4" />
-              Users & Orders
+              <div className="flex items-center gap-3">
+                <User className="w-4 h-4" />
+                <span>Users & Orders</span>
+              </div>
+              {pendingOrdersCount > 0 && (
+                <span className="bg-red-500 text-white font-mono text-[10px] font-extrabold px-2 py-0.5 rounded-full shadow-lg animate-pulse flex items-center justify-center min-w-[20px] h-5">
+                  {pendingOrdersCount}
+                </span>
+              )}
             </button>
           </nav>
         </div>
@@ -689,14 +749,19 @@ export default function AdminPanelPage() {
           </button>
           <button
             onClick={() => setActiveTab("users-orders")}
-            className={`flex-grow py-2 px-3 text-[10px] font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-all rounded whitespace-nowrap cursor-pointer ${
+            className={`flex-grow py-2 px-3 text-[10px] font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all rounded whitespace-nowrap cursor-pointer relative ${
               activeTab === "users-orders"
                 ? "gold-gradient-bg text-black font-extrabold"
                 : "bg-neutral-900 border border-gold-500/5 text-gray-400"
             }`}
           >
             <User className="w-3.5 h-3.5" />
-            Orders
+            <span>Orders</span>
+            {pendingOrdersCount > 0 && (
+              <span className="bg-red-500 text-white font-mono text-[9px] font-bold px-1.5 py-0.2 rounded-full shadow animate-pulse">
+                {pendingOrdersCount}
+              </span>
+            )}
           </button>
         </div>
 
@@ -1413,40 +1478,119 @@ export default function AdminPanelPage() {
                 </div>
               </div>
 
-              {/* Clickable Image Preview Box */}
-              <div className="space-y-1.5">
-                <label className="text-[9px] text-gray-400 uppercase tracking-widest font-semibold block">Product Image (Click to browse files)</label>
-                <div 
-                  onClick={triggerFileSelect}
-                  className="relative h-48 w-full bg-black border border-dashed border-gold-500/20 hover:border-gold-500/40 rounded flex flex-col items-center justify-center cursor-pointer group overflow-hidden transition-all bg-[radial-gradient(circle_at_center,rgba(212,175,55,0.02),transparent_70%)]"
-                >
-                  {formImage ? (
-                    <>
-                      <Image
-                        src={formImage}
-                        alt="Timepiece image preview"
-                        fill
-                        className="object-contain p-4 group-hover:scale-102 transition-transform duration-300"
-                        sizes="(max-width: 768px) 100vw, 50vw"
-                      />
-                      <div className="absolute inset-0 bg-black/75 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center transition-opacity duration-200">
-                        <Plus className="w-8 h-8 text-gold-500 mb-1" />
-                        <span className="text-[10px] text-white font-bold uppercase tracking-widest">Change Image File</span>
-                        <span className="text-[8px] text-gray-500 mt-1 font-mono">Supports local storage / camera</span>
-                      </div>
-                    </>
-                  ) : (
-                    <div className="text-center p-6 space-y-2">
-                      <div className="w-10 h-10 rounded-full border border-gold-500/20 flex items-center justify-center mx-auto bg-gold-500/5 group-hover:border-gold-500/60 transition-colors">
-                        <Plus className="w-5 h-5 text-gold-500/70" />
-                      </div>
-                      <div>
-                        <span className="text-[10px] text-gray-400 font-bold uppercase tracking-widest block">Choose Timepiece Image</span>
-                        <span className="text-[8px] text-gray-600 block mt-0.5">Click to browse native files</span>
-                      </div>
-                    </div>
+              {/* Multiple Images Gallery Manager (Maximum 5 Images) */}
+              <div className="space-y-3 border border-gold-500/20 bg-black/40 p-4 rounded">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-gray-900 pb-2.5">
+                  <div>
+                    <label className="text-[10px] text-gold-400 uppercase tracking-widest font-bold block">
+                      Product Images ({formImages.length}/5 max)
+                    </label>
+                    <p className="text-[9px] text-gray-500 font-light">
+                      Image #1 is the Primary Thumbnail shown in catalogs. Images #2-5 display on the Product Details page.
+                    </p>
+                  </div>
+                  {formImages.length < 5 && (
+                    <button
+                      type="button"
+                      onClick={handleAddImageSlot}
+                      className="inline-flex items-center gap-1 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider border border-gold-500/40 text-gold-400 hover:bg-gold-500 hover:text-black transition-colors rounded cursor-pointer"
+                    >
+                      <Plus className="w-3 h-3" />
+                      Add Gallery Image ({formImages.length}/5)
+                    </button>
                   )}
                 </div>
+
+                {/* Thumbnail Preview Strip */}
+                <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 pt-1">
+                  {formImages.map((imgUrl, idx) => {
+                    const isSelected = activeImageSlot === idx;
+                    return (
+                      <div
+                        key={idx}
+                        onClick={() => setActiveImageSlot(idx)}
+                        className={`relative h-28 bg-black rounded border cursor-pointer overflow-hidden transition-all flex flex-col items-center justify-center group ${
+                          isSelected
+                            ? "border-gold-500 ring-2 ring-gold-500/30 shadow-[0_0_15px_rgba(212,175,55,0.2)]"
+                            : "border-gold-500/15 hover:border-gold-500/40 opacity-80 hover:opacity-100"
+                        }`}
+                      >
+                        {imgUrl ? (
+                          <>
+                            <Image
+                              src={imgUrl}
+                              alt={`Slot ${idx + 1}`}
+                              fill
+                              className="object-contain p-2"
+                            />
+                            <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                              <span className="text-[8px] text-gold-400 font-bold uppercase tracking-widest">Select</span>
+                            </div>
+                          </>
+                        ) : (
+                          <div className="text-center p-2">
+                            <Plus className="w-5 h-5 text-gray-600 mx-auto mb-1" />
+                            <span className="text-[8px] text-gray-500 uppercase block">Empty</span>
+                          </div>
+                        )}
+
+                        {/* Badge */}
+                        <span className={`absolute top-1 left-1 text-[8px] font-black uppercase px-1.5 py-0.5 rounded-sm ${
+                          idx === 0 
+                            ? "bg-gold-500 text-black font-extrabold" 
+                            : "bg-black/80 text-gray-300 border border-gold-500/20"
+                        }`}>
+                          {idx === 0 ? "★ Main" : `#${idx + 1}`}
+                        </span>
+
+                        {/* Remove button (if more than 1 image slot) */}
+                        {formImages.length > 1 && (
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleRemoveImageSlot(idx);
+                            }}
+                            className="absolute top-1 right-1 p-1 bg-red-950/80 border border-red-500/40 text-red-400 hover:bg-red-500 hover:text-white rounded-full transition-colors"
+                            title="Remove this image slot"
+                          >
+                            <X className="w-2.5 h-2.5" />
+                          </button>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Selected Slot Controls */}
+                <div className="pt-2 space-y-3 bg-black/60 p-3 rounded border border-gold-500/10">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                    <span className="text-[10px] text-gold-400 uppercase tracking-wider font-bold">
+                      Editing Image #{activeImageSlot + 1} {activeImageSlot === 0 ? "(Primary Storefront)" : "(Product Gallery)"}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={triggerFileSelect}
+                      className="inline-flex items-center gap-1 text-[10px] text-gray-300 hover:text-gold-400 border border-gray-700 hover:border-gold-500 px-2 py-1 transition-colors cursor-pointer"
+                    >
+                      <Plus className="w-3 h-3 text-gold-500" />
+                      Browse Local Image File for Slot #{activeImageSlot + 1}
+                    </button>
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-[9px] text-gray-400 uppercase tracking-widest block">Image URL / Path</label>
+                    <input
+                      type="text"
+                      required={activeImageSlot === 0}
+                      value={formImages[activeImageSlot] || ""}
+                      onChange={(e) => handleImageSlotChange(activeImageSlot, e.target.value)}
+                      placeholder="/images/hero_luxury_watch.png or https://..."
+                      className="w-full bg-black border border-gold-500/20 text-white py-2 px-3 focus:outline-none focus:border-gold-500 text-xs font-mono"
+                    />
+                  </div>
+                </div>
+
                 {/* Hidden file input */}
                 <input
                   type="file"
@@ -1457,21 +1601,8 @@ export default function AdminPanelPage() {
                 />
               </div>
 
-              {/* Grid for Image URL path and metadata */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                {/* Image Path input */}
-                <div className="sm:col-span-1 space-y-1">
-                  <label htmlFor="form-image" className="text-[9px] text-gray-400 uppercase tracking-widest font-semibold block">Image Path / URL (Required)</label>
-                  <input
-                    id="form-image"
-                    type="text"
-                    required
-                    value={formImage}
-                    onChange={(e) => setFormImage(e.target.value)}
-                    placeholder="/images/hero_luxury_watch.png"
-                    className="w-full bg-black border border-gold-500/15 text-white py-2 px-3 focus:outline-none focus:border-gold-500 text-xs"
-                  />
-                </div>
+              {/* Grid for Rating and Reviews metadata */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
 
                 {/* Rating input */}
                 <div className="space-y-1">

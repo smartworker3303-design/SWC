@@ -49,6 +49,7 @@ export default function ProductDetailPage({ params }: ProductPageProps) {
   const [isPlacingOrder, setIsPlacingOrder] = useState(false);
   const [orderSuccess, setOrderSuccess] = useState<string | null>(null);
   const [orderError, setOrderError] = useState<string | null>(null);
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
 
   useEffect(() => {
     if (user) {
@@ -95,6 +96,11 @@ export default function ProductDetailPage({ params }: ProductPageProps) {
 
   const isHandWatch = product.category === "hand-watches";
   const favorite = isInWishlist(product.id);
+
+  // Extract gallery images (up to 5)
+  const galleryImages = (product.images && product.images.length > 0)
+    ? product.images
+    : (product.image ? [product.image] : []);
 
   // Get up to 3 related products (same category, excluding current product)
   const relatedProducts = products
@@ -174,21 +180,76 @@ export default function ProductDetailPage({ params }: ProductPageProps) {
       {/* Product Details Section */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-start">
         
-        {/* Left Image Column */}
-        <div className="lg:col-span-6 relative h-[320px] sm:h-[480px] lg:h-[550px] w-full bg-black border border-gold-500/15 overflow-hidden flex items-center justify-center group shadow-2xl">
-          <Image 
-            src={product.image}
-            alt={product.name}
-            fill
-            priority
-            className="object-cover group-hover:scale-105 transition-transform duration-700"
-            sizes="(max-w-1024px) 100vw, 600px"
-          />
-          {product.tag && (
-            <span className="absolute top-4 left-4 bg-gold-600 text-black text-[9px] font-black tracking-widest uppercase px-3 py-1.5 z-10">
-              {product.tag}
-            </span>
+        {/* Left Image & Thumbnail Gallery Column */}
+        <div className="lg:col-span-6 space-y-4">
+          
+          {/* Main Large Image Display */}
+          <div className="relative h-[320px] sm:h-[480px] lg:h-[550px] w-full bg-black border border-gold-500/15 overflow-hidden flex items-center justify-center group shadow-2xl rounded-sm">
+            <Image 
+              src={galleryImages[selectedImageIndex] || product.image}
+              alt={product.name}
+              fill
+              priority
+              className="object-cover group-hover:scale-105 transition-transform duration-700"
+              sizes="(max-width: 1024px) 100vw, 600px"
+            />
+            {product.tag && (
+              <span className="absolute top-4 left-4 bg-gold-600 text-black text-[9px] font-black tracking-widest uppercase px-3 py-1.5 z-10 shadow-lg">
+                {product.tag}
+              </span>
+            )}
+            {galleryImages.length > 1 && (
+              <span className="absolute bottom-4 right-4 bg-black/80 backdrop-blur-sm border border-gold-500/20 text-gold-400 text-[10px] font-mono font-bold px-2.5 py-1 rounded shadow">
+                {selectedImageIndex + 1} / {galleryImages.length}
+              </span>
+            )}
+          </div>
+
+          {/* Multiple Images Thumbnail Strip (Max 5 Images) */}
+          {galleryImages.length > 1 && (
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] text-gold-400 uppercase tracking-widest font-bold">
+                  Timepiece Gallery ({galleryImages.length} Views)
+                </span>
+                <span className="text-[9px] text-gray-500 font-light">Click to switch view</span>
+              </div>
+              <div className="grid grid-cols-5 gap-3">
+                {galleryImages.map((imgUrl, idx) => {
+                  const isActive = selectedImageIndex === idx;
+                  return (
+                    <button
+                      key={idx}
+                      type="button"
+                      onClick={() => setSelectedImageIndex(idx)}
+                      className={`relative h-20 sm:h-24 bg-black rounded border transition-all cursor-pointer overflow-hidden group ${
+                        isActive
+                          ? "border-gold-500 ring-2 ring-gold-500/40 shadow-[0_0_15px_rgba(212,175,55,0.3)] scale-[1.02]"
+                          : "border-gold-500/15 hover:border-gold-500/40 opacity-75 hover:opacity-100"
+                      }`}
+                    >
+                      <Image
+                        src={imgUrl}
+                        alt={`${product.name} view ${idx + 1}`}
+                        fill
+                        className="object-cover group-hover:scale-105 transition-transform duration-300"
+                        sizes="120px"
+                      />
+                      {isActive && (
+                        <div className="absolute inset-0 bg-gold-500/10 pointer-events-none" />
+                      )}
+                      <span className={`absolute top-1 left-1 text-[8px] font-bold px-1 rounded ${
+                        isActive ? "bg-gold-500 text-black font-black" : "bg-black/70 text-gray-400"
+                      }`}>
+                        #{idx + 1}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
           )}
+
         </div>
 
         {/* Right Details Column */}

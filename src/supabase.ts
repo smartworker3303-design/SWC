@@ -25,8 +25,10 @@ export async function fetchSupabaseProducts(): Promise<Product[] | null> {
       const cleanSpecs = { ...rawSpecs };
       const subcat = cleanSpecs.__subcategory;
       const brand = cleanSpecs.__brand;
+      const galleryImages = cleanSpecs.__images || p.images || (p.image ? [p.image] : []);
       delete cleanSpecs.__subcategory;
       delete cleanSpecs.__brand;
+      delete cleanSpecs.__images;
       
       return {
         id: p.id,
@@ -38,6 +40,7 @@ export async function fetchSupabaseProducts(): Promise<Product[] | null> {
         rating: Number(p.rating),
         reviews: Number(p.reviews),
         image: p.image,
+        images: Array.isArray(galleryImages) && galleryImages.length > 0 ? galleryImages : (p.image ? [p.image] : []),
         description: p.description,
         specs: cleanSpecs,
         featured: p.featured,
@@ -63,7 +66,12 @@ export async function upsertSupabaseProduct(product: Product): Promise<boolean> 
       reviews: product.reviews,
       image: product.image,
       description: product.description,
-      specs: { ...product.specs, __brand: product.brand, __subcategory: product.subcategory },
+      specs: { 
+        ...product.specs, 
+        __brand: product.brand, 
+        __subcategory: product.subcategory,
+        __images: product.images && product.images.length > 0 ? product.images : [product.image]
+      },
       featured: product.featured,
       tag: product.tag || null
     };
