@@ -1,18 +1,21 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Mail, KeyRound, Loader2, CheckCircle2, Eye, EyeOff, User as UserIcon } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
+import { useOrders } from "../context/OrdersContext";
 
 interface AuthFormProps {
   type: "login" | "signup";
 }
 
-export default function AuthForm({ type }: AuthFormProps) {
+function AuthFormContent({ type }: AuthFormProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { login } = useAuth();
+  const { addProfile, profiles } = useOrders();
   
   // Login fields
   const [identifier, setIdentifier] = useState(""); // Can be email or phone
@@ -37,13 +40,14 @@ export default function AuthForm({ type }: AuthFormProps) {
     setError(null);
 
     try {
-      // Simulate network request
-      await new Promise(resolve => setTimeout(resolve, 800));
+      // Small simulated latency
+      await new Promise(resolve => setTimeout(resolve, 500));
       
       const storedUsers = JSON.parse(localStorage.getItem('mock_users_db_v2') || '[]');
+      const combinedUsers = [...storedUsers, ...profiles];
 
       if (type === "signup") {
-        if (!firstName || !lastName || !email || !password || !phone) {
+        if (!firstName.trim() || !lastName.trim() || !email.trim() || !password || !phone.trim()) {
           throw new Error("All fields are required.");
         }
         
@@ -56,41 +60,40 @@ export default function AuthForm({ type }: AuthFormProps) {
         }
 
         // Check if email already exists
-        const emailExists = storedUsers.find((u: any) => u.email === cleanEmail);
+        const emailExists = combinedUsers.find((u: any) => u.email?.toLowerCase() === cleanEmail);
         if (emailExists) {
           throw new Error("An account with this email address already exists.");
         }
 
         // Check if phone already exists
-        const phoneExists = storedUsers.find((u: any) => u.phone === cleanPhone);
+        const phoneExists = combinedUsers.find((u: any) => u.phone === cleanPhone);
         if (phoneExists) {
           throw new Error("An account with this phone number already exists.");
         }
 
         const newUser = {
-          id: 'user_' + Math.random().toString(36).substr(2, 9),
+          id: 'usr_' + Math.random().toString(36).substring(2, 9) + Date.now().toString(36).slice(-4),
           full_name: `${firstName.trim()} ${lastName.trim()}`,
           email: cleanEmail,
           phone: cleanPhone,
-          password: password, // Storing in plain text only because this is a mock requirement
-          user_metadata: { phone: cleanPhone, first_name: firstName.trim(), last_name: lastName.trim() },
+          password: password,
           created_at: new Date().toISOString()
         };
 
-        storedUsers.push(newUser);
-        localStorage.setItem('mock_users_db_v2', JSON.stringify(storedUsers));
+        // Persist to Supabase and context
+        await addProfile(newUser);
         
-        // Log them in immediately
+        // Log in immediately
         login(newUser);
         
       } else {
-        if (!identifier || !password) {
+        if (!identifier.trim() || !password) {
           throw new Error("Please enter your email/phone and password.");
         }
 
         const cleanIdentifier = identifier.trim().toLowerCase();
-        const user = storedUsers.find((u: any) => 
-          (u.email === cleanIdentifier || u.phone === identifier.trim()) && u.password === password
+        const user = combinedUsers.find((u: any) => 
+          (u.email?.toLowerCase() === cleanIdentifier || u.phone === identifier.trim()) && (!u.password || u.password === password)
         );
 
         if (!user) {
@@ -102,9 +105,10 @@ export default function AuthForm({ type }: AuthFormProps) {
       }
 
       setStep("success");
+      const redirectUrl = searchParams.get("redirect") || "/";
       setTimeout(() => {
-        router.push("/");
-      }, 1500);
+        router.push(redirectUrl);
+      }, 1200);
 
     } catch (err: any) {
       setError(err.message || "An unexpected error occurred.");
@@ -304,5 +308,13 @@ export default function AuthForm({ type }: AuthFormProps) {
         </div>
       )}
     </div>
+  );
+}
+
+export default function AuthForm(props: AuthFormProps) {
+  return (
+    <Suspense fallback={<div className="p-8 text-center text-xs uppercase tracking-widest text-gold-500">Loading Form...</div>}>
+      <AuthFormContent {...props} />
+    </Suspense>
   );
 }

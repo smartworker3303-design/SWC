@@ -170,6 +170,36 @@ export async function fetchSupabaseOrders(): Promise<Order[]> {
   }
 }
 
+export async function insertSupabaseProfile(profile: Profile): Promise<boolean> {
+  if (!supabase) return false;
+  try {
+    const { error } = await supabase.from('profiles').upsert(profile);
+    if (error) {
+      console.warn("Could not insert profile into Supabase:", error);
+      return false;
+    }
+    return true;
+  } catch (err) {
+    console.warn("Unexpected error inserting profile into Supabase:", err);
+    return false;
+  }
+}
+
+export async function insertSupabaseOrder(order: Order): Promise<boolean> {
+  if (!supabase) return false;
+  try {
+    const { error } = await supabase.from('orders').insert(order);
+    if (error) {
+      console.warn("Could not insert order into Supabase:", error);
+      return false;
+    }
+    return true;
+  } catch (err) {
+    console.warn("Unexpected error inserting order into Supabase:", err);
+    return false;
+  }
+}
+
 export async function updateSupabaseOrderStatus(orderId: string, status: OrderStatus): Promise<boolean> {
   if (!supabase) return false;
   try {

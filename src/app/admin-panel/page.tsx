@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { 
@@ -75,6 +75,22 @@ export default function AdminPanelPage() {
       setLocalProfiles(JSON.parse(stored));
     }
   }, [activeTab]);
+
+  // Combined Registered Profiles from Supabase & Local DB
+  const allRegisteredProfiles = useMemo(() => {
+    const map = new Map<string, any>();
+    profiles.forEach(p => {
+      const key = p.email?.toLowerCase() || p.id;
+      map.set(key, p);
+    });
+    localProfiles.forEach(p => {
+      const key = p.email?.toLowerCase() || p.id;
+      if (!map.has(key)) {
+        map.set(key, p);
+      }
+    });
+    return Array.from(map.values());
+  }, [profiles, localProfiles]);
 
   // CRUD Modal States
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -1168,7 +1184,7 @@ export default function AdminPanelPage() {
                     </thead>
                     <tbody className="divide-y divide-gray-900/50">
                       {orders.map((order) => {
-                        const profile = localProfiles.find(p => p.id === order.user_id) || profiles.find(p => p.id === order.user_id);
+                        const profile = allRegisteredProfiles.find(p => p.id === order.user_id || p.email === order.user_id);
                         return (
                           <tr key={order.id} className="hover:bg-gold-500/5 transition-colors group">
                             <td className="px-4 py-4">
@@ -1176,7 +1192,7 @@ export default function AdminPanelPage() {
                               <div className="text-[9px] text-gray-500 mt-1">{new Date(order.created_at).toLocaleDateString()}</div>
                             </td>
                             <td className="px-4 py-4">
-                              <div className="font-bold text-white">{profile?.full_name || 'Anonymous User'}</div>
+                              <div className="font-bold text-white">{profile?.full_name || 'Customer Client'}</div>
                               <div className="text-[9px] text-gray-500">{profile?.email || 'N/A'}</div>
                               <div className="text-[9px] text-gray-500">{order.phone}</div>
                             </td>
@@ -1224,14 +1240,14 @@ export default function AdminPanelPage() {
             {/* Registered Profiles Grid */}
             <div className="glass-panel border border-gold-500/10 p-6 space-y-4">
               <div className="border-b border-gray-900 pb-2">
-                <h3 className="font-serif text-lg font-bold">Registered Profiles ({localProfiles.length})</h3>
+                <h3 className="font-serif text-lg font-bold">Registered Profiles ({allRegisteredProfiles.length})</h3>
               </div>
               
-              {localProfiles.length === 0 ? (
+              {allRegisteredProfiles.length === 0 ? (
                 <p className="text-gray-500 text-xs italic">No user profiles synced yet.</p>
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {localProfiles.map(p => (
+                  {allRegisteredProfiles.map(p => (
                     <div key={p.id} className="bg-black/30 border border-gold-500/5 p-4 rounded flex flex-col gap-2 relative">
                       <div className="w-8 h-8 rounded-full bg-gold-500/10 text-gold-500 flex items-center justify-center font-serif font-bold text-sm absolute top-4 right-4">
                         {(p.full_name || p.email)?.[0]?.toUpperCase() || 'U'}

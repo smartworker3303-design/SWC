@@ -1,6 +1,6 @@
 "use client";
 
-import { use } from "react";
+import { useState, useEffect, use } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
@@ -16,11 +16,17 @@ import {
   Truck,
   Sparkles,
   Eye,
-  ArrowRight
+  ArrowRight,
+  ShoppingBag,
+  CheckCircle2,
+  X,
+  Loader2
 } from "lucide-react";
 import { useProducts } from "../../../context/ProductsContext";
 import { useWishlist } from "../../../context/WishlistContext";
 import { useAuth } from "../../../context/AuthContext";
+import { useOrders } from "../../../context/OrdersContext";
+import { Order } from "../../../supabase";
 
 interface ProductPageProps {
   params: Promise<{ id: string }>;
@@ -31,7 +37,25 @@ export default function ProductDetailPage({ params }: ProductPageProps) {
   const { products, isLoading } = useProducts();
   const { toggleWishlist, isInWishlist } = useWishlist();
   const { user } = useAuth();
+  const { addOrder } = useOrders();
   const router = useRouter();
+
+  // Order Placement Modal States
+  const [isOrderModalOpen, setIsOrderModalOpen] = useState(false);
+  const [orderQuantity, setOrderQuantity] = useState(1);
+  const [shippingAddress, setShippingAddress] = useState("");
+  const [contactPhone, setContactPhone] = useState("");
+  const [customerName, setCustomerName] = useState("");
+  const [isPlacingOrder, setIsPlacingOrder] = useState(false);
+  const [orderSuccess, setOrderSuccess] = useState<string | null>(null);
+  const [orderError, setOrderError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (user) {
+      setContactPhone(user.phone || "");
+      setCustomerName(user.full_name || "");
+    }
+  }, [user]);
 
   // Decode URI component so spaces/special characters match correctly
   const decodedId = decodeURIComponent(rawId).trim();
@@ -80,6 +104,45 @@ export default function ProductDetailPage({ params }: ProductPageProps) {
   const getWhatsAppLink = (productName: string) => {
     const text = encodeURIComponent(`Hi Saleem Watch Center, I am highly interested in purchasing the "${productName}" from swc.com. Please share availability details!`);
     return `https://wa.me/923212200321?text=${text}`;
+  };
+
+  const handleOrderSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!shippingAddress.trim() || !contactPhone.trim()) {
+      setOrderError("Please enter your complete delivery address and active mobile number.");
+      return;
+    }
+
+    try {
+      setIsPlacingOrder(true);
+      setOrderError(null);
+      
+      const newOrderId = 'ord_' + Math.random().toString(36).substring(2, 9) + Date.now().toString(36).slice(-4);
+      const orderPayload: Order = {
+        id: newOrderId,
+        user_id: user?.id || user?.email || 'guest_client',
+        items: [
+          {
+            product_id: product.id,
+            name: product.name,
+            price: product.price,
+            quantity: orderQuantity
+          }
+        ],
+        total_amount: product.price * orderQuantity,
+        status: 'Pending',
+        shipping_address: shippingAddress.trim(),
+        phone: contactPhone.trim(),
+        created_at: new Date().toISOString()
+      };
+
+      await addOrder(orderPayload);
+      setOrderSuccess(newOrderId);
+    } catch (err: any) {
+      setOrderError(err.message || "Failed to place order. Please try again.");
+    } finally {
+      setIsPlacingOrder(false);
+    }
   };
 
   return (
@@ -224,14 +287,16 @@ export default function ProductDetailPage({ params }: ProductPageProps) {
             <button 
               onClick={() => {
                 if (!user) {
-                  router.push('/login');
+                  router.push(`/login?redirect=/product/${encodeURIComponent(product.id)}`);
                 } else {
-                  const text = encodeURIComponent(`Hi Saleem Watch Center, I am a verified client (${user.email}) and I would like to place an order for the timepiece "${product.name}".`);
-                  window.open(`https://wa.me/923212200321?text=${text}`, "_blank");
+                  setIsOrderModalOpen(true);
+                  setOrderSuccess(null);
+                  setOrderError(null);
                 }
               }}
-              className="border border-gold-500 text-gold-500 hover:bg-gold-500 hover:text-black transition-all px-6 py-4 text-xs font-bold uppercase tracking-widest flex items-center justify-center gap-2"
+              className="border border-gold-500 text-gold-500 hover:bg-gold-500 hover:text-black transition-all px-8 py-4 text-xs font-bold uppercase tracking-widest flex items-center justify-center gap-2 cursor-pointer shadow-[0_4px_15px_rgba(212,175,55,0.15)] hover:shadow-[0_4px_25px_rgba(212,175,55,0.4)]"
             >
+              <ShoppingBag className="w-4 h-4" />
               Order Now
             </button>
           </div>
@@ -239,6 +304,176 @@ export default function ProductDetailPage({ params }: ProductPageProps) {
         </div>
 
       </div>
+
+      {/* ORDER PLACEMENT MODAL */}
+      {isOrderModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-luxury-black border border-gold-500/30 w-full max-w-lg p-6 sm:p-8 shadow-2xl relative animate-fade-in-up text-left space-y-6">
+            
+            {/* Close Button */}
+            <button
+              onClick={() => { setIsOrderModalOpen(false); setOrderSuccess(null); }}
+              className="absolute top-4 right-4 text-gray-500 hover:text-gold-500 transition-colors p-1"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            {/* Modal Content */}
+            {!orderSuccess ? (
+              <form onSubmit={handleOrderSubmit} className="space-y-6">
+                <div className="space-y-1">
+                  <span className="text-[10px] text-gold-500 uppercase tracking-widest font-semibold">SWC Direct Checkout</span>
+                  <h3 className="font-serif text-2xl font-bold text-white">Confirm Your Order</h3>
+                </div>
+
+                {orderError && (
+                  <div className="p-3 border border-red-500/50 bg-red-500/10 text-red-400 text-xs">
+                    {orderError}
+                  </div>
+                )}
+
+                {/* Product Summary Card */}
+                <div className="flex items-center gap-4 bg-black/40 border border-gold-500/15 p-3 rounded">
+                  <div className="relative w-16 h-16 bg-black flex-shrink-0 overflow-hidden border border-gold-500/10">
+                    <Image src={product.image} alt={product.name} fill className="object-cover" />
+                  </div>
+                  <div className="flex-grow space-y-0.5">
+                    <p className="text-xs font-bold text-white font-serif">{product.name}</p>
+                    <p className="text-[10px] text-gold-400">Rs. {product.price.toLocaleString()} each</p>
+                  </div>
+                  {/* Quantity Control */}
+                  <div className="flex items-center border border-gold-500/20 bg-black">
+                    <button
+                      type="button"
+                      onClick={() => setOrderQuantity(Math.max(1, orderQuantity - 1))}
+                      className="px-2.5 py-1 text-gray-400 hover:text-gold-500 text-xs font-bold"
+                    >
+                      -
+                    </button>
+                    <span className="px-2 text-xs font-mono text-white">{orderQuantity}</span>
+                    <button
+                      type="button"
+                      onClick={() => setOrderQuantity(orderQuantity + 1)}
+                      className="px-2.5 py-1 text-gray-400 hover:text-gold-500 text-xs font-bold"
+                    >
+                      +
+                    </button>
+                  </div>
+                </div>
+
+                {/* Client Delivery Fields */}
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="space-y-1">
+                      <label className="text-[10px] text-gray-400 uppercase tracking-wider block">Recipient Name</label>
+                      <input 
+                        type="text" 
+                        required
+                        value={customerName}
+                        onChange={(e) => setCustomerName(e.target.value)}
+                        placeholder="Your full name"
+                        className="w-full bg-black border border-gray-800 text-white p-2.5 text-xs focus:border-gold-500 focus:outline-none"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-[10px] text-gray-400 uppercase tracking-wider block">Contact Phone Number</label>
+                      <input 
+                        type="tel" 
+                        required
+                        value={contactPhone}
+                        onChange={(e) => setContactPhone(e.target.value)}
+                        placeholder="03XX XXXXXXX"
+                        className="w-full bg-black border border-gray-800 text-white p-2.5 text-xs focus:border-gold-500 focus:outline-none"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-[10px] text-gray-400 uppercase tracking-wider block">Complete Delivery Address</label>
+                    <textarea 
+                      required
+                      rows={2}
+                      value={shippingAddress}
+                      onChange={(e) => setShippingAddress(e.target.value)}
+                      placeholder="House / Apartment No, Street, Area, City (e.g. Model Colony, Karachi)"
+                      className="w-full bg-black border border-gray-800 text-white p-2.5 text-xs focus:border-gold-500 focus:outline-none resize-none"
+                    />
+                  </div>
+
+                  {/* Payment Method Badge */}
+                  <div className="bg-gold-500/5 border border-gold-500/20 p-3 flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <p className="text-xs font-bold text-white uppercase tracking-wider">Payment on Delivery (COD)</p>
+                      <p className="text-[10px] text-gray-400">Pay cash upon secure doorstep delivery inspection.</p>
+                    </div>
+                    <span className="text-[10px] font-bold text-gold-400 uppercase px-2 py-0.5 border border-gold-500/30 bg-gold-500/10">
+                      Standard COD
+                    </span>
+                  </div>
+                </div>
+
+                {/* Total Calculation */}
+                <div className="border-t border-gray-900 pt-4 flex justify-between items-center">
+                  <div>
+                    <span className="text-[10px] text-gray-400 uppercase tracking-widest block">Total Payable</span>
+                    <span className="text-xs text-gold-500">Free Express Insured Shipping</span>
+                  </div>
+                  <span className="font-serif text-2xl font-bold text-gold-400">
+                    Rs. {(product.price * orderQuantity).toLocaleString()}
+                  </span>
+                </div>
+
+                {/* Submit button */}
+                <button
+                  type="submit"
+                  disabled={isPlacingOrder}
+                  className="w-full py-4 gold-gradient-bg text-black font-extrabold text-xs uppercase tracking-widest hover:opacity-90 transition-opacity flex items-center justify-center gap-2 cursor-pointer shadow-lg disabled:opacity-50"
+                >
+                  {isPlacingOrder ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <span>Placing Order...</span>
+                    </>
+                  ) : (
+                    <>
+                      <ShoppingBag className="w-4 h-4" />
+                      <span>Confirm & Place Order</span>
+                    </>
+                  )}
+                </button>
+              </form>
+            ) : (
+              /* Success confirmation */
+              <div className="text-center py-6 space-y-6">
+                <CheckCircle2 className="w-16 h-16 text-gold-500 mx-auto animate-bounce" />
+                <div className="space-y-2">
+                  <h3 className="font-serif text-2xl font-bold text-white">Order Confirmed!</h3>
+                  <p className="text-xs text-gold-400 font-mono">Order ID: #{orderSuccess.toUpperCase()}</p>
+                  <p className="text-xs text-gray-300 max-w-sm mx-auto leading-relaxed">
+                    Thank you for ordering with Saleem Watch Center. Our concierge is preparing your timepiece for express delivery.
+                  </p>
+                </div>
+
+                <div className="flex flex-col sm:flex-row gap-3 pt-2">
+                  <Link
+                    href="/my-orders"
+                    className="flex-1 gold-gradient-bg text-black font-bold text-xs uppercase tracking-widest py-3 text-center"
+                  >
+                    View My Orders
+                  </Link>
+                  <button
+                    onClick={() => { setIsOrderModalOpen(false); setOrderSuccess(null); }}
+                    className="flex-1 border border-gold-500 text-gold-500 hover:bg-gold-500 hover:text-black transition-colors font-bold text-xs uppercase tracking-widest py-3"
+                  >
+                    Close
+                  </button>
+                </div>
+              </div>
+            )}
+
+          </div>
+        </div>
+      )}
 
       {/* Related Products Grid */}
       {relatedProducts.length > 0 && (

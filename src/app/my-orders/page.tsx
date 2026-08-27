@@ -1,40 +1,22 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { ChevronLeft, Package, Clock, Truck, CheckCircle, XCircle } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
-import { supabase, Order } from "../../supabase";
+import { useOrders } from "../../context/OrdersContext";
 
 export default function MyOrdersPage() {
   const { user } = useAuth();
-  const [orders, setOrders] = useState<Order[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const { orders: allOrders, isLoading } = useOrders();
 
-  useEffect(() => {
-    const fetchMyOrders = async () => {
-      if (!user || !supabase) {
-        setIsLoading(false);
-        return;
-      }
-      try {
-        const { data, error } = await supabase
-          .from('orders')
-          .select('*')
-          .eq('user_id', user.id)
-          .order('created_at', { ascending: false });
-          
-        if (!error && data) {
-          setOrders(data);
-        }
-      } catch (err) {
-        console.error("Failed to fetch orders", err);
-      }
-      setIsLoading(false);
-    };
-
-    fetchMyOrders();
-  }, [user]);
+  const orders = allOrders.filter(o => 
+    user && (
+      o.user_id === user.id || 
+      o.user_id === user.email || 
+      (user.phone && o.phone === user.phone)
+    )
+  );
 
   const getStatusIcon = (status: string) => {
     switch(status) {
