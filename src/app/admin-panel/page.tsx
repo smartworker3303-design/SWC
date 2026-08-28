@@ -109,6 +109,8 @@ export default function AdminPanelPage() {
   const [formSubcategory, setFormSubcategory] = useState<"mens" | "womens" | "">("");
   const [formBrand, setFormBrand] = useState("");
   const [formPrice, setFormPrice] = useState(0);
+  const [formOriginalPrice, setFormOriginalPrice] = useState<number | "">("");
+  const [formDiscount, setFormDiscount] = useState("");
   const [formImage, setFormImage] = useState("");
   const [formImages, setFormImages] = useState<string[]>(["/images/hero_luxury_watch.png"]);
   const [isProcessingImages, setIsProcessingImages] = useState(false);
@@ -318,6 +320,25 @@ export default function AdminPanelPage() {
     return candidate;
   };
 
+  // Price & Discount Helper Handlers
+  const handlePriceChange = (newPrice: number) => {
+    setFormPrice(newPrice);
+    if (typeof formOriginalPrice === "number" && formOriginalPrice > newPrice && newPrice > 0) {
+      const pct = Math.round(((formOriginalPrice - newPrice) / formOriginalPrice) * 100);
+      setFormDiscount(`${pct}% OFF`);
+    }
+  };
+
+  const handleOriginalPriceChange = (newOrigPrice: number | "") => {
+    setFormOriginalPrice(newOrigPrice);
+    if (typeof newOrigPrice === "number" && newOrigPrice > formPrice && formPrice > 0) {
+      const pct = Math.round(((newOrigPrice - formPrice) / newOrigPrice) * 100);
+      setFormDiscount(`${pct}% OFF`);
+    } else if (newOrigPrice === "" || (typeof newOrigPrice === "number" && newOrigPrice <= formPrice)) {
+      setFormDiscount("");
+    }
+  };
+
   // Open Add Modal
   const openAddModal = (defaultCategory?: "hand-watches" | "wall-clocks") => {
     setModalType("add");
@@ -327,6 +348,8 @@ export default function AdminPanelPage() {
     setFormSubcategory("");
     setFormBrand("");
     setFormPrice(1000);
+    setFormOriginalPrice("");
+    setFormDiscount("");
     setFormImage("/images/hero_luxury_watch.png");
     setFormImages(["/images/hero_luxury_watch.png"]);
     setUrlInput("");
@@ -353,6 +376,8 @@ export default function AdminPanelPage() {
     setFormSubcategory(product.subcategory || "");
     setFormBrand(product.brand || "");
     setFormPrice(product.price);
+    setFormOriginalPrice(product.originalPrice || "");
+    setFormDiscount(product.discount || "");
     setFormImage(product.image);
     const existingImgs = product.images && product.images.length > 0 ? product.images : [product.image];
     setFormImages(existingImgs);
@@ -423,6 +448,11 @@ export default function AdminPanelPage() {
       finalId = formId.trim();
     }
 
+    const origPriceNum = typeof formOriginalPrice === "number" && formOriginalPrice > Number(formPrice) ? Number(formOriginalPrice) : undefined;
+    const discountVal = formDiscount.trim() 
+      ? formDiscount.trim() 
+      : (origPriceNum ? `${Math.round(((origPriceNum - Number(formPrice)) / origPriceNum) * 100)}% OFF` : undefined);
+
     const payload: Product = {
       id: finalId,
       name: formName.trim(),
@@ -430,6 +460,8 @@ export default function AdminPanelPage() {
       subcategory: formCategory === "hand-watches" && formSubcategory ? formSubcategory : undefined,
       brand: formCategory === "hand-watches" && formBrand ? formBrand : undefined,
       price: Number(formPrice),
+      originalPrice: origPriceNum,
+      discount: discountVal,
       rating: Number(formRating),
       reviews: Number(formReviews),
       image: primaryImg,
@@ -1035,9 +1067,15 @@ export default function AdminPanelPage() {
                       className="object-cover hover:scale-105 transition-transform duration-500"
                       sizes="(max-width: 768px) 100vw, 33vw"
                     />
+                    {/* Discount Badge */}
+                    {(p.discount || (p.originalPrice && p.originalPrice > p.price)) && (
+                      <span className="absolute top-3 left-3 bg-gradient-to-r from-red-600 to-amber-600 text-white text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-sm shadow-md border border-red-400/30 z-10">
+                        {p.discount || `${Math.round(((p.originalPrice! - p.price) / p.originalPrice!) * 100)}% OFF`}
+                      </span>
+                    )}
                     {/* Overlay Tag */}
                     {p.tag && (
-                      <span className="absolute top-3 left-3 bg-gold-500 text-black text-[9px] font-black uppercase tracking-widest px-2.5 py-0.5 rounded-sm shadow-md">
+                      <span className={`absolute top-3 ${(p.discount || (p.originalPrice && p.originalPrice > p.price)) ? "left-20" : "left-3"} bg-gold-500 text-black text-[9px] font-black uppercase tracking-widest px-2.5 py-0.5 rounded-sm shadow-md z-10`}>
                         {p.tag}
                       </span>
                     )}
@@ -1082,9 +1120,16 @@ export default function AdminPanelPage() {
 
                   {/* Footer Actions */}
                   <div className="px-5 pb-5 pt-3.5 flex justify-between items-center gap-3 border-t border-gold-500/5 bg-black/10">
-                    <span className="text-sm font-extrabold text-gold-400 font-sans">
-                      Rs. {p.price.toLocaleString()}
-                    </span>
+                    <div className="flex items-baseline gap-1.5">
+                      <span className="text-sm font-extrabold text-gold-400 font-sans">
+                        Rs. {p.price.toLocaleString()}
+                      </span>
+                      {p.originalPrice && p.originalPrice > p.price && (
+                        <span className="text-xs text-gray-500 line-through font-mono">
+                          Rs. {p.originalPrice.toLocaleString()}
+                        </span>
+                      )}
+                    </div>
                     
                     <div className="flex gap-2">
                       <button
@@ -1204,9 +1249,15 @@ export default function AdminPanelPage() {
                       className="object-cover hover:scale-105 transition-transform duration-500"
                       sizes="(max-width: 768px) 100vw, 33vw"
                     />
+                    {/* Discount Badge */}
+                    {(p.discount || (p.originalPrice && p.originalPrice > p.price)) && (
+                      <span className="absolute top-3 left-3 bg-gradient-to-r from-red-600 to-amber-600 text-white text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-sm shadow-md border border-red-400/30 z-10">
+                        {p.discount || `${Math.round(((p.originalPrice! - p.price) / p.originalPrice!) * 100)}% OFF`}
+                      </span>
+                    )}
                     {/* Overlay Tag */}
                     {p.tag && (
-                      <span className="absolute top-3 left-3 bg-gold-500 text-black text-[9px] font-black uppercase tracking-widest px-2.5 py-0.5 rounded-sm shadow-md">
+                      <span className={`absolute top-3 ${(p.discount || (p.originalPrice && p.originalPrice > p.price)) ? "left-20" : "left-3"} bg-gold-500 text-black text-[9px] font-black uppercase tracking-widest px-2.5 py-0.5 rounded-sm shadow-md z-10`}>
                         {p.tag}
                       </span>
                     )}
@@ -1251,9 +1302,16 @@ export default function AdminPanelPage() {
 
                   {/* Footer Actions */}
                   <div className="px-5 pb-5 pt-3.5 flex justify-between items-center gap-3 border-t border-gold-500/5 bg-black/10">
-                    <span className="text-sm font-extrabold text-gold-400 font-sans">
-                      Rs. {p.price.toLocaleString()}
-                    </span>
+                    <div className="flex items-baseline gap-1.5">
+                      <span className="text-sm font-extrabold text-gold-400 font-sans">
+                        Rs. {p.price.toLocaleString()}
+                      </span>
+                      {p.originalPrice && p.originalPrice > p.price && (
+                        <span className="text-xs text-gray-500 line-through font-mono">
+                          Rs. {p.originalPrice.toLocaleString()}
+                        </span>
+                      )}
+                    </div>
                     
                     <div className="flex gap-2">
                       <button
@@ -1523,17 +1581,51 @@ export default function AdminPanelPage() {
                   </>
                 )}
 
-                {/* Price input */}
+                {/* Selling Price input */}
                 <div className="space-y-1">
-                  <label htmlFor="form-price" className="text-[9px] text-gray-400 uppercase tracking-widest font-semibold block">Price (PKR Rs.)</label>
+                  <label htmlFor="form-price" className="text-[9px] text-gray-400 uppercase tracking-widest font-semibold block">
+                    Selling Price (PKR Rs.) <span className="text-gold-500">*</span>
+                  </label>
                   <input
                     id="form-price"
                     type="number"
                     required
                     min={0}
                     value={formPrice}
-                    onChange={(e) => setFormPrice(Number(e.target.value))}
+                    onChange={(e) => handlePriceChange(Number(e.target.value))}
                     className="w-full bg-black border border-gold-500/15 text-white py-2 px-3 focus:outline-none focus:border-gold-500 text-xs"
+                    placeholder="e.g. 1000"
+                  />
+                </div>
+
+                {/* Original / Strike-through Price input */}
+                <div className="space-y-1">
+                  <label htmlFor="form-orig-price" className="text-[9px] text-gray-400 uppercase tracking-widest font-semibold block">
+                    Original Price (Strike-through)
+                  </label>
+                  <input
+                    id="form-orig-price"
+                    type="number"
+                    min={0}
+                    value={formOriginalPrice}
+                    onChange={(e) => handleOriginalPriceChange(e.target.value === "" ? "" : Number(e.target.value))}
+                    placeholder="e.g. 1500 (Shown crossed-out)"
+                    className="w-full bg-black border border-gold-500/15 text-gray-300 py-2 px-3 focus:outline-none focus:border-gold-500 text-xs"
+                  />
+                </div>
+
+                {/* Discount Badge input */}
+                <div className="space-y-1">
+                  <label htmlFor="form-discount" className="text-[9px] text-gray-400 uppercase tracking-widest font-semibold block">
+                    Discount Badge Tag
+                  </label>
+                  <input
+                    id="form-discount"
+                    type="text"
+                    value={formDiscount}
+                    onChange={(e) => setFormDiscount(e.target.value)}
+                    placeholder="e.g. 33% OFF, SAVE 500"
+                    className="w-full bg-black border border-gold-500/15 text-gold-400 py-2 px-3 focus:outline-none focus:border-gold-500 text-xs font-semibold"
                   />
                 </div>
 

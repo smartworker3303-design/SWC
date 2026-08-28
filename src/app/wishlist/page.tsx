@@ -108,6 +108,13 @@ export default function WishlistPage() {
                   className="glass-panel glass-panel-hover overflow-hidden flex flex-col group relative"
                 >
                   
+                  {/* Discount Badge */}
+                  {(product.discount || (product.originalPrice && product.originalPrice > product.price)) && (
+                    <span className="absolute top-4 left-4 bg-gradient-to-r from-red-600 to-amber-600 text-white text-[10px] font-black tracking-wider uppercase px-2.5 py-1 z-20 shadow-lg rounded-sm border border-red-400/30">
+                      {product.discount || `${Math.round(((product.originalPrice! - product.price) / product.originalPrice!) * 100)}% OFF`}
+                    </span>
+                  )}
+
                   {/* Remove Button */}
                   <button 
                     onClick={() => toggleWishlist(product.id)}
@@ -146,9 +153,16 @@ export default function WishlistPage() {
                           {product.name}
                         </h4>
                       </Link>
-                      <p className="font-serif text-md font-bold text-gold-400 pt-1">
-                        Rs. {product.price.toLocaleString()}
-                      </p>
+                      <div className="flex items-baseline gap-2 pt-1">
+                        <span className="font-serif text-lg font-bold text-gold-400">
+                          Rs. {product.price.toLocaleString()}
+                        </span>
+                        {product.originalPrice && product.originalPrice > product.price && (
+                          <span className="text-gray-500 line-through text-xs font-mono">
+                            Rs. {product.originalPrice.toLocaleString()}
+                          </span>
+                        )}
+                      </div>
                     </div>
 
                     <p className="text-gray-400 text-xs font-light line-clamp-2 leading-relaxed">

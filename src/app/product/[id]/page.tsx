@@ -194,8 +194,14 @@ export default function ProductDetailPage({ params }: ProductPageProps) {
               className="object-cover group-hover:scale-105 transition-transform duration-700"
               sizes="(max-width: 1024px) 100vw, 800px"
             />
+            {/* Discount Badge */}
+            {(product.discount || (product.originalPrice && product.originalPrice > product.price)) && (
+              <span className="absolute top-4 left-4 bg-gradient-to-r from-red-600 to-amber-600 text-white text-xs font-black tracking-wider uppercase px-3.5 py-1.5 z-10 shadow-xl rounded-sm border border-red-400/40">
+                {product.discount || `${Math.round(((product.originalPrice! - product.price) / product.originalPrice!) * 100)}% OFF`}
+              </span>
+            )}
             {product.tag && (
-              <span className="absolute top-4 left-4 bg-gold-600 text-black text-[9px] font-black tracking-widest uppercase px-3 py-1.5 z-10 shadow-lg">
+              <span className={`absolute top-4 ${(product.discount || (product.originalPrice && product.originalPrice > product.price)) ? "left-28 sm:left-32" : "left-4"} bg-gold-600 text-black text-[9px] font-black tracking-widest uppercase px-3 py-1.5 z-10 shadow-lg`}>
                 {product.tag}
               </span>
             )}
@@ -283,16 +289,40 @@ export default function ProductDetailPage({ params }: ProductPageProps) {
           </div>
 
           {/* Pricing Banner */}
-          <div className="border-y border-gray-900 py-4 flex items-center justify-between">
-            <div className="flex flex-col">
-              <span className="text-[10px] text-gray-500 uppercase tracking-widest">Premium Price</span>
-              <span className="font-serif text-3xl font-bold text-gold-400">Rs. {product.price.toLocaleString()}</span>
+          <div className="border-y border-gray-900 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex flex-col space-y-1">
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] text-gray-500 uppercase tracking-widest">
+                  {product.originalPrice && product.originalPrice > product.price ? "Promotional Sale Price" : "Premium Price"}
+                </span>
+                {(product.discount || (product.originalPrice && product.originalPrice > product.price)) && (
+                  <span className="bg-red-500/20 text-red-400 border border-red-500/40 text-[10px] font-extrabold px-2 py-0.5 rounded uppercase">
+                    {product.discount || `${Math.round(((product.originalPrice! - product.price) / product.originalPrice!) * 100)}% OFF`}
+                  </span>
+                )}
+              </div>
+              <div className="flex items-baseline gap-3">
+                <span className="font-serif text-3xl sm:text-4xl font-extrabold text-gold-400">
+                  Rs. {product.price.toLocaleString()}
+                </span>
+                {product.originalPrice && product.originalPrice > product.price && (
+                  <span className="text-gray-500 line-through text-lg font-mono">
+                    Rs. {product.originalPrice.toLocaleString()}
+                  </span>
+                )}
+              </div>
+              {product.originalPrice && product.originalPrice > product.price && (
+                <p className="text-xs text-green-400 font-semibold flex items-center gap-1 pt-0.5">
+                  <span>⚡ Special Savings:</span>
+                  <span>Rs. {(product.originalPrice - product.price).toLocaleString()} ({Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)}% discount)</span>
+                </p>
+              )}
             </div>
             
             {/* Wishlist Button */}
             <button 
               onClick={() => toggleWishlist(product.id)}
-              className={`inline-flex items-center gap-2 border px-5 py-3 text-xs font-bold uppercase tracking-widest transition-all ${favorite ? "bg-gold-500/10 border-gold-500 text-gold-500" : "border-gray-800 text-gray-400 hover:border-gold-500/50 hover:text-gold-400"}`}
+              className={`inline-flex items-center justify-center gap-2 border px-5 py-3 text-xs font-bold uppercase tracking-widest transition-all ${favorite ? "bg-gold-500/10 border-gold-500 text-gold-500" : "border-gray-800 text-gray-400 hover:border-gold-500/50 hover:text-gold-400"}`}
             >
               <Heart className={`w-4 h-4 ${favorite ? "fill-gold-500" : ""}`} />
               {favorite ? "Saved in Wishlist" : "Add to Wishlist"}
@@ -554,6 +584,13 @@ export default function ProductDetailPage({ params }: ProductPageProps) {
                   key={relProduct.id}
                   className="glass-panel glass-panel-hover overflow-hidden flex flex-col group relative"
                 >
+                  {/* Discount Badge */}
+                  {(relProduct.discount || (relProduct.originalPrice && relProduct.originalPrice > relProduct.price)) && (
+                    <span className="absolute top-4 left-4 bg-gradient-to-r from-red-600 to-amber-600 text-white text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-sm shadow-md border border-red-400/30 z-20">
+                      {relProduct.discount || `${Math.round(((relProduct.originalPrice! - relProduct.price) / relProduct.originalPrice!) * 100)}% OFF`}
+                    </span>
+                  )}
+
                   <button 
                     onClick={(e) => { e.preventDefault(); toggleWishlist(relProduct.id); }}
                     className="absolute top-4 right-4 z-20 p-2 rounded-full bg-black/60 border border-gold-500/20 text-gold-500 shadow-sm"
@@ -584,9 +621,16 @@ export default function ProductDetailPage({ params }: ProductPageProps) {
                       <h4 className="font-serif text-md font-bold text-white group-hover:text-gold-400 transition-colors">
                         {relProduct.name}
                       </h4>
-                      <p className="text-gold-400 text-xs font-serif font-semibold">
-                        Rs. {relProduct.price.toLocaleString()}
-                      </p>
+                      <div className="flex items-baseline gap-2 pt-0.5">
+                        <span className="text-gold-400 text-sm font-serif font-bold">
+                          Rs. {relProduct.price.toLocaleString()}
+                        </span>
+                        {relProduct.originalPrice && relProduct.originalPrice > relProduct.price && (
+                          <span className="text-gray-500 line-through text-xs font-mono">
+                            Rs. {relProduct.originalPrice.toLocaleString()}
+                          </span>
+                        )}
+                      </div>
                     </div>
 
                     <Link 

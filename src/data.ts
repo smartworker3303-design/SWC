@@ -5,6 +5,8 @@ export interface Product {
   subcategory?: "mens" | "womens";
   brand?: string;
   price: number;
+  originalPrice?: number;
+  discount?: string;
   rating: number;
   reviews: number;
   image: string;

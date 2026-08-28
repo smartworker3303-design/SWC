@@ -180,9 +180,16 @@ export default function WallClockPage() {
               key={product.id}
               className="glass-panel glass-panel-hover overflow-hidden flex flex-col group relative"
             >
+              {/* Discount Badge */}
+              {(product.discount || (product.originalPrice && product.originalPrice > product.price)) && (
+                <span className="absolute top-4 left-4 bg-gradient-to-r from-red-600 to-amber-600 text-white text-[10px] font-black tracking-wider uppercase px-2.5 py-1 z-20 shadow-lg rounded-sm border border-red-400/30">
+                  {product.discount || `${Math.round(((product.originalPrice! - product.price) / product.originalPrice!) * 100)}% OFF`}
+                </span>
+              )}
+
               {/* Tag Overlay */}
               {product.tag && (
-                <span className="absolute top-4 left-4 bg-gold-600/90 backdrop-blur-sm text-black text-[9px] font-black tracking-widest uppercase px-2.5 py-1 z-20">
+                <span className={`absolute top-4 ${(product.discount || (product.originalPrice && product.originalPrice > product.price)) ? "left-24 sm:left-28" : "left-4"} bg-gold-600/90 backdrop-blur-sm text-black text-[9px] font-black tracking-widest uppercase px-2.5 py-1 z-20`}>
                   {product.tag}
                 </span>
               )}
@@ -244,8 +251,15 @@ export default function WallClockPage() {
                 {/* Price and Details */}
                 <div className="flex items-center justify-between border-t border-gray-900 pt-4">
                   <div className="flex flex-col">
-                    <span className="text-[10px] text-gray-500 uppercase tracking-widest">Price starting at</span>
-                    <span className="font-serif text-xl font-bold text-gold-400">Rs. {product.price.toLocaleString()}</span>
+                    <span className="text-[10px] text-gray-500 uppercase tracking-widest">
+                      {product.originalPrice && product.originalPrice > product.price ? "Special Offer" : "Price starting at"}
+                    </span>
+                    <div className="flex items-baseline gap-2">
+                      <span className="font-serif text-xl font-bold text-gold-400">Rs. {product.price.toLocaleString()}</span>
+                      {product.originalPrice && product.originalPrice > product.price && (
+                        <span className="text-gray-500 line-through text-xs font-mono">Rs. {product.originalPrice.toLocaleString()}</span>
+                      )}
+                    </div>
                   </div>
                   
                   <Link 

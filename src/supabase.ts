@@ -26,9 +26,14 @@ export async function fetchSupabaseProducts(): Promise<Product[] | null> {
       const subcat = cleanSpecs.__subcategory;
       const brand = cleanSpecs.__brand;
       const galleryImages = cleanSpecs.__images || p.images || (p.image ? [p.image] : []);
+      const origPrice = p.original_price ?? p.originalPrice ?? (cleanSpecs.__original_price ? Number(cleanSpecs.__original_price) : undefined);
+      const discountText = p.discount ?? cleanSpecs.__discount ?? undefined;
+
       delete cleanSpecs.__subcategory;
       delete cleanSpecs.__brand;
       delete cleanSpecs.__images;
+      delete cleanSpecs.__original_price;
+      delete cleanSpecs.__discount;
       
       return {
         id: p.id,
@@ -37,6 +42,8 @@ export async function fetchSupabaseProducts(): Promise<Product[] | null> {
         subcategory: subcat || undefined,
         brand: brand || undefined,
         price: Number(p.price),
+        originalPrice: origPrice && Number(origPrice) > 0 ? Number(origPrice) : undefined,
+        discount: discountText || undefined,
         rating: Number(p.rating),
         reviews: Number(p.reviews),
         image: p.image,
@@ -70,7 +77,9 @@ export async function upsertSupabaseProduct(product: Product): Promise<boolean> 
         ...product.specs, 
         __brand: product.brand, 
         __subcategory: product.subcategory,
-        __images: product.images && product.images.length > 0 ? product.images : [product.image]
+        __images: product.images && product.images.length > 0 ? product.images : [product.image],
+        __original_price: product.originalPrice ? product.originalPrice : undefined,
+        __discount: product.discount ? product.discount : undefined
       },
       featured: product.featured,
       tag: product.tag || null
