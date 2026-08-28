@@ -80,6 +80,15 @@
   body::-webkit-scrollbar-thumb:hover {
     background: #d4af37;
   }
+
+  /* Crisp High-DPI Image Optimization */
+  img {
+    image-rendering: auto;
+    image-rendering: -webkit-optimize-contrast;
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+    transform: translateZ(0);
+  }
 }
 
 /* Hide scrollbar utility */

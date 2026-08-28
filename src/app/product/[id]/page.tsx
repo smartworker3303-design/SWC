@@ -190,8 +190,9 @@ export default function ProductDetailPage({ params }: ProductPageProps) {
               alt={product.name}
               fill
               priority
+              quality={95}
               className="object-cover group-hover:scale-105 transition-transform duration-700"
-              sizes="(max-width: 1024px) 100vw, 600px"
+              sizes="(max-width: 1024px) 100vw, 800px"
             />
             {product.tag && (
               <span className="absolute top-4 left-4 bg-gold-600 text-black text-[9px] font-black tracking-widest uppercase px-3 py-1.5 z-10 shadow-lg">
@@ -232,8 +233,9 @@ export default function ProductDetailPage({ params }: ProductPageProps) {
                         src={imgUrl}
                         alt={`${product.name} view ${idx + 1}`}
                         fill
+                        quality={90}
                         className="object-cover group-hover:scale-105 transition-transform duration-300"
-                        sizes="120px"
+                        sizes="(max-width: 640px) 20vw, 150px"
                       />
                       {isActive && (
                         <div className="absolute inset-0 bg-gold-500/10 pointer-events-none" />
@@ -565,8 +567,9 @@ export default function ProductDetailPage({ params }: ProductPageProps) {
                       src={relProduct.image}
                       alt={relProduct.name}
                       fill
+                      quality={90}
                       className="object-cover scale-100 group-hover:scale-105 transition-transform duration-500"
-                      sizes="(max-w-768px) 100vw, 250px"
+                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                     />
                     <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                       <div className="bg-gold-500 text-black px-4 py-2 font-extrabold text-[10px] uppercase tracking-widest flex items-center gap-1.5">

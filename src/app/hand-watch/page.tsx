@@ -262,8 +262,9 @@ function HandWatchContent() {
                   src={product.image}
                   alt={product.name}
                   fill
+                  quality={90}
                   className="object-cover scale-100 group-hover:scale-108 transition-transform duration-500 ease-out"
-                  sizes="(max-w-768px) 100vw, 380px"
+                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                 />
                 <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                   <div className="bg-gold-500 text-black px-5 py-3 font-extrabold text-xs uppercase tracking-widest flex items-center gap-2 transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300">

@@ -123,8 +123,9 @@ export default function WishlistPage() {
                       src={product.image}
                       alt={product.name}
                       fill
+                      quality={90}
                       className="object-cover scale-100 group-hover:scale-105 transition-transform duration-500"
-                      sizes="(max-w-768px) 100vw, 380px"
+                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                     />
                     <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                       <div className="bg-gold-500 text-black px-4 py-2.5 font-extrabold text-[11px] uppercase tracking-widest flex items-center gap-1.5">

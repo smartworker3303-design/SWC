@@ -67,13 +67,14 @@ export default function AboutPage() {
 
         {/* Story visuals */}
         <div className="lg:col-span-5 relative h-[500px] w-full bg-black border border-gold-500/15 overflow-hidden flex items-center justify-center shadow-2xl p-4">
-          <Image 
-            src="/images/certificate.jpg"
-            alt="SWC Watchmaking Heritage Certificate"
-            fill
-            className="object-contain hover:scale-105 transition-transform duration-700"
-            sizes="(max-w-1024px) 100vw, 500px"
-          />
+            <Image 
+              src="/images/certificate.jpg"
+              alt="SWC Watchmaking Heritage Certificate"
+              fill
+              quality={95}
+              className="object-contain hover:scale-105 transition-transform duration-700"
+              sizes="(max-width: 1024px) 100vw, 500px"
+            />
         </div>
 
       </div>

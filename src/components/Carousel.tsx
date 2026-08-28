@@ -244,8 +244,8 @@ function CarouselContent() {
           animation: sovereignReveal 3s cubic-bezier(0.25, 1, 0.5, 1) forwards;
         }
         @keyframes royaleZoom {
-          0% { transform: scale(1); filter: blur(3px); }
-          100% { transform: scale(1.06); filter: blur(0); }
+          0% { transform: scale(1); }
+          100% { transform: scale(1.06); }
         }
         @keyframes solarisPan {
           0% { transform: scale(1.1) translateX(-12px); filter: brightness(0.85); }

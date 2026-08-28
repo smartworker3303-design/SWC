@@ -153,13 +153,32 @@ export default function AdminPanelPage() {
     if (file) {
       const reader = new FileReader();
       reader.onload = (event) => {
+        const rawDataUrl = event.target?.result;
+        if (typeof rawDataUrl !== "string") return;
+
         const img = new window.Image();
         img.onload = () => {
-          // Keep images small to stay within Supabase's request size limit.
-          // 400px max dimension at 60% webp quality ≈ 50-100KB base64 — safe for DB storage.
-          const MAX_SIZE = 400;
+          // Allow high resolution up to 1600px for crystal-clear detail on 4K & Retina displays.
+          const MAX_SIZE = 1600;
           let width = img.width;
           let height = img.height;
+
+          // If the image is already within high-res bounds and under 1.5MB, preserve original data URL directly
+          if (width <= MAX_SIZE && height <= MAX_SIZE && file.size <= 1.5 * 1024 * 1024) {
+            setFormImage(rawDataUrl);
+            setFormImages(prev => {
+              const copy = [...prev];
+              if (activeImageSlot < copy.length) {
+                copy[activeImageSlot] = rawDataUrl;
+              } else if (copy.length < 5) {
+                copy.push(rawDataUrl);
+              }
+              return copy;
+            });
+            return;
+          }
+
+          // Otherwise, downscale gently while keeping crisp aspect ratio and high fidelity
           if (width > height) {
             if (width > MAX_SIZE) {
               height = Math.round((height * MAX_SIZE) / width);
@@ -171,31 +190,37 @@ export default function AdminPanelPage() {
               height = MAX_SIZE;
             }
           }
-          // Use actual image dimensions for the canvas (no padding/letterboxing)
+
           const canvas = document.createElement("canvas");
           canvas.width = width;
           canvas.height = height;
           const ctx = canvas.getContext("2d");
           if (ctx) {
+            // Enable high-quality smoothing for sharp, un-blurred image downsampling
+            ctx.imageSmoothingEnabled = true;
+            ctx.imageSmoothingQuality = "high";
+            ctx.clearRect(0, 0, width, height);
             ctx.drawImage(img, 0, 0, width, height);
-            const dataUrl = canvas.toDataURL("image/webp", 0.6);
-            setFormImage(dataUrl);
+
+            // Export at 90% WebP quality for crisp textures and micro-details
+            const optimizedDataUrl = canvas.toDataURL("image/webp", 0.90);
+            setFormImage(optimizedDataUrl);
             setFormImages(prev => {
               const copy = [...prev];
               if (activeImageSlot < copy.length) {
-                copy[activeImageSlot] = dataUrl;
+                copy[activeImageSlot] = optimizedDataUrl;
               } else if (copy.length < 5) {
-                copy.push(dataUrl);
+                copy.push(optimizedDataUrl);
               }
               return copy;
             });
           }
         };
-        if (event.target?.result && typeof event.target.result === "string") {
-          img.src = event.target.result;
-        }
+        img.src = rawDataUrl;
       };
       reader.readAsDataURL(file);
+      // Reset input value so the same file can be re-selected if desired
+      e.target.value = "";
     }
   };
 

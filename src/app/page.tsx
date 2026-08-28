@@ -233,8 +233,9 @@ export default function Home() {
                     src={product.image}
                     alt={product.name}
                     fill
+                    quality={90}
                     className="object-cover scale-100 group-hover:scale-108 transition-transform duration-500 ease-out"
-                    sizes="(max-w-768px) 100vw, 380px"
+                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                   />
                   
                   {/* View Details Hover Card Overlay */}
