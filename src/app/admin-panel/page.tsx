@@ -23,7 +23,12 @@ import {
   Settings,
   ChevronLeft,
   Watch,
-  Search
+  Search,
+  UploadCloud,
+  Star,
+  Loader2,
+  Link as LinkIcon,
+  Image as ImageIcon
 } from "lucide-react";
 import { useProducts } from "../../context/ProductsContext";
 import { useOrders } from "../../context/OrdersContext";
@@ -106,7 +111,9 @@ export default function AdminPanelPage() {
   const [formPrice, setFormPrice] = useState(0);
   const [formImage, setFormImage] = useState("");
   const [formImages, setFormImages] = useState<string[]>(["/images/hero_luxury_watch.png"]);
-  const [activeImageSlot, setActiveImageSlot] = useState<number>(0);
+  const [isProcessingImages, setIsProcessingImages] = useState(false);
+  const [urlInput, setUrlInput] = useState("");
+  const [isAddingUrl, setIsAddingUrl] = useState(false);
   const [formDescription, setFormDescription] = useState("");
   const [formRating, setFormRating] = useState(5.0);
   const [formReviews, setFormReviews] = useState(0);
@@ -143,42 +150,29 @@ export default function AdminPanelPage() {
     sessionStorage.removeItem("swc-admin-authenticated");
   };
 
-  // Image Upload File Pickers
-  const triggerFileSelect = () => {
-    document.getElementById("image-file-input")?.click();
-  };
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
+  // Helper to convert/optimize image files to high-resolution crisp WebP (up to 1600px, 90% quality)
+  const processImageFile = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
       const reader = new FileReader();
       reader.onload = (event) => {
         const rawDataUrl = event.target?.result;
-        if (typeof rawDataUrl !== "string") return;
+        if (typeof rawDataUrl !== "string") {
+          reject(new Error("Could not read file"));
+          return;
+        }
 
         const img = new window.Image();
         img.onload = () => {
-          // Allow high resolution up to 1600px for crystal-clear detail on 4K & Retina displays.
           const MAX_SIZE = 1600;
           let width = img.width;
           let height = img.height;
 
-          // If the image is already within high-res bounds and under 1.5MB, preserve original data URL directly
+          // If image is already lightweight & within 1600px bounds, keep original fidelity directly
           if (width <= MAX_SIZE && height <= MAX_SIZE && file.size <= 1.5 * 1024 * 1024) {
-            setFormImage(rawDataUrl);
-            setFormImages(prev => {
-              const copy = [...prev];
-              if (activeImageSlot < copy.length) {
-                copy[activeImageSlot] = rawDataUrl;
-              } else if (copy.length < 5) {
-                copy.push(rawDataUrl);
-              }
-              return copy;
-            });
+            resolve(rawDataUrl);
             return;
           }
 
-          // Otherwise, downscale gently while keeping crisp aspect ratio and high fidelity
           if (width > height) {
             if (width > MAX_SIZE) {
               height = Math.round((height * MAX_SIZE) / width);
@@ -196,63 +190,115 @@ export default function AdminPanelPage() {
           canvas.height = height;
           const ctx = canvas.getContext("2d");
           if (ctx) {
-            // Enable high-quality smoothing for sharp, un-blurred image downsampling
             ctx.imageSmoothingEnabled = true;
             ctx.imageSmoothingQuality = "high";
             ctx.clearRect(0, 0, width, height);
             ctx.drawImage(img, 0, 0, width, height);
-
-            // Export at 90% WebP quality for crisp textures and micro-details
-            const optimizedDataUrl = canvas.toDataURL("image/webp", 0.90);
-            setFormImage(optimizedDataUrl);
-            setFormImages(prev => {
-              const copy = [...prev];
-              if (activeImageSlot < copy.length) {
-                copy[activeImageSlot] = optimizedDataUrl;
-              } else if (copy.length < 5) {
-                copy.push(optimizedDataUrl);
-              }
-              return copy;
-            });
+            resolve(canvas.toDataURL("image/webp", 0.90));
+          } else {
+            resolve(rawDataUrl);
           }
         };
+        img.onerror = () => reject(new Error("Invalid image format"));
         img.src = rawDataUrl;
       };
+      reader.onerror = () => reject(new Error("Failed to read file"));
       reader.readAsDataURL(file);
-      // Reset input value so the same file can be re-selected if desired
+    });
+  };
+
+  // Upload handler for Primary/Main Image
+  const handleMainImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      setIsProcessingImages(true);
+      const dataUrl = await processImageFile(file);
+      setFormImage(dataUrl);
+      setFormImages(prev => {
+        const copy = [...prev];
+        copy[0] = dataUrl;
+        return copy;
+      });
+    } catch (err) {
+      console.error("Error processing main image:", err);
+    } finally {
+      setIsProcessingImages(false);
       e.target.value = "";
     }
   };
 
-  const handleAddImageSlot = () => {
-    if (formImages.length < 5) {
-      const nextIndex = formImages.length;
-      setFormImages([...formImages, ""]);
-      setActiveImageSlot(nextIndex);
+  // Upload handler for Multiple Gallery Images (allows choosing 1 to 4 images at once!)
+  const handleGalleryMultipleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
+
+    try {
+      setIsProcessingImages(true);
+      const newUrls: string[] = [];
+      const currentValid = formImages.filter(img => img.trim().length > 0);
+      const maxSlotsAllowed = 5 - currentValid.length;
+
+      for (const file of files.slice(0, maxSlotsAllowed)) {
+        const dataUrl = await processImageFile(file);
+        newUrls.push(dataUrl);
+      }
+
+      setFormImages(prev => {
+        const valid = prev.filter(img => img.trim().length > 0);
+        const merged = [...valid, ...newUrls].slice(0, 5);
+        if (merged.length > 0) setFormImage(merged[0]);
+        return merged;
+      });
+    } catch (err) {
+      console.error("Error processing gallery images:", err);
+    } finally {
+      setIsProcessingImages(false);
+      e.target.value = "";
     }
   };
 
-  const handleRemoveImageSlot = (index: number) => {
-    if (formImages.length <= 1) {
-      setFormImages([""]);
-      setFormImage("");
-      return;
-    }
-    const updated = formImages.filter((_, i) => i !== index);
-    setFormImages(updated);
-    if (activeImageSlot >= updated.length) {
-      setActiveImageSlot(Math.max(0, updated.length - 1));
-    }
-    setFormImage(updated[0] || "");
+  // Set any secondary image as the Main Cover Image
+  const handleMakeMainImage = (index: number) => {
+    if (index <= 0 || index >= formImages.length) return;
+    setFormImages(prev => {
+      const copy = [...prev];
+      const selected = copy[index];
+      copy.splice(index, 1);
+      copy.unshift(selected); // Put at index 0
+      setFormImage(copy[0]);
+      return copy;
+    });
   };
 
-  const handleImageSlotChange = (index: number, val: string) => {
-    const updated = [...formImages];
-    updated[index] = val;
-    setFormImages(updated);
-    if (index === 0) {
-      setFormImage(val);
-    }
+  // Remove an image from the list
+  const handleRemoveImage = (index: number) => {
+    setFormImages(prev => {
+      const copy = prev.filter((_, i) => i !== index);
+      if (copy.length === 0) {
+        setFormImage("");
+        return [""];
+      }
+      setFormImage(copy[0]);
+      return copy;
+    });
+  };
+
+  // Add an image URL directly
+  const handleAddUrl = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (!urlInput.trim()) return;
+    const url = urlInput.trim();
+    setFormImages(prev => {
+      const valid = prev.filter(img => img.trim().length > 0);
+      if (valid.length >= 5) return prev;
+      const merged = [...valid, url].slice(0, 5);
+      if (merged.length > 0) setFormImage(merged[0]);
+      return merged;
+    });
+    setUrlInput("");
+    setIsAddingUrl(false);
   };
 
   // Helper function to auto-generate clean, URL-safe unique product IDs
@@ -283,7 +329,8 @@ export default function AdminPanelPage() {
     setFormPrice(1000);
     setFormImage("/images/hero_luxury_watch.png");
     setFormImages(["/images/hero_luxury_watch.png"]);
-    setActiveImageSlot(0);
+    setUrlInput("");
+    setIsAddingUrl(false);
     setFormDescription("");
     setFormRating(5.0);
     setFormReviews(0);
@@ -309,7 +356,8 @@ export default function AdminPanelPage() {
     setFormImage(product.image);
     const existingImgs = product.images && product.images.length > 0 ? product.images : [product.image];
     setFormImages(existingImgs);
-    setActiveImageSlot(0);
+    setUrlInput("");
+    setIsAddingUrl(false);
     setFormDescription(product.description);
     setFormRating(product.rating);
     setFormReviews(product.reviews);
@@ -1503,127 +1551,249 @@ export default function AdminPanelPage() {
                 </div>
               </div>
 
-              {/* Multiple Images Gallery Manager (Maximum 5 Images) */}
-              <div className="space-y-3 border border-gold-500/20 bg-black/40 p-4 rounded">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-gray-900 pb-2.5">
+              {/* ========================================================================= */}
+              {/* INTUITIVE PRODUCT IMAGES MANAGER (Main Cover + Secondary Gallery) */}
+              {/* ========================================================================= */}
+              <div className="space-y-4 border border-gold-500/20 bg-black/40 p-4 sm:p-5 rounded-lg text-left">
+                
+                {/* Header */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-gold-500/10 pb-3">
                   <div>
-                    <label className="text-[10px] text-gold-400 uppercase tracking-widest font-bold block">
-                      Product Images ({formImages.length}/5 max)
-                    </label>
-                    <p className="text-[9px] text-gray-500 font-light">
-                      Image #1 is the Primary Thumbnail shown in catalogs. Images #2-5 display on the Product Details page.
+                    <div className="flex items-center gap-2">
+                      <h4 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-gold-400 font-serif">
+                        Product Images ({formImages.filter(img => img && img.trim()).length}/5 Total)
+                      </h4>
+                      {isProcessingImages && (
+                        <span className="inline-flex items-center gap-1 text-[10px] text-gold-300 font-mono animate-pulse">
+                          <Loader2 className="w-3 h-3 animate-spin" /> Optimizing high-res...
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-[10px] text-gray-400 font-light mt-0.5">
+                      The 1st image is the Main Cover shown in catalogs. Additional images (up to 4) appear in the product detail gallery.
                     </p>
                   </div>
-                  {formImages.length < 5 && (
-                    <button
-                      type="button"
-                      onClick={handleAddImageSlot}
-                      className="inline-flex items-center gap-1 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider border border-gold-500/40 text-gold-400 hover:bg-gold-500 hover:text-black transition-colors rounded cursor-pointer"
-                    >
-                      <Plus className="w-3 h-3" />
-                      Add Gallery Image ({formImages.length}/5)
-                    </button>
-                  )}
+
+                  {/* URL / Path Toggle */}
+                  <button
+                    type="button"
+                    onClick={() => setIsAddingUrl(!isAddingUrl)}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-semibold tracking-wider text-gray-300 hover:text-gold-400 border border-gold-500/20 hover:border-gold-500/50 bg-black/60 rounded transition-colors self-start sm:self-auto cursor-pointer"
+                  >
+                    <LinkIcon className="w-3 h-3 text-gold-500" />
+                    {isAddingUrl ? "Hide URL Input" : "Paste Image URL / Path"}
+                  </button>
                 </div>
 
-                {/* Thumbnail Preview Strip */}
-                <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 pt-1">
-                  {formImages.map((imgUrl, idx) => {
-                    const isSelected = activeImageSlot === idx;
-                    return (
-                      <div
-                        key={idx}
-                        onClick={() => setActiveImageSlot(idx)}
-                        className={`relative h-28 bg-black rounded border cursor-pointer overflow-hidden transition-all flex flex-col items-center justify-center group ${
-                          isSelected
-                            ? "border-gold-500 ring-2 ring-gold-500/30 shadow-[0_0_15px_rgba(212,175,55,0.2)]"
-                            : "border-gold-500/15 hover:border-gold-500/40 opacity-80 hover:opacity-100"
-                        }`}
+                {/* Optional URL Input Popover */}
+                {isAddingUrl && (
+                  <div className="bg-neutral-900/95 border border-gold-500/25 p-3 rounded space-y-2 animate-fade-in-up">
+                    <label className="text-[9px] text-gold-400 uppercase tracking-wider font-bold block">
+                      Add Image via Local Path or Web URL (e.g. /images/hero_luxury_watch.png or https://...)
+                    </label>
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={urlInput}
+                        onChange={(e) => setUrlInput(e.target.value)}
+                        placeholder="/images/products/swc_product_1.webp or https://..."
+                        className="flex-1 bg-black border border-gold-500/30 text-white px-3 py-2 text-xs font-mono focus:outline-none focus:border-gold-500"
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            e.preventDefault();
+                            handleAddUrl();
+                          }
+                        }}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => handleAddUrl()}
+                        disabled={!urlInput.trim() || formImages.filter(img => img && img.trim()).length >= 5}
+                        className="px-4 py-2 gold-gradient-bg text-black text-xs font-extrabold uppercase tracking-wider disabled:opacity-50 cursor-pointer"
                       >
-                        {imgUrl ? (
-                          <>
-                            <Image
-                              src={imgUrl}
-                              alt={`Slot ${idx + 1}`}
-                              fill
-                              className="object-contain p-2"
-                            />
-                            <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                              <span className="text-[8px] text-gold-400 font-bold uppercase tracking-widest">Select</span>
-                            </div>
-                          </>
-                        ) : (
-                          <div className="text-center p-2">
-                            <Plus className="w-5 h-5 text-gray-600 mx-auto mb-1" />
-                            <span className="text-[8px] text-gray-500 uppercase block">Empty</span>
+                        Add
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* MAIN COVER & GALLERY GRID LAYOUT */}
+                <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-start">
+                  
+                  {/* SECTION 1: PRIMARY / MAIN STOREFRONT IMAGE (5 cols) */}
+                  <div className="md:col-span-5 bg-neutral-950/80 border-2 border-gold-500/40 rounded-lg p-3.5 space-y-2.5 relative">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] font-black uppercase tracking-widest bg-gold-500 text-black px-2 py-0.5 rounded-sm">
+                        ★ Main Cover Image
+                      </span>
+                      <span className="text-[9px] text-gold-400/80 font-mono">Image #1</span>
+                    </div>
+
+                    {/* Main Image Box */}
+                    <div className="relative h-44 w-full bg-black rounded border border-gold-500/20 overflow-hidden flex items-center justify-center group">
+                      {formImages[0] && formImages[0].trim() ? (
+                        <>
+                          <Image
+                            src={formImages[0]}
+                            alt="Main Product Cover"
+                            fill
+                            className="object-contain p-2"
+                          />
+                          {/* Quick Hover Actions */}
+                          <div className="absolute inset-0 bg-black/75 opacity-0 group-hover:opacity-100 flex items-center justify-center gap-2 transition-opacity">
+                            <button
+                              type="button"
+                              onClick={() => document.getElementById("main-image-input")?.click()}
+                              className="px-3 py-1.5 bg-gold-500 text-black font-bold text-[10px] uppercase tracking-wider rounded hover:bg-gold-400 transition-colors cursor-pointer"
+                            >
+                              Change File
+                            </button>
+                            {formImages.length > 1 && (
+                              <button
+                                type="button"
+                                onClick={() => handleRemoveImage(0)}
+                                className="p-1.5 bg-red-950/90 text-red-300 border border-red-500/40 rounded hover:bg-red-600 hover:text-white transition-colors cursor-pointer"
+                                title="Remove Main Image"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            )}
                           </div>
-                        )}
+                        </>
+                      ) : (
+                        <div 
+                          onClick={() => document.getElementById("main-image-input")?.click()}
+                          className="text-center p-4 cursor-pointer hover:text-gold-400 transition-colors w-full h-full flex flex-col items-center justify-center"
+                        >
+                          <UploadCloud className="w-8 h-8 text-gold-500/70 mb-2 animate-bounce" />
+                          <p className="text-[11px] font-bold text-gray-300 uppercase tracking-wider">Click to Upload Main Image</p>
+                          <p className="text-[9px] text-gray-500 mt-1">High resolution supported (JPEG, PNG, WebP)</p>
+                        </div>
+                      )}
+                    </div>
 
-                        {/* Badge */}
-                        <span className={`absolute top-1 left-1 text-[8px] font-black uppercase px-1.5 py-0.5 rounded-sm ${
-                          idx === 0 
-                            ? "bg-gold-500 text-black font-extrabold" 
-                            : "bg-black/80 text-gray-300 border border-gold-500/20"
-                        }`}>
-                          {idx === 0 ? "★ Main" : `#${idx + 1}`}
-                        </span>
-
-                        {/* Remove button (if more than 1 image slot) */}
-                        {formImages.length > 1 && (
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleRemoveImageSlot(idx);
-                            }}
-                            className="absolute top-1 right-1 p-1 bg-red-950/80 border border-red-500/40 text-red-400 hover:bg-red-500 hover:text-white rounded-full transition-colors"
-                            title="Remove this image slot"
-                          >
-                            <X className="w-2.5 h-2.5" />
-                          </button>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-
-                {/* Selected Slot Controls */}
-                <div className="pt-2 space-y-3 bg-black/60 p-3 rounded border border-gold-500/10">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                    <span className="text-[10px] text-gold-400 uppercase tracking-wider font-bold">
-                      Editing Image #{activeImageSlot + 1} {activeImageSlot === 0 ? "(Primary Storefront)" : "(Product Gallery)"}
-                    </span>
+                    {/* Direct Upload Button for Main */}
                     <button
                       type="button"
-                      onClick={triggerFileSelect}
-                      className="inline-flex items-center gap-1 text-[10px] text-gray-300 hover:text-gold-400 border border-gray-700 hover:border-gold-500 px-2 py-1 transition-colors cursor-pointer"
+                      onClick={() => document.getElementById("main-image-input")?.click()}
+                      className="w-full py-2 px-3 border border-gold-500/40 bg-gold-500/10 text-gold-400 hover:bg-gold-500 hover:text-black font-bold text-xs uppercase tracking-wider rounded transition-all flex items-center justify-center gap-2 cursor-pointer"
                     >
-                      <Plus className="w-3 h-3 text-gold-500" />
-                      Browse Local Image File for Slot #{activeImageSlot + 1}
+                      <UploadCloud className="w-4 h-4" />
+                      {formImages[0] && formImages[0].trim() ? "Change Main Image File" : "Upload Main Image File"}
                     </button>
-                  </div>
 
-                  <div className="space-y-1">
-                    <label className="text-[9px] text-gray-400 uppercase tracking-widest block">Image URL / Path</label>
+                    {/* Hidden File Input for Main Image */}
                     <input
-                      type="text"
-                      required={activeImageSlot === 0}
-                      value={formImages[activeImageSlot] || ""}
-                      onChange={(e) => handleImageSlotChange(activeImageSlot, e.target.value)}
-                      placeholder="/images/hero_luxury_watch.png or https://..."
-                      className="w-full bg-black border border-gold-500/20 text-white py-2 px-3 focus:outline-none focus:border-gold-500 text-xs font-mono"
+                      type="file"
+                      id="main-image-input"
+                      accept="image/*"
+                      onChange={handleMainImageUpload}
+                      className="hidden"
                     />
                   </div>
-                </div>
 
-                {/* Hidden file input */}
-                <input
-                  type="file"
-                  id="image-file-input"
-                  accept="image/*"
-                  onChange={handleFileChange}
-                  className="hidden"
-                />
+                  {/* SECTION 2: SECONDARY GALLERY IMAGES (7 cols) */}
+                  <div className="md:col-span-7 bg-neutral-950/60 border border-gold-500/15 rounded-lg p-3.5 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-gray-300 block">
+                          Gallery Views (Images #2 - #5)
+                        </span>
+                        <span className="text-[9px] text-gray-500">
+                          {formImages.slice(1).filter(img => img && img.trim()).length} / 4 secondary images added
+                        </span>
+                      </div>
+
+                      {/* Multi-file Upload Button for Gallery */}
+                      {formImages.filter(img => img && img.trim()).length < 5 && (
+                        <button
+                          type="button"
+                          onClick={() => document.getElementById("gallery-multi-input")?.click()}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 gold-gradient-bg text-black font-extrabold text-[10px] uppercase tracking-wider rounded hover:opacity-90 transition-opacity cursor-pointer shadow"
+                        >
+                          <Plus className="w-3.5 h-3.5 stroke-[3px]" />
+                          + Upload Multiple Images
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Hidden Multi-file Input for Gallery */}
+                    <input
+                      type="file"
+                      id="gallery-multi-input"
+                      accept="image/*"
+                      multiple
+                      onChange={handleGalleryMultipleUpload}
+                      className="hidden"
+                    />
+
+                    {/* Secondary Images Grid */}
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                      {formImages.slice(1).map((imgUrl, sliceIdx) => {
+                        const actualIdx = sliceIdx + 1;
+                        if (!imgUrl || !imgUrl.trim()) return null;
+
+                        return (
+                          <div
+                            key={actualIdx}
+                            className="relative h-32 bg-black rounded-lg border border-gold-500/20 overflow-hidden flex flex-col group transition-all hover:border-gold-500 shadow"
+                          >
+                            {/* Image Preview */}
+                            <div className="relative w-full h-full">
+                              <Image
+                                src={imgUrl}
+                                alt={`Gallery view #${actualIdx + 1}`}
+                                fill
+                                className="object-contain p-1.5"
+                              />
+                            </div>
+
+                            {/* Position Badge */}
+                            <span className="absolute top-1.5 left-1.5 text-[8px] font-bold bg-black/80 text-gold-400 border border-gold-500/30 px-1.5 py-0.5 rounded">
+                              #{actualIdx + 1}
+                            </span>
+
+                            {/* Top Right Remove Button */}
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveImage(actualIdx)}
+                              className="absolute top-1.5 right-1.5 p-1 bg-red-950/90 text-red-300 border border-red-500/40 rounded-full hover:bg-red-600 hover:text-white transition-colors cursor-pointer"
+                              title="Remove this image"
+                            >
+                              <X className="w-2.5 h-2.5" />
+                            </button>
+
+                            {/* Bottom Make-Main Promotion Button */}
+                            <button
+                              type="button"
+                              onClick={() => handleMakeMainImage(actualIdx)}
+                              className="w-full py-1 bg-neutral-900/95 hover:bg-gold-500 text-gray-300 hover:text-black text-[9px] font-bold uppercase tracking-wider border-t border-gold-500/20 transition-colors flex items-center justify-center gap-1 cursor-pointer"
+                              title="Promote this image to primary main cover"
+                            >
+                              <Star className="w-2.5 h-2.5" />
+                              Make Main
+                            </button>
+                          </div>
+                        );
+                      })}
+
+                      {/* Empty Add Slot Box (if under 5 images total) */}
+                      {formImages.filter(img => img && img.trim()).length < 5 && (
+                        <div
+                          onClick={() => document.getElementById("gallery-multi-input")?.click()}
+                          className="h-32 border-2 border-dashed border-gold-500/25 hover:border-gold-500/60 bg-gold-500/5 hover:bg-gold-500/10 rounded-lg flex flex-col items-center justify-center p-2 text-center cursor-pointer transition-all group"
+                        >
+                          <Plus className="w-6 h-6 text-gold-500/70 group-hover:text-gold-400 mb-1 group-hover:scale-110 transition-transform" />
+                          <span className="text-[10px] font-bold text-gray-300 group-hover:text-gold-400 uppercase tracking-wider">
+                            + Add Image
+                          </span>
+                          <span className="text-[8px] text-gray-500 mt-0.5">Select files</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                </div>
               </div>
 
               {/* Grid for Rating and Reviews metadata */}
