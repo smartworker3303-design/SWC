@@ -50,6 +50,7 @@ export default function ProductDetailPage({ params }: ProductPageProps) {
   const [orderSuccess, setOrderSuccess] = useState<string | null>(null);
   const [orderError, setOrderError] = useState<string | null>(null);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+  const [selectedColor, setSelectedColor] = useState<string>("");
 
   useEffect(() => {
     if (user) {
@@ -67,6 +68,14 @@ export default function ProductDetailPage({ params }: ProductPageProps) {
     p.id === decodedId || 
     p.id.toLowerCase() === decodedId.toLowerCase()
   );
+
+  useEffect(() => {
+    if (product?.colors && product.colors.length > 0) {
+      setSelectedColor(product.colors[0]);
+    } else {
+      setSelectedColor("");
+    }
+  }, [product]);
 
   if (isLoading) {
     return (
@@ -107,8 +116,9 @@ export default function ProductDetailPage({ params }: ProductPageProps) {
     .filter(p => p.category === product.category && p.id !== product.id)
     .slice(0, 3);
 
-  const getWhatsAppLink = (productName: string) => {
-    const text = encodeURIComponent(`Hi Saleem Watch Center, I am highly interested in purchasing the "${productName}" from swc.com. Please share availability details!`);
+  const getWhatsAppLink = (productName: string, color?: string) => {
+    const colorSpec = color ? ` (Color: ${color})` : "";
+    const text = encodeURIComponent(`Hi Saleem Watch Center, I am highly interested in purchasing the "${productName}"${colorSpec} from swc.com. Please share availability details!`);
     return `https://wa.me/923212200321?text=${text}`;
   };
 
@@ -124,13 +134,14 @@ export default function ProductDetailPage({ params }: ProductPageProps) {
       setOrderError(null);
       
       const newOrderId = 'ord_' + Math.random().toString(36).substring(2, 9) + Date.now().toString(36).slice(-4);
+      const itemName = selectedColor ? `${product.name} (Color: ${selectedColor})` : product.name;
       const orderPayload: Order = {
         id: newOrderId,
         user_id: user?.id || user?.email || 'guest_client',
         items: [
           {
             product_id: product.id,
-            name: product.name,
+            name: itemName,
             price: product.price,
             quantity: orderQuantity
           }
@@ -334,6 +345,57 @@ export default function ProductDetailPage({ params }: ProductPageProps) {
             {product.description}
           </p>
 
+          {/* Color Variation Selector if available */}
+          {product.colors && product.colors.length > 0 && (
+            <div className="space-y-3 border-y border-gray-900 py-4">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-extrabold text-white uppercase tracking-widest flex items-center gap-1.5">
+                  <Sparkles className="w-3.5 h-3.5 text-gold-500" />
+                  Available Watch Colours
+                </span>
+                {selectedColor && (
+                  <span className="text-xs text-gold-400 font-semibold font-mono">
+                    Selected: <span className="text-white">{selectedColor}</span>
+                  </span>
+                )}
+              </div>
+              <div className="flex flex-wrap gap-2.5">
+                {product.colors.map((colorName) => {
+                  const isSelected = selectedColor.toLowerCase() === colorName.toLowerCase();
+                  return (
+                    <button
+                      key={colorName}
+                      type="button"
+                      onClick={() => setSelectedColor(colorName)}
+                      className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-sm border text-xs font-semibold uppercase tracking-wider transition-all cursor-pointer ${
+                        isSelected 
+                          ? "bg-gold-500 text-black border-gold-400 font-bold shadow-[0_0_15px_rgba(212,175,55,0.4)] scale-105" 
+                          : "bg-black/60 text-gray-300 border-gold-500/20 hover:border-gold-500/60 hover:text-white"
+                      }`}
+                    >
+                      <span 
+                        className={`w-3 h-3 rounded-full border inline-block ${isSelected ? 'border-black' : 'border-gold-500/40'}`}
+                        style={{ 
+                          backgroundColor: colorName.toLowerCase().includes("black") ? "#111" 
+                            : colorName.toLowerCase().includes("blue") ? "#1e40af"
+                            : colorName.toLowerCase().includes("gold") ? "#d4af37"
+                            : colorName.toLowerCase().includes("silver") ? "#cbd5e1"
+                            : colorName.toLowerCase().includes("rose") ? "#b76e79"
+                            : colorName.toLowerCase().includes("green") ? "#065f46"
+                            : colorName.toLowerCase().includes("brown") ? "#78350f"
+                            : colorName.toLowerCase().includes("white") ? "#ffffff"
+                            : "#555"
+                        }}
+                      />
+                      <span>{colorName}</span>
+                      {isSelected && <span className="text-[10px] font-bold">✓</span>}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
           {/* Luxury badges check */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 border-b border-gray-900 pb-6 text-xs text-gray-400">
             <div className="flex items-center gap-2">
@@ -357,6 +419,12 @@ export default function ProductDetailPage({ params }: ProductPageProps) {
               Technical Specifications
             </h3>
             <div className="border border-gold-500/10 divide-y divide-gray-900">
+              {product.colors && product.colors.length > 0 && (
+                <div className="grid grid-cols-2 p-3 text-xs bg-luxury-charcoal/20">
+                  <span className="text-gray-500 font-light">Available Colours</span>
+                  <span className="text-gold-400 font-medium text-right">{product.colors.join(", ")}</span>
+                </div>
+              )}
               {Object.entries(product.specs).map(([specKey, specVal]) => (
                 <div key={specKey} className="grid grid-cols-2 p-3 text-xs bg-luxury-charcoal/20">
                   <span className="text-gray-500 font-light">{specKey}</span>
@@ -369,7 +437,7 @@ export default function ProductDetailPage({ params }: ProductPageProps) {
           {/* Purchase Actions */}
           <div className="flex flex-col sm:flex-row gap-4 pt-4">
             <a 
-              href={getWhatsAppLink(product.name)}
+              href={getWhatsAppLink(product.name, selectedColor)}
               target="_blank" 
               rel="noopener noreferrer"
               className="flex-grow gold-gradient-bg text-black font-extrabold text-xs tracking-widest uppercase py-4 text-center flex items-center justify-center gap-2 hover:opacity-90 shadow-[0_4px_25px_rgba(212,175,55,0.25)]"
@@ -432,6 +500,11 @@ export default function ProductDetailPage({ params }: ProductPageProps) {
                   </div>
                   <div className="flex-grow space-y-0.5">
                     <p className="text-xs font-bold text-white font-serif">{product.name}</p>
+                    {selectedColor && (
+                      <p className="text-[10px] text-gold-400 font-semibold font-mono">
+                        Selected Color: <span className="text-white">{selectedColor}</span>
+                      </p>
+                    )}
                     <p className="text-[10px] text-gold-400">Rs. {product.price.toLocaleString()} each</p>
                   </div>
                   {/* Quantity Control */}

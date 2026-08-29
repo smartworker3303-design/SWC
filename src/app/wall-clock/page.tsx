@@ -59,7 +59,11 @@ export default function WallClockPage() {
         const bIndex = products.indexOf(b);
         return bIndex - aIndex;
       }
-      return 0; // "featured" or default
+      // default / featured: respect custom sortOrder position
+      const aOrder = a.sortOrder !== undefined && a.sortOrder > 0 ? a.sortOrder : 999999;
+      const bOrder = b.sortOrder !== undefined && b.sortOrder > 0 ? b.sortOrder : 999999;
+      if (aOrder !== bOrder) return aOrder - bOrder;
+      return products.indexOf(a) - products.indexOf(b);
     });
   }, [products, searchQuery, sortBy]);
 

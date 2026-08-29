@@ -28,12 +28,24 @@ export async function fetchSupabaseProducts(): Promise<Product[] | null> {
       const galleryImages = cleanSpecs.__images || p.images || (p.image ? [p.image] : []);
       const origPrice = p.original_price ?? p.originalPrice ?? (cleanSpecs.__original_price ? Number(cleanSpecs.__original_price) : undefined);
       const discountText = p.discount ?? cleanSpecs.__discount ?? undefined;
+      const rawSortOrder = p.sort_order ?? p.sortOrder ?? cleanSpecs.__sort_order;
+      const sortOrderNum = rawSortOrder !== undefined && rawSortOrder !== null && rawSortOrder !== "" ? Number(rawSortOrder) : undefined;
+      let colorsList: string[] | undefined = undefined;
+      if (Array.isArray(p.colors) && p.colors.length > 0) {
+        colorsList = p.colors;
+      } else if (Array.isArray(cleanSpecs.__colors) && cleanSpecs.__colors.length > 0) {
+        colorsList = cleanSpecs.__colors;
+      } else if (typeof cleanSpecs.__colors === "string" && cleanSpecs.__colors.trim()) {
+        colorsList = cleanSpecs.__colors.split(",").map((c: string) => c.trim()).filter(Boolean);
+      }
 
       delete cleanSpecs.__subcategory;
       delete cleanSpecs.__brand;
       delete cleanSpecs.__images;
       delete cleanSpecs.__original_price;
       delete cleanSpecs.__discount;
+      delete cleanSpecs.__sort_order;
+      delete cleanSpecs.__colors;
       
       return {
         id: p.id,
@@ -51,7 +63,9 @@ export async function fetchSupabaseProducts(): Promise<Product[] | null> {
         description: p.description,
         specs: cleanSpecs,
         featured: p.featured,
-        tag: p.tag || undefined
+        tag: p.tag || undefined,
+        sortOrder: sortOrderNum,
+        colors: colorsList
       };
     });
   } catch (err) {
@@ -79,7 +93,9 @@ export async function upsertSupabaseProduct(product: Product): Promise<boolean> 
         __subcategory: product.subcategory,
         __images: product.images && product.images.length > 0 ? product.images : [product.image],
         __original_price: product.originalPrice ? product.originalPrice : undefined,
-        __discount: product.discount ? product.discount : undefined
+        __discount: product.discount ? product.discount : undefined,
+        __sort_order: product.sortOrder,
+        __colors: product.colors
       },
       featured: product.featured,
       tag: product.tag || null
@@ -101,6 +117,47 @@ export async function upsertSupabaseProduct(product: Product): Promise<boolean> 
     return true;
   } catch (err) {
     console.error("Unexpected error upserting to Supabase:", err);
+    return false;
+  }
+}
+
+export async function upsertMultipleSupabaseProducts(products: Product[]): Promise<boolean> {
+  if (!supabase || products.length === 0) return false;
+  try {
+    const payloads = products.map(product => ({
+      id: product.id,
+      name: product.name,
+      category: product.category,
+      price: product.price,
+      rating: product.rating,
+      reviews: product.reviews,
+      image: product.image,
+      description: product.description,
+      specs: { 
+        ...product.specs, 
+        __brand: product.brand, 
+        __subcategory: product.subcategory,
+        __images: product.images && product.images.length > 0 ? product.images : [product.image],
+        __original_price: product.originalPrice ? product.originalPrice : undefined,
+        __discount: product.discount ? product.discount : undefined,
+        __sort_order: product.sortOrder,
+        __colors: product.colors
+      },
+      featured: product.featured,
+      tag: product.tag || null
+    }));
+
+    const { error } = await supabase
+      .from("products")
+      .upsert(payloads);
+      
+    if (error) {
+      console.error("Supabase bulk upsert error:", error);
+      return false;
+    }
+    return true;
+  } catch (err) {
+    console.error("Unexpected error in bulk upsert:", err);
     return false;
   }
 }

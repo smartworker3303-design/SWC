@@ -30,9 +30,22 @@ import {
   Link as LinkIcon,
   Image as ImageIcon
 } from "lucide-react";
-import { useProducts } from "../../context/ProductsContext";
+import { useProducts, getProductGroupKey } from "../../context/ProductsContext";
 import { useOrders } from "../../context/OrdersContext";
 import { Product } from "../../data";
+
+const COLOR_PRESETS = [
+  { name: "Black", bg: "#111111", border: "#444444" },
+  { name: "Blue", bg: "#1d4ed8", border: "#3b82f6" },
+  { name: "Navy Blue", bg: "#0f172a", border: "#2563eb" },
+  { name: "Gold", bg: "#d4af37", border: "#f59e0b" },
+  { name: "Silver", bg: "#cbd5e1", border: "#94a3b8" },
+  { name: "Rose Gold", bg: "#b76e79", border: "#f43f5e" },
+  { name: "Green", bg: "#064e3b", border: "#10b981" },
+  { name: "Brown", bg: "#78350f", border: "#d97706" },
+  { name: "White", bg: "#ffffff", border: "#cbd5e1" },
+  { name: "Two-Tone", bg: "linear-gradient(135deg, #d4af37 50%, #cbd5e1 50%)", border: "#d4af37" }
+];
 
 export default function AdminPanelPage() {
   const { 
@@ -120,10 +133,41 @@ export default function AdminPanelPage() {
   const [formRating, setFormRating] = useState(5.0);
   const [formReviews, setFormReviews] = useState(0);
   const [formTag, setFormTag] = useState("");
+  const [formSortOrder, setFormSortOrder] = useState<number>(1);
+  const [formColors, setFormColors] = useState<string[]>([]);
+  const [customColorInput, setCustomColorInput] = useState("");
   const [formSpecs, setFormSpecs] = useState<{ key: string; value: string }[]>([]);
   const [formError, setFormError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+
+  // Dynamic max allowed position for sorting based on selected category & subcategory
+  const currentMaxPosition = useMemo(() => {
+    let groupKey: string;
+    if (formCategory === "hand-watches") {
+      groupKey = formSubcategory === "womens" ? "hand-watches:womens" : "hand-watches:mens";
+    } else {
+      groupKey = formCategory;
+    }
+    const otherItemsInGroup = products.filter(p => {
+      const pGroupKey = getProductGroupKey(p);
+      return pGroupKey === groupKey && (modalType === "add" || p.id !== formId);
+    });
+    return otherItemsInGroup.length + 1;
+  }, [formCategory, formSubcategory, products, modalType, formId]);
+
+  const handleAddCustomColor = () => {
+    if (!customColorInput.trim()) return;
+    const parts = customColorInput.split(",").map(s => s.trim()).filter(Boolean);
+    const newColors = [...formColors];
+    parts.forEach(p => {
+      if (!newColors.some(c => c.toLowerCase() === p.toLowerCase())) {
+        newColors.push(p);
+      }
+    });
+    setFormColors(newColors);
+    setCustomColorInput("");
+  };
 
   // Check login session on mount
   useEffect(() => {
@@ -341,11 +385,17 @@ export default function AdminPanelPage() {
 
   // Open Add Modal
   const openAddModal = (defaultCategory?: "hand-watches" | "wall-clocks") => {
+    const cat = defaultCategory || "hand-watches";
+    const subcat: "mens" | "womens" | "" = cat === "hand-watches" ? "mens" : "";
+    const groupKey = getProductGroupKey({ category: cat, subcategory: subcat } as any);
+    const countInGroup = products.filter(p => getProductGroupKey(p) === groupKey).length;
+    const maxPos = countInGroup + 1;
+
     setModalType("add");
     setFormId("");
     setFormName("");
-    setFormCategory(defaultCategory || "hand-watches");
-    setFormSubcategory("");
+    setFormCategory(cat);
+    setFormSubcategory(subcat);
     setFormBrand("");
     setFormPrice(1000);
     setFormOriginalPrice("");
@@ -358,6 +408,9 @@ export default function AdminPanelPage() {
     setFormRating(5.0);
     setFormReviews(0);
     setFormTag("New");
+    setFormSortOrder(maxPos);
+    setFormColors([]);
+    setCustomColorInput("");
     setFormSpecs([
       { key: "Movement", value: "Quartz" },
       { key: "Water Resistance", value: "50m (5 ATM)" }
@@ -387,6 +440,9 @@ export default function AdminPanelPage() {
     setFormRating(product.rating);
     setFormReviews(product.reviews);
     setFormTag(product.tag || "");
+    setFormSortOrder(product.sortOrder && product.sortOrder >= 1 ? product.sortOrder : 1);
+    setFormColors(product.colors || []);
+    setCustomColorInput("");
     
     // Map specifications object to key-value array
     const mappedSpecs = Object.entries(product.specs).map(([key, value]) => ({
@@ -453,6 +509,8 @@ export default function AdminPanelPage() {
       ? formDiscount.trim() 
       : (origPriceNum ? `${Math.round(((origPriceNum - Number(formPrice)) / origPriceNum) * 100)}% OFF` : undefined);
 
+    const boundedSortOrder = Math.min(Math.max(1, Number(formSortOrder) || 1), currentMaxPosition);
+
     const payload: Product = {
       id: finalId,
       name: formName.trim(),
@@ -469,7 +527,9 @@ export default function AdminPanelPage() {
       description: formDescription.trim(),
       specs: specsObject,
       featured: true, // Default to true so it can show in collections and catalog
-      tag: formTag.trim() || undefined
+      tag: formTag.trim() || undefined,
+      sortOrder: boundedSortOrder,
+      colors: formColors.length > 0 ? formColors : undefined
     };
 
     try {
@@ -511,6 +571,8 @@ export default function AdminPanelPage() {
   // Metric Calculation
   const totalProducts = products.length;
   const handWatchesCount = products.filter(p => p.category === "hand-watches").length;
+  const mensWatchesCount = products.filter(p => p.category === "hand-watches" && (p.subcategory === "mens" || !p.subcategory)).length;
+  const womensWatchesCount = products.filter(p => p.category === "hand-watches" && p.subcategory === "womens").length;
   const wallClocksCount = products.filter(p => p.category === "wall-clocks").length;
   const totalAssetValue = products.reduce((acc, p) => acc + p.price, 0);
   const pendingOrdersCount = orders.filter(o => o.status === 'Pending').length;
@@ -521,7 +583,7 @@ export default function AdminPanelPage() {
     const filtered = products.filter(product => {
       const matchesCategory = product.category === category;
       const matchesSubcat = category === "hand-watches" && adminSubcatFilter !== "all" 
-                            ? product.subcategory === adminSubcatFilter 
+                            ? (adminSubcatFilter === "mens" ? (product.subcategory === "mens" || !product.subcategory) : product.subcategory === adminSubcatFilter)
                             : true;
       const query = adminSearchQuery.toLowerCase().trim();
       const decodedQuery = decodeURIComponent(adminSearchQuery).toLowerCase().trim();
@@ -531,7 +593,8 @@ export default function AdminPanelPage() {
                             product.name.toLowerCase().includes(query) ||
                             product.description.toLowerCase().includes(query) ||
                             (product.brand && product.brand.toLowerCase().includes(query)) ||
-                            (product.tag && product.tag.toLowerCase().includes(query));
+                            (product.tag && product.tag.toLowerCase().includes(query)) ||
+                            (product.colors && product.colors.some(c => c.toLowerCase().includes(query)));
       return matchesCategory && matchesSubcat && matchesSearch;
     });
 
@@ -556,7 +619,11 @@ export default function AdminPanelPage() {
         const bIndex = products.indexOf(b);
         return bIndex - aIndex;
       }
-      return 0; // default / featured
+      // default / featured: respect custom sortOrder position
+      const aOrder = a.sortOrder !== undefined && a.sortOrder > 0 ? a.sortOrder : 999999;
+      const bOrder = b.sortOrder !== undefined && b.sortOrder > 0 ? b.sortOrder : 999999;
+      if (aOrder !== bOrder) return aOrder - bOrder;
+      return products.indexOf(a) - products.indexOf(b);
     });
   };
 
@@ -962,7 +1029,7 @@ export default function AdminPanelPage() {
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
               <div className="space-y-1">
                 <h2 className="font-serif text-2xl font-bold">Manage Hand Watches</h2>
-                <p className="text-xs text-gray-400 font-light">Create, modify details, and prune wristwatches inventory.</p>
+                <p className="text-xs text-gray-400 font-light">Create, modify details, set custom sort rankings, and prune wristwatches inventory.</p>
               </div>
               
               <div className="flex gap-2">
@@ -973,6 +1040,90 @@ export default function AdminPanelPage() {
                   <Plus className="w-4 h-4" />
                   Add Watch
                 </button>
+              </div>
+            </div>
+
+            {/* Live Count Statistics Banner */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+              {/* Men's Watches Count Card */}
+              <div 
+                onClick={() => setAdminSubcatFilter(adminSubcatFilter === "mens" ? "all" : "mens")}
+                className={`glass-panel p-4 rounded border transition-all cursor-pointer ${
+                  adminSubcatFilter === "mens" 
+                    ? "border-gold-500 bg-gold-500/10 ring-1 ring-gold-500/30" 
+                    : "border-gold-500/15 hover:border-gold-500/40 bg-black/40"
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-gold-400">
+                    Men&apos;s Watches
+                  </span>
+                  <span className="text-[9px] px-2 py-0.5 rounded bg-gold-500/20 text-gold-300 font-mono">
+                    Live
+                  </span>
+                </div>
+                <div className="mt-2 flex items-baseline justify-between">
+                  <span className="font-serif text-3xl font-extrabold text-white">
+                    {mensWatchesCount}
+                  </span>
+                  <span className="text-[10px] text-gray-400 underline decoration-gold-500/30">
+                    {adminSubcatFilter === "mens" ? "Active Filter" : "Click to Filter"}
+                  </span>
+                </div>
+              </div>
+
+              {/* Women's Watches Count Card */}
+              <div 
+                onClick={() => setAdminSubcatFilter(adminSubcatFilter === "womens" ? "all" : "womens")}
+                className={`glass-panel p-4 rounded border transition-all cursor-pointer ${
+                  adminSubcatFilter === "womens" 
+                    ? "border-gold-500 bg-gold-500/10 ring-1 ring-gold-500/30" 
+                    : "border-gold-500/15 hover:border-gold-500/40 bg-black/40"
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-gold-400">
+                    Women&apos;s Watches
+                  </span>
+                  <span className="text-[9px] px-2 py-0.5 rounded bg-pink-500/20 text-pink-300 font-mono">
+                    Live
+                  </span>
+                </div>
+                <div className="mt-2 flex items-baseline justify-between">
+                  <span className="font-serif text-3xl font-extrabold text-white">
+                    {womensWatchesCount}
+                  </span>
+                  <span className="text-[10px] text-gray-400 underline decoration-gold-500/30">
+                    {adminSubcatFilter === "womens" ? "Active Filter" : "Click to Filter"}
+                  </span>
+                </div>
+              </div>
+
+              {/* Total Hand Watches Count Card */}
+              <div 
+                onClick={() => setAdminSubcatFilter("all")}
+                className={`glass-panel p-4 rounded border transition-all cursor-pointer ${
+                  adminSubcatFilter === "all" 
+                    ? "border-gold-500 bg-gold-500/10 ring-1 ring-gold-500/30" 
+                    : "border-gold-500/15 hover:border-gold-500/40 bg-black/40"
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-gray-300">
+                    Total Hand Watches
+                  </span>
+                  <span className="text-[9px] px-2 py-0.5 rounded bg-white/10 text-gray-300 font-mono">
+                    All
+                  </span>
+                </div>
+                <div className="mt-2 flex items-baseline justify-between">
+                  <span className="font-serif text-3xl font-extrabold text-gold-400">
+                    {handWatchesCount}
+                  </span>
+                  <span className="text-[10px] text-gray-400 underline decoration-gold-500/30">
+                    {adminSubcatFilter === "all" ? "Showing All" : "Reset Filter"}
+                  </span>
+                </div>
               </div>
             </div>
 
@@ -1032,7 +1183,7 @@ export default function AdminPanelPage() {
                     backgroundSize: '16px'
                   }}
                 >
-                  <option value="featured">Featured / Default</option>
+                  <option value="featured">Sort Position (1 to N)</option>
                   <option value="price-asc">Price: Low to High</option>
                   <option value="price-desc">Price: High to Low</option>
                   <option value="rating">Customer Rating</option>
@@ -1067,15 +1218,22 @@ export default function AdminPanelPage() {
                       className="object-cover hover:scale-105 transition-transform duration-500"
                       sizes="(max-width: 768px) 100vw, 33vw"
                     />
+
+                    {/* Position Rank Badge */}
+                    <span className="absolute top-3 left-3 bg-black/90 text-gold-400 border border-gold-500/40 font-mono text-[10px] font-black px-2 py-0.5 rounded shadow-lg z-20 flex items-center gap-1">
+                      <span className="text-gold-500 text-[8px]">RANK</span>
+                      #{p.sortOrder || 1}
+                    </span>
+
                     {/* Discount Badge */}
                     {(p.discount || (p.originalPrice && p.originalPrice > p.price)) && (
-                      <span className="absolute top-3 left-3 bg-gradient-to-r from-red-600 to-amber-600 text-white text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-sm shadow-md border border-red-400/30 z-10">
+                      <span className="absolute top-3 left-20 bg-gradient-to-r from-red-600 to-amber-600 text-white text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-sm shadow-md border border-red-400/30 z-10">
                         {p.discount || `${Math.round(((p.originalPrice! - p.price) / p.originalPrice!) * 100)}% OFF`}
                       </span>
                     )}
                     {/* Overlay Tag */}
                     {p.tag && (
-                      <span className={`absolute top-3 ${(p.discount || (p.originalPrice && p.originalPrice > p.price)) ? "left-20" : "left-3"} bg-gold-500 text-black text-[9px] font-black uppercase tracking-widest px-2.5 py-0.5 rounded-sm shadow-md z-10`}>
+                      <span className={`absolute top-3 ${(p.discount || (p.originalPrice && p.originalPrice > p.price)) ? "left-40" : "left-20"} bg-gold-500 text-black text-[9px] font-black uppercase tracking-widest px-2.5 py-0.5 rounded-sm shadow-md z-10`}>
                         {p.tag}
                       </span>
                     )}
@@ -1105,6 +1263,18 @@ export default function AdminPanelPage() {
                         {p.description}
                       </p>
                     </div>
+
+                    {/* Colors list if configured */}
+                    {p.colors && p.colors.length > 0 && (
+                      <div className="flex items-center gap-1.5 flex-wrap pt-1">
+                        <span className="text-[8px] text-gray-500 uppercase tracking-wider font-bold">Colours:</span>
+                        {p.colors.map((c, i) => (
+                          <span key={i} className="text-[9px] px-2 py-0.5 rounded bg-gold-500/10 border border-gold-500/20 text-gold-300 font-medium">
+                            {c}
+                          </span>
+                        ))}
+                      </div>
+                    )}
 
                     {/* Specs */}
                     {p.specs && Object.keys(p.specs).length > 0 && (
@@ -1249,15 +1419,21 @@ export default function AdminPanelPage() {
                       className="object-cover hover:scale-105 transition-transform duration-500"
                       sizes="(max-width: 768px) 100vw, 33vw"
                     />
+                    {/* Position Rank Badge */}
+                    <span className="absolute top-3 left-3 bg-black/90 text-gold-400 border border-gold-500/40 font-mono text-[10px] font-black px-2 py-0.5 rounded shadow-lg z-20 flex items-center gap-1">
+                      <span className="text-gold-500 text-[8px]">RANK</span>
+                      #{p.sortOrder || 1}
+                    </span>
+
                     {/* Discount Badge */}
                     {(p.discount || (p.originalPrice && p.originalPrice > p.price)) && (
-                      <span className="absolute top-3 left-3 bg-gradient-to-r from-red-600 to-amber-600 text-white text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-sm shadow-md border border-red-400/30 z-10">
+                      <span className="absolute top-3 left-20 bg-gradient-to-r from-red-600 to-amber-600 text-white text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-sm shadow-md border border-red-400/30 z-10">
                         {p.discount || `${Math.round(((p.originalPrice! - p.price) / p.originalPrice!) * 100)}% OFF`}
                       </span>
                     )}
                     {/* Overlay Tag */}
                     {p.tag && (
-                      <span className={`absolute top-3 ${(p.discount || (p.originalPrice && p.originalPrice > p.price)) ? "left-20" : "left-3"} bg-gold-500 text-black text-[9px] font-black uppercase tracking-widest px-2.5 py-0.5 rounded-sm shadow-md z-10`}>
+                      <span className={`absolute top-3 ${(p.discount || (p.originalPrice && p.originalPrice > p.price)) ? "left-40" : "left-20"} bg-gold-500 text-black text-[9px] font-black uppercase tracking-widest px-2.5 py-0.5 rounded-sm shadow-md z-10`}>
                         {p.tag}
                       </span>
                     )}
@@ -1287,6 +1463,18 @@ export default function AdminPanelPage() {
                         {p.description}
                       </p>
                     </div>
+
+                    {/* Colors list if configured */}
+                    {p.colors && p.colors.length > 0 && (
+                      <div className="flex items-center gap-1.5 flex-wrap pt-1">
+                        <span className="text-[8px] text-gray-500 uppercase tracking-wider font-bold">Colours:</span>
+                        {p.colors.map((c, i) => (
+                          <span key={i} className="text-[9px] px-2 py-0.5 rounded bg-gold-500/10 border border-gold-500/20 text-gold-300 font-medium">
+                            {c}
+                          </span>
+                        ))}
+                      </div>
+                    )}
 
                     {/* Specs */}
                     {p.specs && Object.keys(p.specs).length > 0 && (
@@ -1641,6 +1829,36 @@ export default function AdminPanelPage() {
                     className="w-full bg-black border border-gold-500/15 text-white py-2 px-3 focus:outline-none focus:border-gold-500 text-xs"
                   />
                 </div>
+
+                {/* Display Position / Sorting Input */}
+                <div className="space-y-1">
+                  <div className="flex items-center justify-between">
+                    <label htmlFor="form-sort-order" className="text-[9px] text-gray-400 uppercase tracking-widest font-semibold block">
+                      Display Position (Rank) <span className="text-gold-500">*</span>
+                    </label>
+                    <span className="text-[9px] font-mono text-gold-400">
+                      1 to {currentMaxPosition}
+                    </span>
+                  </div>
+                  <select
+                    id="form-sort-order"
+                    value={Math.min(Math.max(1, formSortOrder), currentMaxPosition)}
+                    onChange={(e) => setFormSortOrder(Number(e.target.value))}
+                    className="w-full bg-black border border-gold-500/20 text-gold-300 py-2 px-3 focus:outline-none focus:border-gold-500 text-xs font-mono appearance-none cursor-pointer"
+                    style={{
+                      backgroundImage: `url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23D4AF37' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'></polyline></svg>")`,
+                      backgroundRepeat: 'no-repeat',
+                      backgroundPosition: 'right 10px center',
+                      backgroundSize: '14px'
+                    }}
+                  >
+                    {Array.from({ length: currentMaxPosition }, (_, i) => i + 1).map((pos) => (
+                      <option key={pos} value={pos}>
+                        Position #{pos} {pos === 1 ? "(Top / First in List)" : pos === currentMaxPosition ? `(Position ${pos} - End of List)` : `(Position ${pos})`}
+                      </option>
+                    ))}
+                  </select>
+                </div>
               </div>
 
               {/* ========================================================================= */}
@@ -1920,6 +2138,112 @@ export default function AdminPanelPage() {
                     className="w-full bg-black border border-gold-500/15 text-white py-2 px-3 focus:outline-none focus:border-gold-500 text-xs"
                   />
                 </div>
+              </div>
+
+              {/* Available Colours Section */}
+              <div className="space-y-3 border border-gold-500/15 bg-black/30 p-4 rounded-lg text-left">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 border-b border-gold-500/10 pb-2">
+                  <div>
+                    <label className="text-[10px] font-bold text-gold-400 uppercase tracking-widest block font-serif">
+                      Available Watch Colours / Variations
+                    </label>
+                    <p className="text-[9px] text-gray-400 font-light">
+                      Add color choices for this timepiece (e.g. Black, Blue, Gold). Live buyers can view and select their preferred color on the website.
+                    </p>
+                  </div>
+                  <span className="text-[9px] font-mono text-gray-400">
+                    {formColors.length} {formColors.length === 1 ? "color" : "colors"} selected
+                  </span>
+                </div>
+
+                {/* Quick Presets */}
+                <div className="space-y-1.5">
+                  <span className="text-[8px] text-gray-500 uppercase tracking-wider font-semibold">Quick Presets (Click to add):</span>
+                  <div className="flex flex-wrap gap-1.5">
+                    {COLOR_PRESETS.map((preset) => {
+                      const isSelected = formColors.some(c => c.toLowerCase() === preset.name.toLowerCase());
+                      return (
+                        <button
+                          key={preset.name}
+                          type="button"
+                          onClick={() => {
+                            if (isSelected) {
+                              setFormColors(formColors.filter(c => c.toLowerCase() !== preset.name.toLowerCase()));
+                            } else {
+                              setFormColors([...formColors, preset.name]);
+                            }
+                          }}
+                          className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-[10px] rounded-full border transition-all cursor-pointer ${
+                            isSelected 
+                              ? "bg-gold-500 text-black border-gold-400 font-bold shadow-[0_0_10px_rgba(212,175,55,0.3)]" 
+                              : "bg-black/60 text-gray-300 border-gold-500/20 hover:border-gold-500/50 hover:text-white"
+                          }`}
+                        >
+                          <span 
+                            className="w-2.5 h-2.5 rounded-full border border-black/40 inline-block flex-shrink-0"
+                            style={{ background: preset.bg, borderColor: preset.border }}
+                          />
+                          <span>{preset.name}</span>
+                          {isSelected && <span className="text-[9px] ml-0.5 font-bold">✓</span>}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Custom Color Input */}
+                <div className="flex gap-2 items-center pt-1">
+                  <input
+                    type="text"
+                    value={customColorInput}
+                    onChange={(e) => setCustomColorInput(e.target.value)}
+                    placeholder="Type custom color (e.g. Midnight Blue, Matte Black) and click + Add"
+                    className="flex-1 bg-black border border-gold-500/20 text-white py-1.5 px-3 focus:outline-none focus:border-gold-500 text-xs"
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        handleAddCustomColor();
+                      }
+                    }}
+                  />
+                  <button
+                    type="button"
+                    onClick={handleAddCustomColor}
+                    disabled={!customColorInput.trim()}
+                    className="px-3 py-1.5 bg-gold-500 hover:bg-gold-400 text-black font-extrabold text-[10px] uppercase tracking-wider rounded disabled:opacity-40 transition-colors cursor-pointer"
+                  >
+                    + Add Color
+                  </button>
+                </div>
+
+                {/* Selected Colors Tag Strip */}
+                {formColors.length > 0 && (
+                  <div className="flex flex-wrap gap-2 pt-2 border-t border-gray-900">
+                    {formColors.map((colorName, idx) => {
+                      const matchedPreset = COLOR_PRESETS.find(p => p.name.toLowerCase() === colorName.toLowerCase());
+                      return (
+                        <span 
+                          key={idx}
+                          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-neutral-900 border border-gold-500/30 text-white text-xs"
+                        >
+                          <span 
+                            className="w-2.5 h-2.5 rounded-full border border-gold-500/40 inline-block flex-shrink-0"
+                            style={{ background: matchedPreset ? matchedPreset.bg : '#777' }}
+                          />
+                          <span className="font-medium text-gold-300">{colorName}</span>
+                          <button
+                            type="button"
+                            onClick={() => setFormColors(formColors.filter((_, i) => i !== idx))}
+                            className="ml-1 text-gray-500 hover:text-red-400 p-0.5 rounded transition-colors"
+                            title="Remove color"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        </span>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
 
               {/* Description Input */}

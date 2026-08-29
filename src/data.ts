@@ -15,6 +15,8 @@ export interface Product {
   specs: { [key: string]: string };
   featured: boolean;
   tag?: string;
+  sortOrder?: number;
+  colors?: string[];
 }
 
 // Products are managed entirely via the Admin Panel and stored in Supabase.

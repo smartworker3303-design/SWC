@@ -75,7 +75,11 @@ export default function WomenWatchPage() {
         const bIndex = products.indexOf(b);
         return bIndex - aIndex;
       }
-      return 0; // "featured" or default
+      // default / featured: respect custom sortOrder position
+      const aOrder = a.sortOrder !== undefined && a.sortOrder > 0 ? a.sortOrder : 999999;
+      const bOrder = b.sortOrder !== undefined && b.sortOrder > 0 ? b.sortOrder : 999999;
+      if (aOrder !== bOrder) return aOrder - bOrder;
+      return products.indexOf(a) - products.indexOf(b);
     });
   }, [products, searchQuery, sortBy, brandFilter]);
 
@@ -303,6 +307,18 @@ export default function WomenWatchPage() {
                   <span className="font-bold text-white pl-1">{product.rating}</span>
                   <span className="text-gray-500">({product.reviews} reviews)</span>
                 </div>
+
+                {/* Available colors */}
+                {product.colors && product.colors.length > 0 && (
+                  <div className="flex items-center gap-1.5 flex-wrap pt-0.5">
+                    <span className="text-[8px] text-gray-500 uppercase tracking-wider font-semibold">Colors:</span>
+                    {product.colors.map((c, i) => (
+                      <span key={i} className="text-[9px] px-2 py-0.5 rounded-full border border-gold-500/20 bg-gold-500/5 text-gold-300 font-medium">
+                        {c}
+                      </span>
+                    ))}
+                  </div>
+                )}
 
                 {/* Price and Action Button */}
                 <div className="flex items-center justify-between border-t border-gray-900 pt-4">
