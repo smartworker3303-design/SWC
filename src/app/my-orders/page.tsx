@@ -108,26 +108,50 @@ export default function MyOrdersPage() {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
                 <div>
-                  <h4 className="text-[10px] text-gray-500 uppercase tracking-widest font-bold mb-3">Items</h4>
+                  <h4 className="text-[10px] text-gray-500 uppercase tracking-widest font-bold mb-3">Purchased Timepieces</h4>
                   <div className="space-y-3">
                     {order.items.map((item, idx) => (
-                      <div key={idx} className="flex justify-between items-center text-sm">
-                        <span className="text-gray-300"><span className="text-gold-500 font-mono text-xs mr-2">{item.quantity}x</span> {item.name}</span>
-                        <span className="text-gray-400 font-mono text-xs">Rs. {(item.price * item.quantity).toLocaleString()}</span>
+                      <div key={idx} className="flex justify-between items-start text-sm bg-black/40 p-2.5 rounded border border-gold-500/10">
+                        <div className="space-y-1">
+                          <p className="text-gray-200 font-bold">
+                            <span className="text-gold-500 font-mono text-xs mr-1.5">{item.quantity}x</span> 
+                            {item.name}
+                          </p>
+                          <div className="flex items-center gap-2 text-[10px]">
+                            <span className="font-mono text-gold-400">ID: {item.product_id}</span>
+                            {item.color && (
+                              <span className="bg-gold-500/10 text-gold-300 border border-gold-500/20 px-1.5 py-0.2 rounded font-medium">
+                                Colour: {item.color}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        <span className="text-gold-400 font-mono text-xs font-bold flex-shrink-0">
+                          Rs. {(item.price * item.quantity).toLocaleString()}
+                        </span>
                       </div>
                     ))}
                   </div>
                   <div className="mt-4 pt-3 border-t border-gray-900 flex justify-between items-center">
-                    <span className="text-xs font-bold text-gray-400 uppercase tracking-widest">Total</span>
+                    <span className="text-xs font-bold text-gray-400 uppercase tracking-widest">Total Amount</span>
                     <span className="text-lg font-serif font-bold text-gold-400">Rs. {order.total_amount.toLocaleString()}</span>
                   </div>
                 </div>
 
                 <div className="bg-black/30 p-4 border border-gold-500/5 rounded space-y-4">
-                  <h4 className="text-[10px] text-gray-500 uppercase tracking-widest font-bold">Delivery Details</h4>
-                  <div className="space-y-2 text-sm text-gray-400">
-                    <p><span className="text-gray-600 block text-[10px] uppercase">Shipping Address</span> {order.shipping_address}</p>
-                    <p><span className="text-gray-600 block text-[10px] uppercase">Contact Number</span> {order.phone}</p>
+                  <h4 className="text-[10px] text-gray-500 uppercase tracking-widest font-bold">Delivery Destination</h4>
+                  <div className="space-y-2 text-xs text-gray-400">
+                    <div>
+                      <span className="text-gray-600 block text-[10px] uppercase">Shipping Address</span> 
+                      <p className="text-gray-200 leading-relaxed mt-0.5">{order.shipping_address}</p>
+                    </div>
+                    {order.shipping_details?.landmark && (
+                      <p className="text-gold-400 font-semibold text-[11px]">📍 Landmark: {order.shipping_details.landmark}</p>
+                    )}
+                    <div>
+                      <span className="text-gray-600 block text-[10px] uppercase">Contact Phone</span> 
+                      <p className="text-gray-200 font-mono mt-0.5">{order.phone}</p>
+                    </div>
                   </div>
                 </div>
               </div>

@@ -203,16 +203,39 @@ export interface OrderItem {
   quantity: number;
   price: number;
   name: string;
+  color?: string;
+  image?: string;
+  category?: string;
+}
+
+export interface ShippingDetails {
+  recipient_name: string;
+  phone: string;
+  alt_phone?: string;
+  email?: string;
+  street_address: string;
+  apartment_suite?: string;
+  landmark?: string;
+  city: string;
+  province: string;
+  postal_code?: string;
+  order_notes?: string;
 }
 
 export interface Order {
   id: string;
   user_id: string;
+  customer_name?: string;
   items: OrderItem[];
   total_amount: number;
+  discount_amount?: number;
+  delivery_fee?: number;
+  payment_method?: 'cod' | 'bank_transfer' | 'whatsapp';
   status: OrderStatus;
   shipping_address: string;
+  shipping_details?: ShippingDetails;
   phone: string;
+  email?: string;
   created_at: string;
 }
 
@@ -238,7 +261,20 @@ export async function fetchSupabaseOrders(): Promise<Order[]> {
       console.warn("Could not fetch orders. User may need to run SUPABASE_SETUP SQL.");
       return [];
     }
-    return data || [];
+    return (data || []).map((o: any) => {
+      // Parse items if stringified
+      let parsedItems: OrderItem[] = [];
+      if (Array.isArray(o.items)) {
+        parsedItems = o.items;
+      } else if (typeof o.items === 'string') {
+        try { parsedItems = JSON.parse(o.items); } catch { parsedItems = []; }
+      }
+      return {
+        ...o,
+        items: parsedItems,
+        customer_name: o.customer_name || o.shipping_details?.recipient_name,
+      };
+    });
   } catch {
     return [];
   }
@@ -262,7 +298,18 @@ export async function insertSupabaseProfile(profile: Profile): Promise<boolean> 
 export async function insertSupabaseOrder(order: Order): Promise<boolean> {
   if (!supabase) return false;
   try {
-    const { error } = await supabase.from('orders').insert(order);
+    // 1. Try insert with all fields
+    const { error } = await supabase.from('orders').insert({
+      id: order.id,
+      user_id: order.user_id,
+      items: order.items,
+      total_amount: order.total_amount,
+      status: order.status,
+      shipping_address: order.shipping_address,
+      phone: order.phone,
+      created_at: order.created_at
+    });
+
     if (error) {
       console.warn("Could not insert order into Supabase:", error);
       return false;

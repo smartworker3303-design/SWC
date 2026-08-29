@@ -28,7 +28,15 @@ import {
   Star,
   Loader2,
   Link as LinkIcon,
-  Image as ImageIcon
+  Image as ImageIcon,
+  ShoppingBag,
+  MessageSquare,
+  Phone,
+  MapPin,
+  Package,
+  ExternalLink,
+  CheckCircle,
+  Users
 } from "lucide-react";
 import { useProducts, getProductGroupKey } from "../../context/ProductsContext";
 import { useOrders } from "../../context/OrdersContext";
@@ -71,14 +79,21 @@ export default function AdminPanelPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loginError, setLoginError] = useState("");
 
-  // UI Tabs State
-  const [activeTab, setActiveTab] = useState<"dashboard" | "hand-watches" | "wall-clocks" | "users-orders">("dashboard");
+  // UI Tabs State: 5 distinct tabs (Dashboard, Watches, Clocks, Orders, Users)
+  const [activeTab, setActiveTab] = useState<"dashboard" | "hand-watches" | "wall-clocks" | "orders" | "users">("dashboard");
   const [localProfiles, setLocalProfiles] = useState<any[]>([]);
 
-  // Admin Search & Sort State
+  // Admin Search & Sort State for Products
   const [adminSearchQuery, setAdminSearchQuery] = useState("");
   const [adminSortBy, setAdminSortBy] = useState("featured");
   const [adminSubcatFilter, setAdminSubcatFilter] = useState("all");
+
+  // Orders Tab Filter State
+  const [orderSearchQuery, setOrderSearchQuery] = useState("");
+  const [orderStatusFilter, setOrderStatusFilter] = useState<string>("all");
+
+  // Users Tab Filter State
+  const [userSearchQuery, setUserSearchQuery] = useState("");
 
   // Reset search and sort when active tab changes
   useEffect(() => {
@@ -798,22 +813,39 @@ export default function AdminPanelPage() {
             </button>
 
             <button
-              onClick={() => setActiveTab("users-orders")}
+              onClick={() => setActiveTab("orders")}
               className={`w-full py-3 px-4 text-xs font-bold uppercase tracking-wider flex items-center justify-between transition-all rounded cursor-pointer ${
-                activeTab === "users-orders"
+                activeTab === "orders"
                   ? "gold-gradient-bg text-black font-extrabold shadow-md shadow-gold-500/10"
                   : "bg-transparent border border-transparent text-gray-400 hover:text-gold-400 hover:border-gold-500/15"
               }`}
             >
               <div className="flex items-center gap-3">
-                <User className="w-4 h-4" />
-                <span>Users & Orders</span>
+                <ShoppingBag className="w-4 h-4" />
+                <span>Client Orders</span>
               </div>
               {pendingOrdersCount > 0 && (
                 <span className="bg-red-500 text-white font-mono text-[10px] font-extrabold px-2 py-0.5 rounded-full shadow-lg animate-pulse flex items-center justify-center min-w-[20px] h-5">
                   {pendingOrdersCount}
                 </span>
               )}
+            </button>
+
+            <button
+              onClick={() => setActiveTab("users")}
+              className={`w-full py-3 px-4 text-xs font-bold uppercase tracking-wider flex items-center justify-between transition-all rounded cursor-pointer ${
+                activeTab === "users"
+                  ? "gold-gradient-bg text-black font-extrabold shadow-md shadow-gold-500/10"
+                  : "bg-transparent border border-transparent text-gray-400 hover:text-gold-400 hover:border-gold-500/15"
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <Users className="w-4 h-4" />
+                <span>Registered Users</span>
+              </div>
+              <span className="bg-white/10 text-gray-300 font-mono text-[10px] font-bold px-2 py-0.5 rounded-full">
+                {allRegisteredProfiles.length}
+              </span>
             </button>
           </nav>
         </div>
@@ -888,7 +920,7 @@ export default function AdminPanelPage() {
         <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
           <button
             onClick={() => setActiveTab("dashboard")}
-            className={`flex-grow py-2 px-3 text-[10px] font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-all rounded whitespace-nowrap cursor-pointer ${
+            className={`flex-grow py-2 px-3 text-[10px] font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all rounded whitespace-nowrap cursor-pointer ${
               activeTab === "dashboard"
                 ? "gold-gradient-bg text-black font-extrabold"
                 : "bg-neutral-900 border border-gold-500/5 text-gray-400"
@@ -899,7 +931,7 @@ export default function AdminPanelPage() {
           </button>
           <button
             onClick={() => setActiveTab("hand-watches")}
-            className={`flex-grow py-2 px-3 text-[10px] font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-all rounded whitespace-nowrap cursor-pointer ${
+            className={`flex-grow py-2 px-3 text-[10px] font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all rounded whitespace-nowrap cursor-pointer ${
               activeTab === "hand-watches"
                 ? "gold-gradient-bg text-black font-extrabold"
                 : "bg-neutral-900 border border-gold-500/5 text-gray-400"
@@ -910,7 +942,7 @@ export default function AdminPanelPage() {
           </button>
           <button
             onClick={() => setActiveTab("wall-clocks")}
-            className={`flex-grow py-2 px-3 text-[10px] font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-all rounded whitespace-nowrap cursor-pointer ${
+            className={`flex-grow py-2 px-3 text-[10px] font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all rounded whitespace-nowrap cursor-pointer ${
               activeTab === "wall-clocks"
                 ? "gold-gradient-bg text-black font-extrabold"
                 : "bg-neutral-900 border border-gold-500/5 text-gray-400"
@@ -920,20 +952,31 @@ export default function AdminPanelPage() {
             Clocks
           </button>
           <button
-            onClick={() => setActiveTab("users-orders")}
+            onClick={() => setActiveTab("orders")}
             className={`flex-grow py-2 px-3 text-[10px] font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all rounded whitespace-nowrap cursor-pointer relative ${
-              activeTab === "users-orders"
+              activeTab === "orders"
                 ? "gold-gradient-bg text-black font-extrabold"
                 : "bg-neutral-900 border border-gold-500/5 text-gray-400"
             }`}
           >
-            <User className="w-3.5 h-3.5" />
+            <ShoppingBag className="w-3.5 h-3.5" />
             <span>Orders</span>
             {pendingOrdersCount > 0 && (
               <span className="bg-red-500 text-white font-mono text-[9px] font-bold px-1.5 py-0.2 rounded-full shadow animate-pulse">
                 {pendingOrdersCount}
               </span>
             )}
+          </button>
+          <button
+            onClick={() => setActiveTab("users")}
+            className={`flex-grow py-2 px-3 text-[10px] font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all rounded whitespace-nowrap cursor-pointer ${
+              activeTab === "users"
+                ? "gold-gradient-bg text-black font-extrabold"
+                : "bg-neutral-900 border border-gold-500/5 text-gray-400"
+            }`}
+          >
+            <Users className="w-3.5 h-3.5" />
+            <span>Users</span>
           </button>
         </div>
 
@@ -1008,13 +1051,29 @@ export default function AdminPanelPage() {
                   onClick={() => setActiveTab("hand-watches")}
                   className="border border-gold-500 text-gold-500 hover:bg-gold-500 hover:text-black font-bold text-xs tracking-widest uppercase px-5 py-3 transition-all flex items-center gap-1.5 cursor-pointer"
                 >
+                  <Watch className="w-3.5 h-3.5" />
                   View Hand Watches
                 </button>
                 <button
                   onClick={() => setActiveTab("wall-clocks")}
                   className="border border-gold-500 text-gold-500 hover:bg-gold-500 hover:text-black font-bold text-xs tracking-widest uppercase px-5 py-3 transition-all flex items-center gap-1.5 cursor-pointer"
                 >
+                  <Clock className="w-3.5 h-3.5" />
                   View Wall Clocks
+                </button>
+                <button
+                  onClick={() => setActiveTab("orders")}
+                  className="border border-gold-500/40 text-white hover:bg-gold-500 hover:text-black font-bold text-xs tracking-widest uppercase px-5 py-3 transition-all flex items-center gap-1.5 cursor-pointer"
+                >
+                  <ShoppingBag className="w-3.5 h-3.5" />
+                  Client Orders ({orders.length})
+                </button>
+                <button
+                  onClick={() => setActiveTab("users")}
+                  className="border border-gold-500/40 text-white hover:bg-gold-500 hover:text-black font-bold text-xs tracking-widest uppercase px-5 py-3 transition-all flex items-center gap-1.5 cursor-pointer"
+                >
+                  <Users className="w-3.5 h-3.5" />
+                  Registered Users ({allRegisteredProfiles.length})
                 </button>
               </div>
             </div>
@@ -1525,131 +1584,510 @@ export default function AdminPanelPage() {
           </div>
         )}
 
-        {/* TAB 4: USERS & ORDERS */}
-        {activeTab === "users-orders" && (
+        {/* ========================================================================= */}
+        {/* TAB 4: CLIENT ORDERS MANAGEMENT */}
+        {/* ========================================================================= */}
+        {activeTab === "orders" && (
           <div className="space-y-6 animate-fade-in-up">
             
             {/* Header row */}
-            <div className="space-y-1">
-              <h2 className="font-serif text-2xl font-bold">Users & Orders Management</h2>
-              <p className="text-xs text-gray-400 font-light">Monitor registered customers, track order status, and update fulfillments.</p>
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+              <div className="space-y-1">
+                <h2 className="font-serif text-2xl font-bold">Client Orders Management</h2>
+                <p className="text-xs text-gray-400 font-light">
+                  Track customer orders, verify delivery addresses & landmarks, view ordered product IDs & colours, and update fulfillment status.
+                </p>
+              </div>
+
+              <button
+                onClick={() => refreshData()}
+                className="gold-gradient-bg text-black font-extrabold text-xs tracking-widest uppercase px-4 py-2.5 hover:opacity-90 flex items-center gap-1.5 cursor-pointer rounded"
+              >
+                <RefreshCw className="w-3.5 h-3.5" />
+                Refresh Sync
+              </button>
             </div>
 
-            {/* Orders Data Grid */}
-            <div className="glass-panel border border-gold-500/10 p-6 space-y-6">
-              
-              <div className="flex items-center justify-between border-b border-gray-900 pb-4">
-                <h3 className="font-serif text-lg font-bold">Recent Orders ({orders.length})</h3>
-                <button
-                  onClick={() => refreshData()}
-                  className="text-xs flex items-center gap-1.5 text-gray-400 hover:text-gold-500 transition-colors"
+            {/* Orders Statistics Cards */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+              <div className="glass-panel p-4 rounded border border-gold-500/10">
+                <span className="text-[10px] text-gray-400 uppercase tracking-widest block font-bold">Total Orders</span>
+                <p className="font-serif text-2xl font-extrabold text-white mt-1">{orders.length}</p>
+                <span className="text-[9px] text-gray-500">All-time received</span>
+              </div>
+
+              <div className="glass-panel p-4 rounded border border-orange-500/30 bg-orange-500/5">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] text-orange-400 uppercase tracking-widest block font-bold">Pending Orders</span>
+                  {pendingOrdersCount > 0 && (
+                    <span className="w-2 h-2 rounded-full bg-orange-400 animate-ping" />
+                  )}
+                </div>
+                <p className="font-serif text-2xl font-extrabold text-orange-400 mt-1">{pendingOrdersCount}</p>
+                <span className="text-[9px] text-orange-300/70">Awaiting confirmation</span>
+              </div>
+
+              <div className="glass-panel p-4 rounded border border-blue-500/20 bg-blue-500/5">
+                <span className="text-[10px] text-blue-400 uppercase tracking-widest block font-bold">In Transit / Shipped</span>
+                <p className="font-serif text-2xl font-extrabold text-blue-400 mt-1">
+                  {orders.filter(o => o.status === "Processing" || o.status === "Shipped").length}
+                </p>
+                <span className="text-[9px] text-blue-300/70">With courier partner</span>
+              </div>
+
+              <div className="glass-panel p-4 rounded border border-green-500/20 bg-green-500/5">
+                <span className="text-[10px] text-green-400 uppercase tracking-widest block font-bold">Completed / Delivered</span>
+                <p className="font-serif text-2xl font-extrabold text-green-400 mt-1">
+                  {orders.filter(o => o.status === "Delivered").length}
+                </p>
+                <span className="text-[9px] text-green-300/70">Fulfilled orders</span>
+              </div>
+            </div>
+
+            {/* Search & Status Filter Controls */}
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 bg-neutral-900/40 border border-gold-500/10 p-4 rounded text-left">
+              {/* Search input */}
+              <div className="relative flex-grow max-w-lg">
+                <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gold-500">
+                  <Search className="w-4 h-4" />
+                </span>
+                <input 
+                  type="text"
+                  value={orderSearchQuery}
+                  onChange={(e) => setOrderSearchQuery(e.target.value)}
+                  placeholder="Search by Order ID, Customer Name, Phone, City, Product ID, Watch Name..."
+                  className="w-full bg-black border border-gold-500/15 text-white pl-10 pr-10 py-2.5 focus:outline-none focus:border-gold-500 text-xs transition-all rounded"
+                />
+                {orderSearchQuery && (
+                  <button 
+                    onClick={() => setOrderSearchQuery("")}
+                    className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-gray-500 hover:text-gold-500"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
+
+              {/* Status Filter Dropdown */}
+              <div className="relative w-full sm:w-56">
+                <select
+                  value={orderStatusFilter}
+                  onChange={(e) => setOrderStatusFilter(e.target.value)}
+                  className="w-full bg-black border border-gold-500/15 text-white py-2.5 px-4 focus:outline-none focus:border-gold-500 text-xs transition-all cursor-pointer appearance-none rounded"
+                  style={{
+                    backgroundImage: `url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23D4AF37' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'></polyline></svg>")`,
+                    backgroundRepeat: 'no-repeat',
+                    backgroundPosition: 'right 12px center',
+                    backgroundSize: '16px'
+                  }}
                 >
-                  <RefreshCw className="w-3.5 h-3.5" />
-                  Refresh Sync
-                </button>
+                  <option value="all">All Orders ({orders.length})</option>
+                  <option value="Pending">Pending ({orders.filter(o => o.status === "Pending").length})</option>
+                  <option value="Processing">Processing ({orders.filter(o => o.status === "Processing").length})</option>
+                  <option value="Shipped">Shipped ({orders.filter(o => o.status === "Shipped").length})</option>
+                  <option value="Delivered">Delivered ({orders.filter(o => o.status === "Delivered").length})</option>
+                  <option value="Cancelled">Cancelled ({orders.filter(o => o.status === "Cancelled").length})</option>
+                </select>
               </div>
+            </div>
 
-              {orders.length === 0 ? (
-                <div className="text-center py-12 border border-dashed border-gold-500/10 rounded bg-black/20">
-                  <p className="text-gold-500 text-sm font-bold font-serif uppercase tracking-wider">No Orders Found</p>
-                  <p className="text-gray-500 text-xs mt-1">Customers have not placed any orders yet.</p>
-                </div>
-              ) : (
-                <div className="overflow-x-auto scrollbar-none">
-                  <table className="w-full text-left text-xs whitespace-nowrap">
-                    <thead className="bg-black/40 text-gray-400 uppercase tracking-widest text-[9px]">
-                      <tr>
-                        <th className="px-4 py-3 font-semibold">Order ID / Date</th>
-                        <th className="px-4 py-3 font-semibold">Customer Details</th>
-                        <th className="px-4 py-3 font-semibold">Items</th>
-                        <th className="px-4 py-3 font-semibold">Total Amount</th>
-                        <th className="px-4 py-3 font-semibold text-right">Fulfillment Status</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-900/50">
-                      {orders.map((order) => {
-                        const profile = allRegisteredProfiles.find(p => p.id === order.user_id || p.email === order.user_id);
-                        return (
-                          <tr key={order.id} className="hover:bg-gold-500/5 transition-colors group">
-                            <td className="px-4 py-4">
-                              <div className="font-mono text-gold-500">{order.id.slice(0, 8).toUpperCase()}</div>
-                              <div className="text-[9px] text-gray-500 mt-1">{new Date(order.created_at).toLocaleDateString()}</div>
-                            </td>
-                            <td className="px-4 py-4">
-                              <div className="font-bold text-white">{profile?.full_name || 'Customer Client'}</div>
-                              <div className="text-[9px] text-gray-500">{profile?.email || 'N/A'}</div>
-                              <div className="text-[9px] text-gray-500">{order.phone}</div>
-                            </td>
-                            <td className="px-4 py-4">
-                              <div className="space-y-1 max-w-[200px] overflow-hidden">
-                                {order.items.map((item, idx) => (
-                                  <div key={idx} className="flex justify-between gap-4 text-[10px] bg-black/30 px-2 py-1 rounded border border-gold-500/10">
-                                    <span className="truncate" title={item.name}>{item.quantity}x {item.name}</span>
-                                    <span className="text-gold-400">Rs. {(item.price * item.quantity).toLocaleString()}</span>
-                                  </div>
-                                ))}
+            {/* Orders Cards Feed */}
+            {(() => {
+              const q = orderSearchQuery.toLowerCase().trim();
+              const filteredOrders = orders.filter(o => {
+                const matchesStatus = orderStatusFilter === "all" || o.status === orderStatusFilter;
+                const matchesSearch = !q ||
+                  o.id.toLowerCase().includes(q) ||
+                  (o.customer_name && o.customer_name.toLowerCase().includes(q)) ||
+                  (o.shipping_details?.recipient_name && o.shipping_details.recipient_name.toLowerCase().includes(q)) ||
+                  o.phone.toLowerCase().includes(q) ||
+                  o.shipping_address.toLowerCase().includes(q) ||
+                  (o.shipping_details?.city && o.shipping_details.city.toLowerCase().includes(q)) ||
+                  (o.shipping_details?.landmark && o.shipping_details.landmark.toLowerCase().includes(q)) ||
+                  o.items.some(it => 
+                    it.name.toLowerCase().includes(q) ||
+                    it.product_id.toLowerCase().includes(q) ||
+                    (it.color && it.color.toLowerCase().includes(q))
+                  );
+                return matchesStatus && matchesSearch;
+              });
+
+              if (filteredOrders.length === 0) {
+                return (
+                  <div className="text-center py-16 border border-dashed border-gold-500/10 rounded-xl bg-black/20 space-y-3">
+                    <ShoppingBag className="w-10 h-10 text-gold-500/40 mx-auto" />
+                    <p className="text-gold-500 text-sm font-bold font-serif uppercase tracking-wider">No Orders Match Your Query</p>
+                    <p className="text-gray-500 text-xs max-w-sm mx-auto">
+                      {orderSearchQuery ? `No records match "${orderSearchQuery}". Try clearing filters.` : "No customer orders recorded in the database."}
+                    </p>
+                  </div>
+                );
+              }
+
+              return (
+                <div className="space-y-4">
+                  {filteredOrders.map((order) => {
+                    const recipientName = order.shipping_details?.recipient_name || order.customer_name || "Valued Customer";
+                    const cleanPhone = order.phone.replace(/\D/g, "");
+                    const whatsappText = encodeURIComponent(
+                      `Hi ${recipientName}, this is Saleem Watch Center regarding your Order #${order.id}.\n\n` +
+                      `Items: ${order.items.map(i => `${i.quantity}x ${i.name} (ID: ${i.product_id}${i.color ? `, Color: ${i.color}` : ''})`).join(", ")}\n` +
+                      `Total: Rs. ${order.total_amount.toLocaleString()}\n` +
+                      `Delivery: ${order.shipping_address}\n\n` +
+                      `Please confirm your availability for delivery.`
+                    );
+
+                    return (
+                      <div 
+                        key={order.id} 
+                        className="glass-panel border border-gold-500/15 rounded-xl p-5 sm:p-6 space-y-5 relative overflow-hidden transition-all hover:border-gold-500/30"
+                      >
+                        {/* Top Header Strip: Order ID, Date, Payment & Status Updater */}
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-gold-500/10 pb-3.5">
+                          <div className="flex items-center gap-3 flex-wrap">
+                            <span className="font-mono text-sm font-bold text-gold-400 bg-gold-500/10 border border-gold-500/20 px-2.5 py-1 rounded">
+                              #{order.id}
+                            </span>
+                            <span className="text-xs text-gray-400">
+                              🕒 {new Date(order.created_at).toLocaleDateString()} at {new Date(order.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            </span>
+                            <span className="bg-black/60 border border-gold-500/20 text-gold-300 text-[10px] uppercase tracking-wider font-bold px-2 py-0.5 rounded">
+                              {order.payment_method === "bank_transfer" ? "Bank Transfer" : "Cash on Delivery (COD)"}
+                            </span>
+                          </div>
+
+                          {/* Fulfillment Status Dropdown */}
+                          <div className="flex items-center gap-2">
+                            <span className="text-[10px] text-gray-400 uppercase font-semibold">Status:</span>
+                            <select
+                              value={order.status}
+                              onChange={(e) => updateStatus(order.id, e.target.value as any)}
+                              className={`text-xs font-bold uppercase tracking-wider px-3 py-1.5 rounded outline-none border cursor-pointer transition-colors ${
+                                order.status === 'Pending' ? 'bg-orange-500/15 text-orange-400 border-orange-500/30 hover:border-orange-500' :
+                                order.status === 'Processing' ? 'bg-blue-500/15 text-blue-400 border-blue-500/30 hover:border-blue-500' :
+                                order.status === 'Shipped' ? 'bg-purple-500/15 text-purple-400 border-purple-500/30 hover:border-purple-500' :
+                                order.status === 'Delivered' ? 'bg-green-500/15 text-green-400 border-green-500/30 hover:border-green-500' :
+                                'bg-red-500/15 text-red-400 border-red-500/30 hover:border-red-500'
+                              }`}
+                            >
+                              <option value="Pending">Pending</option>
+                              <option value="Processing">Processing</option>
+                              <option value="Shipped">Shipped</option>
+                              <option value="Delivered">Delivered</option>
+                              <option value="Cancelled">Cancelled</option>
+                            </select>
+                          </div>
+                        </div>
+
+                        {/* Main Grid: Customer Contact, Detailed Address, Ordered Items */}
+                        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+                          
+                          {/* Col 1: Customer Contact & WhatsApp Button */}
+                          <div className="lg:col-span-3 space-y-2 text-xs bg-black/40 border border-gold-500/10 p-3.5 rounded-lg">
+                            <span className="text-[10px] font-bold text-gold-400 uppercase tracking-wider block border-b border-gray-900 pb-1 flex items-center gap-1.5">
+                              <User className="w-3.5 h-3.5 text-gold-500" />
+                              Customer Info
+                            </span>
+                            <div className="space-y-1">
+                              <p className="font-bold text-white text-sm">{recipientName}</p>
+                              <p className="text-gray-300 font-mono flex items-center gap-1">
+                                📱 {order.phone}
+                              </p>
+                              {order.shipping_details?.alt_phone && (
+                                <p className="text-gray-400 font-mono text-[11px]">
+                                  Alt: {order.shipping_details.alt_phone}
+                                </p>
+                              )}
+                              {order.email && (
+                                <p className="text-gray-400 truncate" title={order.email}>
+                                  ✉️ {order.email}
+                                </p>
+                              )}
+                            </div>
+
+                            {/* 1-Click WhatsApp Concierge Chat Button */}
+                            {cleanPhone && (
+                              <div className="pt-1.5">
+                                <a
+                                  href={`https://wa.me/${cleanPhone}?text=${whatsappText}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="w-full inline-flex items-center justify-center gap-1.5 bg-green-600/20 hover:bg-green-600 border border-green-500/40 text-green-300 hover:text-white py-1.5 px-2 rounded font-bold text-[10px] uppercase tracking-wider transition-all cursor-pointer shadow"
+                                >
+                                  <MessageSquare className="w-3 h-3" />
+                                  Chat on WhatsApp
+                                </a>
                               </div>
-                            </td>
-                            <td className="px-4 py-4 font-bold text-gold-400 font-sans">
+                            )}
+                          </div>
+
+                          {/* Col 2: Detailed Multi-Field Shipping Address */}
+                          <div className="lg:col-span-4 space-y-2 text-xs bg-black/40 border border-gold-500/10 p-3.5 rounded-lg">
+                            <span className="text-[10px] font-bold text-gold-400 uppercase tracking-wider block border-b border-gray-900 pb-1 flex items-center gap-1.5">
+                              <MapPin className="w-3.5 h-3.5 text-gold-500" />
+                              Shipping Address & Landmark
+                            </span>
+                            <div className="space-y-1 text-gray-300 leading-relaxed">
+                              <p className="font-medium text-white">
+                                {order.shipping_details?.street_address || order.shipping_address}
+                              </p>
+                              {order.shipping_details?.apartment_suite && (
+                                <p className="text-gray-400 text-[11px]">
+                                  🏢 Apt/Floor: {order.shipping_details.apartment_suite}
+                                </p>
+                              )}
+                              {order.shipping_details?.landmark && (
+                                <p className="text-gold-400 font-semibold text-[11px] bg-gold-500/10 px-2 py-0.5 rounded border border-gold-500/20 inline-block">
+                                  📍 Landmark: {order.shipping_details.landmark}
+                                </p>
+                              )}
+                              <p className="text-white font-bold pt-0.5">
+                                🏙️ {order.shipping_details?.city || 'Pakistan'}, {order.shipping_details?.province || ''}
+                              </p>
+                              {order.shipping_details?.order_notes && (
+                                <p className="text-gray-400 text-[11px] italic bg-black/50 p-1.5 rounded border border-gray-900 mt-1">
+                                  📝 &ldquo;{order.shipping_details.order_notes}&rdquo;
+                                </p>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Col 3: Ordered Items Detail (Product ID, Title, Colour, Qty, Unit Price) */}
+                          <div className="lg:col-span-5 space-y-2 text-xs bg-black/40 border border-gold-500/10 p-3.5 rounded-lg">
+                            <span className="text-[10px] font-bold text-gold-400 uppercase tracking-wider block border-b border-gray-900 pb-1 flex items-center gap-1.5">
+                              <Package className="w-3.5 h-3.5 text-gold-500" />
+                              Ordered Timepieces ({order.items.length})
+                            </span>
+                            
+                            <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
+                              {order.items.map((it, idx) => (
+                                <div key={idx} className="flex items-center gap-3 bg-black/60 p-2.5 rounded border border-gold-500/10">
+                                  {it.image && (
+                                    <div className="relative w-12 h-12 bg-black rounded overflow-hidden flex-shrink-0 border border-gold-500/20">
+                                      <Image src={it.image} alt={it.name} fill className="object-cover" />
+                                    </div>
+                                  )}
+                                  <div className="flex-grow space-y-0.5 min-w-0">
+                                    <div className="flex justify-between items-start gap-1">
+                                      <p className="font-serif font-bold text-white text-xs truncate" title={it.name}>
+                                        {it.name}
+                                      </p>
+                                      <span className="font-mono text-gold-400 font-bold text-xs flex-shrink-0">
+                                        Rs. {(it.price * it.quantity).toLocaleString()}
+                                      </span>
+                                    </div>
+                                    <div className="flex items-center gap-2 flex-wrap text-[10px]">
+                                      {/* Product ID Badge with Link */}
+                                      <Link
+                                        href={`/product/${encodeURIComponent(it.product_id)}`}
+                                        target="_blank"
+                                        className="font-mono text-gold-400 hover:underline font-bold bg-gold-500/10 px-1.5 py-0.2 rounded flex items-center gap-0.5"
+                                      >
+                                        ID: {it.product_id}
+                                        <ExternalLink className="w-2.5 h-2.5" />
+                                      </Link>
+
+                                      {/* Color Variant Badge */}
+                                      {it.color && (
+                                        <span className="bg-neutral-800 text-gold-300 border border-gold-500/20 px-1.5 py-0.2 rounded font-medium">
+                                          Colour: {it.color}
+                                        </span>
+                                      )}
+
+                                      {/* Quantity */}
+                                      <span className="text-gray-400">
+                                        Qty: <strong className="text-white">{it.quantity}</strong> (Rs. {it.price.toLocaleString()} ea)
+                                      </span>
+                                    </div>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+
+                        </div>
+
+                        {/* Card Footer: Amount Breakdown */}
+                        <div className="border-t border-gold-500/10 pt-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+                          <span className="text-[11px] text-gray-500 font-mono">
+                            Client Identifier: {order.user_id}
+                          </span>
+
+                          <div className="flex items-baseline gap-3">
+                            <span className="text-gray-400 uppercase text-[10px] tracking-wider">Total Payable:</span>
+                            <span className="font-serif text-lg font-extrabold text-gold-400">
                               Rs. {order.total_amount.toLocaleString()}
-                            </td>
-                            <td className="px-4 py-4 text-right">
-                              <select
-                                value={order.status}
-                                onChange={(e) => updateStatus(order.id, e.target.value as any)}
-                                className={`text-[10px] font-bold uppercase tracking-wider px-3 py-1.5 rounded outline-none border cursor-pointer transition-colors ${
-                                  order.status === 'Pending' ? 'bg-orange-500/10 text-orange-400 border-orange-500/20 hover:border-orange-500/50' :
-                                  order.status === 'Processing' ? 'bg-blue-500/10 text-blue-400 border-blue-500/20 hover:border-blue-500/50' :
-                                  order.status === 'Shipped' ? 'bg-purple-500/10 text-purple-400 border-purple-500/20 hover:border-purple-500/50' :
-                                  order.status === 'Delivered' ? 'bg-green-500/10 text-green-400 border-green-500/20 hover:border-green-500/50' :
-                                  'bg-red-500/10 text-red-400 border-red-500/20 hover:border-red-500/50'
-                                }`}
-                              >
-                                <option value="Pending">Pending</option>
-                                <option value="Processing">Processing</option>
-                                <option value="Shipped">Shipped</option>
-                                <option value="Delivered">Delivered</option>
-                                <option value="Cancelled">Cancelled</option>
-                              </select>
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
-              )}
+              );
+            })()}
+
+          </div>
+        )}
+
+        {/* ========================================================================= */}
+        {/* TAB 5: REGISTERED USERS & PROFILES */}
+        {/* ========================================================================= */}
+        {activeTab === "users" && (
+          <div className="space-y-6 animate-fade-in-up">
+            
+            {/* Header row */}
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+              <div className="space-y-1">
+                <h2 className="font-serif text-2xl font-bold">Registered Users Directory</h2>
+                <p className="text-xs text-gray-400 font-light">
+                  Browse customer account profiles, registration timestamps, and cross-reference total order activity.
+                </p>
+              </div>
+
+              <button
+                onClick={() => refreshData()}
+                className="gold-gradient-bg text-black font-extrabold text-xs tracking-widest uppercase px-4 py-2.5 hover:opacity-90 flex items-center gap-1.5 cursor-pointer rounded"
+              >
+                <RefreshCw className="w-3.5 h-3.5" />
+                Refresh Sync
+              </button>
             </div>
 
-            {/* Registered Profiles Grid */}
-            <div className="glass-panel border border-gold-500/10 p-6 space-y-4">
-              <div className="border-b border-gray-900 pb-2">
-                <h3 className="font-serif text-lg font-bold">Registered Profiles ({allRegisteredProfiles.length})</h3>
+            {/* Users Statistics Cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="glass-panel p-4 rounded border border-gold-500/10">
+                <span className="text-[10px] text-gray-400 uppercase tracking-widest block font-bold">Registered Accounts</span>
+                <p className="font-serif text-3xl font-extrabold text-white mt-1">{allRegisteredProfiles.length}</p>
+                <span className="text-[9px] text-gray-500">Total customer profiles</span>
               </div>
-              
-              {allRegisteredProfiles.length === 0 ? (
-                <p className="text-gray-500 text-xs italic">No user profiles synced yet.</p>
-              ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {allRegisteredProfiles.map(p => (
-                    <div key={p.id} className="bg-black/30 border border-gold-500/5 p-4 rounded flex flex-col gap-2 relative">
-                      <div className="w-8 h-8 rounded-full bg-gold-500/10 text-gold-500 flex items-center justify-center font-serif font-bold text-sm absolute top-4 right-4">
-                        {(p.full_name || p.email)?.[0]?.toUpperCase() || 'U'}
-                      </div>
-                      <div className="space-y-1">
-                        <p className="font-bold text-sm text-white">{p.full_name || 'Customer'}</p>
-                        <p className="text-xs text-gray-400">Email: {p.email}</p>
-                        {p.phone && <p className="text-[10px] text-gray-500 font-mono">Phone: {p.phone}</p>}
-                        {p.password && <p className="text-[10px] text-red-400 font-mono mt-1">Pass: {p.password}</p>}
-                      </div>
-                      <p className="text-[9px] text-gray-600 mt-2 uppercase tracking-widest">
-                        Joined {p.created_at ? new Date(p.created_at).toLocaleDateString() : new Date().toLocaleDateString()}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              )}
+
+              <div className="glass-panel p-4 rounded border border-gold-500/10">
+                <span className="text-[10px] text-gold-400 uppercase tracking-widest block font-bold">Active Buyers</span>
+                <p className="font-serif text-3xl font-extrabold text-gold-400 mt-1">
+                  {new Set(orders.map(o => o.user_id)).size}
+                </p>
+                <span className="text-[9px] text-gray-500">Users who have placed orders</span>
+              </div>
+
+              <div className="glass-panel p-4 rounded border border-gold-500/10">
+                <span className="text-[10px] text-gray-400 uppercase tracking-widest block font-bold">Cloud Sync Status</span>
+                <p className="font-serif text-xl font-bold text-green-400 mt-1">✓ Real-time Sync</p>
+                <span className="text-[9px] text-gray-500">Supabase Profiles Connected</span>
+              </div>
             </div>
+
+            {/* Search Controls */}
+            <div className="bg-neutral-900/40 border border-gold-500/10 p-4 rounded text-left">
+              <div className="relative max-w-md">
+                <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gold-500">
+                  <Search className="w-4 h-4" />
+                </span>
+                <input 
+                  type="text"
+                  value={userSearchQuery}
+                  onChange={(e) => setUserSearchQuery(e.target.value)}
+                  placeholder="Search user by Name, Email, or Phone..."
+                  className="w-full bg-black border border-gold-500/15 text-white pl-10 pr-10 py-2.5 focus:outline-none focus:border-gold-500 text-xs transition-all rounded"
+                />
+                {userSearchQuery && (
+                  <button 
+                    onClick={() => setUserSearchQuery("")}
+                    className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-gray-500 hover:text-gold-500"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Users Cards Grid */}
+            {(() => {
+              const uQuery = userSearchQuery.toLowerCase().trim();
+              const filteredProfiles = allRegisteredProfiles.filter(p => {
+                if (!uQuery) return true;
+                return (
+                  (p.full_name && p.full_name.toLowerCase().includes(uQuery)) ||
+                  (p.email && p.email.toLowerCase().includes(uQuery)) ||
+                  (p.phone && p.phone.toLowerCase().includes(uQuery))
+                );
+              });
+
+              if (filteredProfiles.length === 0) {
+                return (
+                  <div className="text-center py-16 border border-dashed border-gold-500/10 rounded-xl bg-black/20 space-y-3">
+                    <Users className="w-10 h-10 text-gold-500/40 mx-auto" />
+                    <p className="text-gold-500 text-sm font-bold font-serif uppercase tracking-wider">No User Profiles Found</p>
+                    <p className="text-gray-500 text-xs max-w-sm mx-auto">
+                      {userSearchQuery ? `No profiles match "${userSearchQuery}".` : "No registered accounts recorded."}
+                    </p>
+                  </div>
+                );
+              }
+
+              return (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {filteredProfiles.map((p) => {
+                    const userOrders = orders.filter(o => 
+                      o.user_id === p.id || 
+                      o.user_id === p.email || 
+                      (p.phone && o.phone === p.phone)
+                    );
+                    const cleanPhone = p.phone ? p.phone.replace(/\D/g, "") : "";
+
+                    return (
+                      <div 
+                        key={p.id || p.email} 
+                        className="glass-panel border border-gold-500/10 p-5 rounded-xl flex flex-col justify-between space-y-4 relative overflow-hidden transition-all hover:border-gold-500/30"
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-full bg-gold-500/15 text-gold-400 border border-gold-500/30 flex items-center justify-center font-serif font-extrabold text-base flex-shrink-0">
+                              {(p.full_name || p.email)?.[0]?.toUpperCase() || 'U'}
+                            </div>
+                            <div className="overflow-hidden">
+                              <h4 className="font-serif font-bold text-white text-sm truncate">{p.full_name || 'Customer'}</h4>
+                              <p className="text-xs text-gray-400 truncate">{p.email}</p>
+                            </div>
+                          </div>
+
+                          <span className="bg-gold-500/10 border border-gold-500/20 text-gold-300 font-mono text-[10px] px-2 py-0.5 rounded font-bold flex-shrink-0">
+                            {userOrders.length} {userOrders.length === 1 ? "order" : "orders"}
+                          </span>
+                        </div>
+
+                        <div className="space-y-1.5 text-xs border-t border-gold-500/10 pt-3">
+                          {p.phone && (
+                            <p className="text-gray-300 font-mono flex items-center gap-1">
+                              📱 {p.phone}
+                            </p>
+                          )}
+                          <p className="text-[10px] text-gray-500 font-mono">
+                            Joined: {p.created_at ? new Date(p.created_at).toLocaleDateString() : "Recent"}
+                          </p>
+                        </div>
+
+                        {/* Action Buttons */}
+                        {cleanPhone && (
+                          <div className="border-t border-gray-900 pt-2">
+                            <a
+                              href={`https://wa.me/${cleanPhone}?text=${encodeURIComponent(`Hi ${p.full_name || 'Customer'}, Saleem Watch Center concierge here!`)}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="w-full inline-flex items-center justify-center gap-1.5 bg-green-600/10 hover:bg-green-600 border border-green-500/30 text-green-300 hover:text-white py-1.5 px-3 rounded font-bold text-[10px] uppercase tracking-wider transition-all"
+                            >
+                              <MessageSquare className="w-3 h-3" />
+                              WhatsApp Customer
+                            </a>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              );
+            })()}
+
           </div>
         )}
 
