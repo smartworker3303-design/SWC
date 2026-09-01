@@ -31,16 +31,38 @@ export function OrdersProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
 
   const load = async () => {
-    setIsLoading(true);
+    // 1. Instant hydration from localStorage
+    try {
+      const localOrdersStr = localStorage.getItem("mock_orders_db_v2");
+      const localOrders: Order[] = localOrdersStr ? JSON.parse(localOrdersStr) : [];
+      const localUsersStr = localStorage.getItem("mock_users_db_v2");
+      const localUsers: Profile[] = localUsersStr ? JSON.parse(localUsersStr) : [];
+
+      if (localOrders.length > 0) setOrders(localOrders);
+      if (localUsers.length > 0) setProfiles(localUsers);
+      if (localOrders.length > 0 || localUsers.length > 0) {
+        setIsLoading(false);
+      }
+    } catch {}
+
+    // 2. Parallel fetch from Supabase
     let dbOrders: Order[] = [];
     let dbProfiles: Profile[] = [];
 
     if (supabase) {
-      dbOrders = (await fetchSupabaseOrders()) || [];
-      dbProfiles = (await fetchSupabaseProfiles()) || [];
+      try {
+        const [ordersRes, profilesRes] = await Promise.all([
+          fetchSupabaseOrders(),
+          fetchSupabaseProfiles()
+        ]);
+        dbOrders = ordersRes || [];
+        dbProfiles = profilesRes || [];
+      } catch (err) {
+        console.warn("Supabase orders load warning:", err);
+      }
     }
 
-    // Also merge with localStorage backups
+    // 3. Merge with localStorage backups
     try {
       const localOrdersStr = localStorage.getItem("mock_orders_db_v2");
       const localOrders: Order[] = localOrdersStr ? JSON.parse(localOrdersStr) : [];
@@ -54,7 +76,9 @@ export function OrdersProvider({ children }: { children: React.ReactNode }) {
       localOrders.forEach(o => {
         if (!orderMap.has(o.id)) orderMap.set(o.id, o);
       });
-      setOrders(Array.from(orderMap.values()));
+      const mergedOrders = Array.from(orderMap.values());
+      setOrders(mergedOrders);
+      localStorage.setItem("mock_orders_db_v2", JSON.stringify(mergedOrders));
 
       // Merge profiles (deduplicate by id or email)
       const profileMap = new Map<string, Profile>();
@@ -63,7 +87,9 @@ export function OrdersProvider({ children }: { children: React.ReactNode }) {
         const key = p.id || p.email;
         if (!profileMap.has(key)) profileMap.set(key, p);
       });
-      setProfiles(Array.from(profileMap.values()));
+      const mergedProfiles = Array.from(profileMap.values());
+      setProfiles(mergedProfiles);
+      localStorage.setItem("mock_users_db_v2", JSON.stringify(mergedProfiles));
     } catch {
       setOrders(dbOrders);
       setProfiles(dbProfiles);

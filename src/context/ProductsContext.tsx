@@ -48,30 +48,58 @@ export function ProductsProvider({ children }: { children: React.ReactNode }) {
       const dbProducts = await fetchSupabaseProducts();
       if (dbProducts !== null) {
         setProducts(dbProducts);
+        try {
+          localStorage.setItem("swc_products_catalog_cache_v2", JSON.stringify(dbProducts));
+        } catch {}
         return;
       }
     }
   }, [isSupabaseConnected]);
 
-  // Load products on mount — Supabase is the ONLY source of truth.
+  // Load products on mount with instant localStorage caching + background Supabase fetch
   useEffect(() => {
-    async function load() {
-      setIsLoading(true);
+    let isMounted = true;
 
-      if (isSupabaseConnected) {
-        const dbProducts = await fetchSupabaseProducts();
-        if (dbProducts !== null) {
-          setProducts(dbProducts);
+    // 1. Instant Cache Hydration — makes website load in 0ms on repeat visits
+    try {
+      const cached = localStorage.getItem("swc_products_catalog_cache_v2");
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setProducts(parsed);
           setIsLoading(false);
-          return;
+        }
+      }
+    } catch {}
+
+    // 2. Fetch fresh data from Supabase in background
+    async function load() {
+      if (isSupabaseConnected) {
+        try {
+          const dbProducts = await fetchSupabaseProducts();
+          if (dbProducts !== null && isMounted) {
+            setProducts(dbProducts);
+            try {
+              localStorage.setItem("swc_products_catalog_cache_v2", JSON.stringify(dbProducts));
+            } catch {}
+            setIsLoading(false);
+            return;
+          }
+        } catch (err) {
+          console.warn("Could not fetch products from Supabase:", err);
         }
       }
 
-      // No Supabase or connection failed — show empty catalog.
-      setProducts([]);
-      setIsLoading(false);
+      if (isMounted) {
+        setIsLoading(false);
+      }
     }
+
     load();
+
+    return () => {
+      isMounted = false;
+    };
   }, [isSupabaseConnected]);
 
   const addProduct = async (newProduct: Product) => {
@@ -98,20 +126,26 @@ export function ProductsProvider({ children }: { children: React.ReactNode }) {
     const otherProducts = products.filter(p => getProductGroupKey(p) !== targetGroupKey);
     const nextAllProducts = [...otherProducts, ...updatedGroup];
 
+    // Optimistic local state update + cache
+    setProducts(nextAllProducts);
+    try {
+      localStorage.setItem("swc_products_catalog_cache_v2", JSON.stringify(nextAllProducts));
+    } catch {}
+
     if (isSupabaseConnected) {
       const success = await upsertMultipleSupabaseProducts(updatedGroup);
       if (!success) {
         throw new Error("Failed to save product to Supabase. The image may be too large — please use a smaller image.");
       }
-      const dbProducts = await fetchSupabaseProducts();
-      if (dbProducts !== null) {
-        setProducts(dbProducts);
-        return;
-      }
+      fetchSupabaseProducts().then(dbProducts => {
+        if (dbProducts !== null) {
+          setProducts(dbProducts);
+          try {
+            localStorage.setItem("swc_products_catalog_cache_v2", JSON.stringify(dbProducts));
+          } catch {}
+        }
+      });
     }
-
-    // Local-only fallback
-    setProducts(nextAllProducts);
   };
 
   const updateProduct = async (updatedProduct: Product) => {
@@ -169,20 +203,26 @@ export function ProductsProvider({ children }: { children: React.ReactNode }) {
       nextAllProducts = [...otherProducts, ...updatedOldGroup, ...updatedNewGroup];
     }
 
+    // Optimistic local state update + cache
+    setProducts(nextAllProducts);
+    try {
+      localStorage.setItem("swc_products_catalog_cache_v2", JSON.stringify(nextAllProducts));
+    } catch {}
+
     if (isSupabaseConnected) {
       const success = await upsertMultipleSupabaseProducts(allAffectedProductsToSave);
       if (!success) {
         throw new Error("Failed to update product in Supabase. The image may be too large — please use a smaller image.");
       }
-      const dbProducts = await fetchSupabaseProducts();
-      if (dbProducts !== null) {
-        setProducts(dbProducts);
-        return;
-      }
+      fetchSupabaseProducts().then(dbProducts => {
+        if (dbProducts !== null) {
+          setProducts(dbProducts);
+          try {
+            localStorage.setItem("swc_products_catalog_cache_v2", JSON.stringify(dbProducts));
+          } catch {}
+        }
+      });
     }
-
-    // Local-only fallback
-    setProducts(nextAllProducts);
   };
 
   const deleteProduct = async (id: string) => {
@@ -198,6 +238,21 @@ export function ProductsProvider({ children }: { children: React.ReactNode }) {
       }));
     }
 
+    let nextAllProducts: Product[] = [];
+    if (toDelete) {
+      const groupKey = getProductGroupKey(toDelete);
+      const otherProducts = products.filter(p => getProductGroupKey(p) !== groupKey && p.id !== id);
+      nextAllProducts = [...otherProducts, ...updatedGroup];
+    } else {
+      nextAllProducts = products.filter(p => p.id !== id);
+    }
+
+    // Optimistic local state update + cache
+    setProducts(nextAllProducts);
+    try {
+      localStorage.setItem("swc_products_catalog_cache_v2", JSON.stringify(nextAllProducts));
+    } catch {}
+
     if (isSupabaseConnected) {
       const success = await deleteSupabaseProduct(id);
       if (!success) {
@@ -206,20 +261,14 @@ export function ProductsProvider({ children }: { children: React.ReactNode }) {
       if (updatedGroup.length > 0) {
         await upsertMultipleSupabaseProducts(updatedGroup);
       }
-      const dbProducts = await fetchSupabaseProducts();
-      if (dbProducts !== null) {
-        setProducts(dbProducts);
-        return;
-      }
-    }
-
-    // Local-only fallback
-    if (toDelete) {
-      const groupKey = getProductGroupKey(toDelete);
-      const otherProducts = products.filter(p => getProductGroupKey(p) !== groupKey && p.id !== id);
-      setProducts([...otherProducts, ...updatedGroup]);
-    } else {
-      setProducts(prev => prev.filter(p => p.id !== id));
+      fetchSupabaseProducts().then(dbProducts => {
+        if (dbProducts !== null) {
+          setProducts(dbProducts);
+          try {
+            localStorage.setItem("swc_products_catalog_cache_v2", JSON.stringify(dbProducts));
+          } catch {}
+        }
+      });
     }
   };
 

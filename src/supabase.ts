@@ -106,7 +106,7 @@ export async function upsertSupabaseProduct(product: Product): Promise<boolean> 
       .upsert(payload);
       
     if (error) {
-      console.error("Supabase upsert error:", {
+      console.error("Supabase upsert error for product", product.id, {
         message: error.message,
         code: error.code,
         details: error.details,
@@ -124,38 +124,12 @@ export async function upsertSupabaseProduct(product: Product): Promise<boolean> 
 export async function upsertMultipleSupabaseProducts(products: Product[]): Promise<boolean> {
   if (!supabase || products.length === 0) return false;
   try {
-    const payloads = products.map(product => ({
-      id: product.id,
-      name: product.name,
-      category: product.category,
-      price: product.price,
-      rating: product.rating,
-      reviews: product.reviews,
-      image: product.image,
-      description: product.description,
-      specs: { 
-        ...product.specs, 
-        __brand: product.brand, 
-        __subcategory: product.subcategory,
-        __images: product.images && product.images.length > 0 ? product.images : [product.image],
-        __original_price: product.originalPrice ? product.originalPrice : undefined,
-        __discount: product.discount ? product.discount : undefined,
-        __sort_order: product.sortOrder,
-        __colors: product.colors
-      },
-      featured: product.featured,
-      tag: product.tag || null
-    }));
-
-    const { error } = await supabase
-      .from("products")
-      .upsert(payloads);
-      
-    if (error) {
-      console.error("Supabase bulk upsert error:", error);
-      return false;
-    }
-    return true;
+    // Upsert products in parallel individual requests to avoid Postgres payload size and statement timeouts
+    const results = await Promise.all(
+      products.map(product => upsertSupabaseProduct(product))
+    );
+    const hasFailure = results.some(success => !success);
+    return !hasFailure;
   } catch (err) {
     console.error("Unexpected error in bulk upsert:", err);
     return false;

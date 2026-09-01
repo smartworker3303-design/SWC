@@ -36,7 +36,8 @@ import {
   Package,
   ExternalLink,
   CheckCircle,
-  Users
+  Users,
+  AlertCircle
 } from "lucide-react";
 import { useProducts, getProductGroupKey } from "../../context/ProductsContext";
 import { useOrders } from "../../context/OrdersContext";
@@ -211,7 +212,7 @@ export default function AdminPanelPage() {
     sessionStorage.removeItem("swc-admin-authenticated");
   };
 
-  // Helper to convert/optimize image files to high-resolution crisp WebP (up to 1600px, 90% quality)
+  // Helper to convert/optimize image files to high-resolution crisp WebP (up to 1000px, 82% quality)
   const processImageFile = (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
@@ -224,15 +225,9 @@ export default function AdminPanelPage() {
 
         const img = new window.Image();
         img.onload = () => {
-          const MAX_SIZE = 1600;
+          const MAX_SIZE = 1000;
           let width = img.width;
           let height = img.height;
-
-          // If image is already lightweight & within 1600px bounds, keep original fidelity directly
-          if (width <= MAX_SIZE && height <= MAX_SIZE && file.size <= 1.5 * 1024 * 1024) {
-            resolve(rawDataUrl);
-            return;
-          }
 
           if (width > height) {
             if (width > MAX_SIZE) {
@@ -255,7 +250,14 @@ export default function AdminPanelPage() {
             ctx.imageSmoothingQuality = "high";
             ctx.clearRect(0, 0, width, height);
             ctx.drawImage(img, 0, 0, width, height);
-            resolve(canvas.toDataURL("image/webp", 0.90));
+            try {
+              const webpData = canvas.toDataURL("image/webp", 0.82);
+              if (webpData && webpData.startsWith("data:image/webp")) {
+                resolve(webpData);
+                return;
+              }
+            } catch {}
+            resolve(canvas.toDataURL("image/jpeg", 0.82));
           } else {
             resolve(rawDataUrl);
           }
@@ -642,15 +644,6 @@ export default function AdminPanelPage() {
     });
   };
 
-  if (isProductsLoading || isOrdersLoading) {
-    return (
-      <div className="min-h-screen bg-transparent flex flex-col items-center justify-center space-y-4">
-        <div className="w-12 h-12 rounded-full border-t-2 border-r-2 border-gold-500 animate-spin" />
-        <p className="text-gray-400 text-xs tracking-widest uppercase">Loading SWC Admin Console...</p>
-      </div>
-    );
-  }
-
   // 1. LOGIN GATE VIEW
   if (!isAuthenticated) {
     return (
@@ -669,62 +662,61 @@ export default function AdminPanelPage() {
             <div className="w-14 h-14 rounded-full border border-gold-500 flex items-center justify-center bg-black/60 shadow-[0_0_15px_rgba(212,175,55,0.15)] mx-auto">
               <Lock className="w-6 h-6 text-gold-500" />
             </div>
-            <h2 className="font-serif text-2xl font-bold tracking-wider text-white">
-              SWC Concierge Portal
-            </h2>
-            <p className="text-gray-400 text-xs font-light max-w-xs mx-auto leading-relaxed">
-              Enter admin credentials to configure inventory tables, recalibrate pricing, and sync cloud databases.
+            <h1 className="font-serif text-2xl font-bold tracking-tight text-white">
+              SWC Concierge <span className="text-gold-500 font-sans text-sm tracking-widest block uppercase mt-1">Management Portal</span>
+            </h1>
+            <p className="text-xs text-gray-400">
+              Sign in with administrative credentials to access the timepiece curation dashboard.
             </p>
           </div>
 
-          <form onSubmit={handleLogin} className="mt-8 space-y-6">
+          <form onSubmit={handleLogin} className="mt-8 space-y-5">
+            {loginError && (
+              <div className="p-3 bg-red-950/40 border border-red-500/30 text-red-400 text-xs rounded-none flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 shrink-0" />
+                <span>{loginError}</span>
+              </div>
+            )}
+
             <div className="space-y-4">
-              <div className="space-y-1">
-                <label htmlFor="login-email" className="text-[10px] text-gray-400 uppercase tracking-widest font-semibold block">Email Address</label>
+              <div>
+                <label className="block text-[11px] font-bold text-gray-300 uppercase tracking-wider mb-2">
+                  Concierge Email
+                </label>
                 <div className="relative">
-                  <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gold-500/70">
-                    <User className="w-4 h-4" />
-                  </span>
                   <input
-                    id="login-email"
                     type="email"
                     required
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder="concierge@swc.com"
-                    className="w-full bg-black border border-gold-500/15 text-white pl-10 pr-4 py-3 focus:outline-none focus:border-gold-500 text-sm transition-all"
+                    placeholder="concierge@saleemwatchcenter.com"
+                    className="w-full bg-black/60 border border-gray-800 focus:border-gold-500 rounded-none px-4 py-3 text-sm text-white focus:outline-none transition-colors"
                   />
+                  <ShieldCheck className="w-4 h-4 text-gray-600 absolute right-3.5 top-3.5 pointer-events-none" />
                 </div>
               </div>
 
-              <div className="space-y-1">
-                <label htmlFor="login-password" className="text-[10px] text-gray-400 uppercase tracking-widest font-semibold block">Password</label>
+              <div>
+                <label className="block text-[11px] font-bold text-gray-300 uppercase tracking-wider mb-2">
+                  Security Passkey
+                </label>
                 <div className="relative">
-                  <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gold-500/70">
-                    <Lock className="w-4 h-4" />
-                  </span>
                   <input
-                    id="login-password"
                     type="password"
                     required
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="••••••••••••"
-                    className="w-full bg-black border border-gold-500/15 text-white pl-10 pr-4 py-3 focus:outline-none focus:border-gold-500 text-sm transition-all"
+                    className="w-full bg-black/60 border border-gray-800 focus:border-gold-500 rounded-none px-4 py-3 text-sm text-white focus:outline-none transition-colors"
                   />
+                  <Lock className="w-4 h-4 text-gray-600 absolute right-3.5 top-3.5 pointer-events-none" />
                 </div>
               </div>
             </div>
 
-            {loginError && (
-              <div className="bg-red-500/10 border border-red-500/30 p-3 text-center text-xs text-red-400 font-medium font-mono animate-shake">
-                {loginError}
-              </div>
-            )}
-
             <button
               type="submit"
-              className="w-full gold-gradient-bg text-black font-extrabold text-xs tracking-widest uppercase py-4 shadow-lg hover:opacity-95 transition-opacity"
+              className="w-full gold-gradient-bg text-black font-extrabold text-xs tracking-widest uppercase py-4 shadow-lg hover:opacity-95 transition-opacity cursor-pointer mt-4"
             >
               Sign In Admin Console
             </button>
