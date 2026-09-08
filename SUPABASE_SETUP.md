@@ -40,7 +40,7 @@ create table products (
 
 -- Create the profiles table to track users
 create table profiles (
-  id uuid references auth.users on delete cascade primary key,
+  id text primary key,
   email text not null,
   phone text,
   full_name text,
@@ -49,13 +49,19 @@ create table profiles (
 
 -- Create the orders table
 create table orders (
-  id uuid default gen_random_uuid() primary key,
-  user_id uuid references profiles(id) on delete cascade not null,
+  id text primary key,
+  user_id text not null,
+  customer_name text,
   items jsonb not null,
   total_amount numeric not null,
+  discount_amount numeric,
+  delivery_fee numeric,
+  payment_method text,
   status text not null check (status in ('Pending', 'Processing', 'Shipped', 'Delivered', 'Cancelled')) default 'Pending',
   shipping_address text not null,
+  shipping_details jsonb,
   phone text not null,
+  email text,
   created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 

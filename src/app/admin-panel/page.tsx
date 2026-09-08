@@ -952,7 +952,7 @@ export default function AdminPanelPage() {
             }`}
           >
             <ShoppingBag className="w-3.5 h-3.5" />
-            <span>Orders</span>
+            <span>Client Orders</span>
             {pendingOrdersCount > 0 && (
               <span className="bg-red-500 text-white font-mono text-[9px] font-bold px-1.5 py-0.2 rounded-full shadow animate-pulse">
                 {pendingOrdersCount}
@@ -968,7 +968,7 @@ export default function AdminPanelPage() {
             }`}
           >
             <Users className="w-3.5 h-3.5" />
-            <span>Users</span>
+            <span>Registered Users</span>
           </button>
         </div>
 

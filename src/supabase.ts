@@ -276,11 +276,17 @@ export async function insertSupabaseOrder(order: Order): Promise<boolean> {
     const { error } = await supabase.from('orders').insert({
       id: order.id,
       user_id: order.user_id,
+      customer_name: order.customer_name,
       items: order.items,
       total_amount: order.total_amount,
+      discount_amount: order.discount_amount,
+      delivery_fee: order.delivery_fee,
+      payment_method: order.payment_method,
       status: order.status,
       shipping_address: order.shipping_address,
+      shipping_details: order.shipping_details,
       phone: order.phone,
+      email: order.email,
       created_at: order.created_at
     });
 
