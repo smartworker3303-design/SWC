@@ -9,6 +9,7 @@ import {
   Star, 
   MessageSquare, 
   ChevronLeft, 
+  ChevronRight,
   Smartphone, 
   Clock, 
   Award,
@@ -158,9 +159,35 @@ export default function ProductDetailPage({ params }: ProductPageProps) {
               </span>
             )}
             {galleryImages.length > 1 && (
-              <span className="absolute bottom-4 right-4 bg-black/80 backdrop-blur-sm border border-gold-500/20 text-gold-400 text-[10px] font-mono font-bold px-2.5 py-1 rounded shadow">
+              <span className="absolute bottom-4 right-4 bg-black/80 backdrop-blur-sm border border-gold-500/20 text-gold-400 text-[10px] font-mono font-bold px-2.5 py-1 rounded shadow pointer-events-none">
                 {selectedImageIndex + 1} / {galleryImages.length}
               </span>
+            )}
+            
+            {/* Prev/Next Image Navigation Overlay */}
+            {galleryImages.length > 1 && (
+              <>
+                <button
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setSelectedImageIndex((prev) => (prev === 0 ? galleryImages.length - 1 : prev - 1));
+                  }}
+                  className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 p-2 bg-black/50 hover:bg-gold-500/80 hover:text-black text-gold-500 border border-gold-500/30 rounded-full transition-colors z-20"
+                  aria-label="Previous image"
+                >
+                  <ChevronLeft className="w-6 h-6" />
+                </button>
+                <button
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setSelectedImageIndex((prev) => (prev === galleryImages.length - 1 ? 0 : prev + 1));
+                  }}
+                  className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 p-2 bg-black/50 hover:bg-gold-500/80 hover:text-black text-gold-500 border border-gold-500/30 rounded-full transition-colors z-20"
+                  aria-label="Next image"
+                >
+                  <ChevronRight className="w-6 h-6" />
+                </button>
+              </>
             )}
           </div>
 

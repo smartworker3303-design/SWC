@@ -37,7 +37,9 @@ import {
   ExternalLink,
   CheckCircle,
   Users,
-  AlertCircle
+  AlertCircle,
+  Eye,
+  EyeOff
 } from "lucide-react";
 import { useProducts, getProductGroupKey } from "../../context/ProductsContext";
 import { useOrders } from "../../context/OrdersContext";
@@ -95,6 +97,17 @@ export default function AdminPanelPage() {
 
   // Users Tab Filter State
   const [userSearchQuery, setUserSearchQuery] = useState("");
+
+  // Orders Expansion State
+  const [expandedOrders, setExpandedOrders] = useState<Set<string>>(new Set());
+  const toggleOrderExpansion = (id: string) => {
+    setExpandedOrders(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
 
   // Reset search and sort when active tab changes
   useEffect(() => {
@@ -1732,44 +1745,71 @@ export default function AdminPanelPage() {
                     return (
                       <div 
                         key={order.id} 
-                        className="glass-panel border border-gold-500/15 rounded-xl p-5 sm:p-6 space-y-5 relative overflow-hidden transition-all hover:border-gold-500/30"
+                        className={`glass-panel border border-gold-500/15 rounded-xl ${expandedOrders.has(order.id) ? 'p-5 sm:p-6 space-y-5' : 'p-3 sm:p-4'} relative overflow-hidden transition-all hover:border-gold-500/30`}
                       >
                         {/* Top Header Strip: Order ID, Date, Payment & Status Updater */}
-                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-gold-500/10 pb-3.5">
+                        <div className={`flex flex-col lg:flex-row lg:items-center justify-between gap-3 ${expandedOrders.has(order.id) ? 'border-b border-gold-500/10 pb-3.5' : ''}`}>
                           <div className="flex items-center gap-3 flex-wrap">
+                            <button 
+                              onClick={() => toggleOrderExpansion(order.id)} 
+                              className="p-1.5 bg-black/40 hover:bg-gold-500/20 text-gold-400 rounded border border-gold-500/30 transition-colors"
+                              title={expandedOrders.has(order.id) ? "Hide Details" : "View Details"}
+                            >
+                              {expandedOrders.has(order.id) ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                            </button>
                             <span className="font-mono text-sm font-bold text-gold-400 bg-gold-500/10 border border-gold-500/20 px-2.5 py-1 rounded">
                               #{order.id}
                             </span>
-                            <span className="text-xs text-gray-400">
-                              🕒 {new Date(order.created_at).toLocaleDateString()} at {new Date(order.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            <span className="font-bold text-white text-sm">
+                              {recipientName}
                             </span>
-                            <span className="bg-black/60 border border-gold-500/20 text-gold-300 text-[10px] uppercase tracking-wider font-bold px-2 py-0.5 rounded">
-                              {order.payment_method === "bank_transfer" ? "Bank Transfer" : "Cash on Delivery (COD)"}
+                            <span className="text-gold-400 font-serif text-sm font-bold">
+                              Rs. {order.total_amount.toLocaleString()}
                             </span>
+                            {expandedOrders.has(order.id) && (
+                              <span className="text-xs text-gray-400 hidden sm:inline-block">
+                                🕒 {new Date(order.created_at).toLocaleDateString()} at {new Date(order.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                              </span>
+                            )}
                           </div>
 
-                          {/* Fulfillment Status Dropdown */}
-                          <div className="flex items-center gap-2">
-                            <span className="text-[10px] text-gray-400 uppercase font-semibold">Status:</span>
-                            <select
-                              value={order.status}
-                              onChange={(e) => updateStatus(order.id, e.target.value as any)}
-                              className={`text-xs font-bold uppercase tracking-wider px-3 py-1.5 rounded outline-none border cursor-pointer transition-colors ${
-                                order.status === 'Pending' ? 'bg-orange-500/15 text-orange-400 border-orange-500/30 hover:border-orange-500' :
-                                order.status === 'Processing' ? 'bg-blue-500/15 text-blue-400 border-blue-500/30 hover:border-blue-500' :
-                                order.status === 'Shipped' ? 'bg-purple-500/15 text-purple-400 border-purple-500/30 hover:border-purple-500' :
-                                order.status === 'Delivered' ? 'bg-green-500/15 text-green-400 border-green-500/30 hover:border-green-500' :
-                                'bg-red-500/15 text-red-400 border-red-500/30 hover:border-red-500'
-                              }`}
-                            >
-                              <option value="Pending">Pending</option>
-                              <option value="Processing">Processing</option>
-                              <option value="Shipped">Shipped</option>
-                              <option value="Delivered">Delivered</option>
-                              <option value="Cancelled">Cancelled</option>
-                            </select>
+                          <div className="flex items-center gap-2 justify-between lg:justify-end w-full lg:w-auto">
+                            {!expandedOrders.has(order.id) && (
+                              <span className="text-xs text-gray-400 sm:hidden">
+                                {new Date(order.created_at).toLocaleDateString()}
+                              </span>
+                            )}
+                            {expandedOrders.has(order.id) && (
+                              <span className="bg-black/60 border border-gold-500/20 text-gold-300 text-[10px] uppercase tracking-wider font-bold px-2 py-0.5 rounded hidden lg:inline-block">
+                                {order.payment_method === "bank_transfer" ? "Bank Transfer" : "Cash on Delivery (COD)"}
+                              </span>
+                            )}
+                            {/* Fulfillment Status Dropdown */}
+                            <div className="flex items-center gap-2 ml-auto">
+                              <span className="text-[10px] text-gray-400 uppercase font-semibold hidden sm:inline-block">Status:</span>
+                              <select
+                                value={order.status}
+                                onChange={(e) => updateStatus(order.id, e.target.value as any)}
+                                className={`text-xs font-bold uppercase tracking-wider px-3 py-1.5 rounded outline-none border cursor-pointer transition-colors ${
+                                  order.status === 'Pending' ? 'bg-orange-500/15 text-orange-400 border-orange-500/30 hover:border-orange-500' :
+                                  order.status === 'Processing' ? 'bg-blue-500/15 text-blue-400 border-blue-500/30 hover:border-blue-500' :
+                                  order.status === 'Shipped' ? 'bg-purple-500/15 text-purple-400 border-purple-500/30 hover:border-purple-500' :
+                                  order.status === 'Delivered' ? 'bg-green-500/15 text-green-400 border-green-500/30 hover:border-green-500' :
+                                  'bg-red-500/15 text-red-400 border-red-500/30 hover:border-red-500'
+                                }`}
+                              >
+                                <option value="Pending">Pending</option>
+                                <option value="Processing">Processing</option>
+                                <option value="Shipped">Shipped</option>
+                                <option value="Delivered">Delivered</option>
+                                <option value="Cancelled">Cancelled</option>
+                              </select>
+                            </div>
                           </div>
                         </div>
+
+                        {expandedOrders.has(order.id) && (
+                          <div className="space-y-5 animate-fade-in-up mt-4">
 
                         {/* Main Grid: Customer Contact, Detailed Address, Ordered Items */}
                         <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
@@ -1912,6 +1952,8 @@ export default function AdminPanelPage() {
                             </span>
                           </div>
                         </div>
+                          </div>
+                        )}
                       </div>
                     );
                   })}
