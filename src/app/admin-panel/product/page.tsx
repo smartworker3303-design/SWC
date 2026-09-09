@@ -9,7 +9,7 @@ import {
   UploadCloud, Star, Save, X, Loader2 
 } from "lucide-react";
 import { useProducts, getProductGroupKey } from "../../../context/ProductsContext";
-import { Product } from "../../../data";
+import { Product, CustomerReview } from "../../../data";
 
 const COLOR_PRESETS = [
   { name: "Black", bg: "#111111", border: "#444444" },
@@ -54,6 +54,49 @@ function ProductFormContent() {
   const [formSortOrder, setFormSortOrder] = useState<number>(1);
   const [formColors, setFormColors] = useState<string[]>([]);
   const [customColorInput, setCustomColorInput] = useState("");
+  const [formCustomerReviews, setFormCustomerReviews] = useState<CustomerReview[]>([]);
+  const [isAddingReview, setIsAddingReview] = useState(false);
+  const [newReview, setNewReview] = useState<Partial<CustomerReview>>({ rating: 5, verified: true, date: new Date().toLocaleDateString('en-US', {month: '2-digit', day: '2-digit', year: 'numeric'}) });
+
+  const handleAddReview = () => {
+    if (!newReview.name || !newReview.text) {
+      setFormError("Please provide reviewer name and text");
+      return;
+    }
+    const r: CustomerReview = {
+      id: Date.now().toString(),
+      name: newReview.name || '',
+      rating: Number(newReview.rating) || 5,
+      date: newReview.date || new Date().toLocaleDateString('en-US', {month: '2-digit', day: '2-digit', year: 'numeric'}),
+      title: newReview.title || '',
+      text: newReview.text || '',
+      verified: Boolean(newReview.verified),
+      images: newReview.images || []
+    };
+    setFormCustomerReviews([...formCustomerReviews, r]);
+    setNewReview({ rating: 5, verified: true, date: new Date().toLocaleDateString('en-US', {month: '2-digit', day: '2-digit', year: 'numeric'}) });
+    setIsAddingReview(false);
+  };
+  
+  const handleRemoveReview = (id: string) => {
+    setFormCustomerReviews(formCustomerReviews.filter(r => r.id !== id));
+  };
+  
+  const handleReviewImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      try {
+        setIsProcessingImages(true);
+        const dataUrl = await processImageFile(file);
+        setNewReview(prev => ({ ...prev, images: [...(prev.images || []), dataUrl] }));
+      } catch (err) {
+        setFormError("Failed to process review image.");
+      } finally {
+        setIsProcessingImages(false);
+      }
+    }
+  };
+
   const [formSpecs, setFormSpecs] = useState<{ key: string; value: string }[]>([
     { key: "Movement", value: "Quartz" },
     { key: "Water Resistance", value: "50m (5 ATM)" }
@@ -114,6 +157,7 @@ function ProductFormContent() {
         setFormTag(prod.tag || "");
         setFormSortOrder(prod.sortOrder && prod.sortOrder >= 1 ? prod.sortOrder : 1);
         setFormColors(prod.colors || []);
+        setFormCustomerReviews(prod.customerReviews || []);
         
         const mappedSpecs = Object.entries(prod.specs).map(([key, value]) => ({ key, value }));
         setFormSpecs(mappedSpecs.length > 0 ? mappedSpecs : [
@@ -369,7 +413,8 @@ function ProductFormContent() {
       featured: true,
       tag: formTag.trim() || undefined,
       sortOrder: boundedSortOrder,
-      colors: formColors.length > 0 ? formColors : undefined
+      colors: formColors.length > 0 ? formColors : undefined,
+      customerReviews: formCustomerReviews.length > 0 ? formCustomerReviews : undefined
     };
 
     try {
@@ -500,10 +545,11 @@ function ProductFormContent() {
                     >
                       <option value="">None / Unbranded</option>
                       <option value="Rolex">Rolex</option>
-                      <option value="Patek Philippe">Patek Philippe</option>
-                      <option value="Cartier">Cartier</option>
-                      <option value="Audemars Piguet">Audemars Piguet</option>
-                      <option value="Omega">Omega</option>
+                      <option value="Patek-phillip">Patek-phillip</option>
+                      <option value="Tissot">Tissot</option>
+                      <option value="Hublot">Hublot</option>
+                      <option value="Tag Heuer">Tag Heuer</option>
+                      <option value="skmei">skmei</option>
                     </select>
                   </div>
                 </>
@@ -552,14 +598,28 @@ function ProductFormContent() {
                 <label htmlFor="form-discount" className="text-[10px] text-gray-400 uppercase tracking-widest font-bold block">
                   Discount Badge Text
                 </label>
-                <input
-                  id="form-discount"
-                  type="text"
-                  value={formDiscount}
-                  onChange={(e) => setFormDiscount(e.target.value)}
-                  placeholder="e.g. 33% OFF, BUY 1 GET 1"
-                  className="w-full bg-black border border-gold-500/15 text-gold-400 py-2.5 px-3 rounded focus:outline-none focus:border-gold-500 text-sm font-semibold uppercase"
-                />
+                <div className="flex flex-col gap-3">
+                  <input
+                    id="form-discount"
+                    type="text"
+                    value={formDiscount}
+                    onChange={(e) => setFormDiscount(e.target.value)}
+                    placeholder="e.g. 33% OFF, BUY 1 GET 1 FREE"
+                    className="w-full bg-black border border-gold-500/15 text-gold-400 py-2.5 px-3 rounded focus:outline-none focus:border-gold-500 text-sm font-semibold uppercase"
+                  />
+                  <label className="flex items-center gap-2 cursor-pointer w-fit group">
+                    <div className={`w-4 h-4 rounded-sm border flex items-center justify-center transition-colors ${formDiscount.toUpperCase() === "BUY 1 GET 1 FREE" ? "bg-gold-500 border-gold-500" : "bg-black border-gold-500/30 group-hover:border-gold-500/60"}`}>
+                      {formDiscount.toUpperCase() === "BUY 1 GET 1 FREE" && <svg className="w-3 h-3 text-black" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>}
+                    </div>
+                    <input
+                      type="checkbox"
+                      className="sr-only"
+                      checked={formDiscount.toUpperCase() === "BUY 1 GET 1 FREE"}
+                      onChange={(e) => setFormDiscount(e.target.checked ? "BUY 1 GET 1 FREE" : "")}
+                    />
+                    <span className="text-[10px] text-gold-400 uppercase tracking-widest font-bold group-hover:text-gold-300">Offer: Buy 1 Get 1 Free</span>
+                  </label>
+                </div>
               </div>
 
               <div className="space-y-1">
@@ -760,6 +820,154 @@ function ProductFormContent() {
                   )}
                 </div>
               </div>
+            </div>
+          </div>
+
+          {/* Customer Reviews Section */}
+          <div className="space-y-5">
+            <h2 className="text-gold-500 text-xs font-bold uppercase tracking-widest border-b border-gold-500/20 pb-2 flex items-center justify-between">
+              <span>Customer Reviews (Admin Override)</span>
+              <button 
+                type="button" 
+                onClick={() => setIsAddingReview(!isAddingReview)}
+                className="px-2.5 py-1 bg-gold-500 text-black text-[9px] uppercase font-extrabold rounded hover:bg-gold-400"
+              >
+                + Add Review
+              </button>
+            </h2>
+
+            {isAddingReview && (
+              <div className="bg-neutral-900 border border-gold-500/20 p-4 rounded space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <label className="text-[10px] text-gray-400 uppercase font-bold block">Reviewer Name</label>
+                    <input 
+                      type="text" 
+                      value={newReview.name || ''} 
+                      onChange={(e) => setNewReview({...newReview, name: e.target.value})} 
+                      className="w-full bg-black border border-gold-500/15 text-white py-2 px-3 rounded focus:outline-none focus:border-gold-500 text-sm"
+                      placeholder="e.g. John Doe"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[10px] text-gray-400 uppercase font-bold block">Date (MM/DD/YYYY)</label>
+                    <input 
+                      type="text" 
+                      value={newReview.date || ''} 
+                      onChange={(e) => setNewReview({...newReview, date: e.target.value})} 
+                      className="w-full bg-black border border-gold-500/15 text-white py-2 px-3 rounded focus:outline-none focus:border-gold-500 text-sm"
+                      placeholder="e.g. 09/02/2025"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[10px] text-gray-400 uppercase font-bold block">Rating (1-5)</label>
+                    <select 
+                      value={newReview.rating || 5} 
+                      onChange={(e) => setNewReview({...newReview, rating: Number(e.target.value)})} 
+                      className="w-full bg-black border border-gold-500/15 text-white py-2 px-3 rounded focus:outline-none focus:border-gold-500 text-sm"
+                    >
+                      <option value={5}>5 Stars</option>
+                      <option value={4}>4 Stars</option>
+                      <option value={3}>3 Stars</option>
+                      <option value={2}>2 Stars</option>
+                      <option value={1}>1 Star</option>
+                    </select>
+                  </div>
+                  <div className="space-y-1 flex items-end">
+                    <label className="flex items-center gap-2 cursor-pointer pb-2">
+                      <input 
+                        type="checkbox" 
+                        checked={newReview.verified || false} 
+                        onChange={(e) => setNewReview({...newReview, verified: e.target.checked})} 
+                        className="accent-gold-500 w-4 h-4"
+                      />
+                      <span className="text-sm text-white font-medium">Verified Buyer</span>
+                    </label>
+                  </div>
+                  <div className="sm:col-span-2 space-y-1">
+                    <label className="text-[10px] text-gray-400 uppercase font-bold block">Review Title (Optional)</label>
+                    <input 
+                      type="text" 
+                      value={newReview.title || ''} 
+                      onChange={(e) => setNewReview({...newReview, title: e.target.value})} 
+                      className="w-full bg-black border border-gold-500/15 text-white py-2 px-3 rounded focus:outline-none focus:border-gold-500 text-sm uppercase"
+                      placeholder="e.g. GOOD QUALITY WATCH"
+                    />
+                  </div>
+                  <div className="sm:col-span-2 space-y-1">
+                    <label className="text-[10px] text-gray-400 uppercase font-bold block">Review Text</label>
+                    <textarea 
+                      value={newReview.text || ''} 
+                      onChange={(e) => setNewReview({...newReview, text: e.target.value})} 
+                      className="w-full bg-black border border-gold-500/15 text-white py-2 px-3 rounded focus:outline-none focus:border-gold-500 text-sm min-h-[80px]"
+                      placeholder="Write review text here..."
+                    />
+                  </div>
+                  <div className="sm:col-span-2 space-y-1">
+                    <label className="text-[10px] text-gray-400 uppercase font-bold block flex justify-between">
+                      <span>Review Images (Optional)</span>
+                      <button type="button" onClick={() => document.getElementById("review-img-upload")?.click()} className="text-gold-400 hover:text-gold-300 font-bold underline decoration-gold-500/30">+ Upload Photo</button>
+                    </label>
+                    <input type="file" id="review-img-upload" accept="image/*" onChange={handleReviewImageUpload} className="hidden" />
+                    {newReview.images && newReview.images.length > 0 && (
+                      <div className="flex gap-2 mt-2 flex-wrap">
+                        {newReview.images.map((img, i) => (
+                          <div key={i} className="relative w-16 h-16 border border-gold-500/20 bg-black">
+                            <Image src={img} alt="Review img" fill className="object-cover" />
+                            <button type="button" onClick={() => setNewReview({...newReview, images: newReview.images?.filter((_, idx) => idx !== i)})} className="absolute -top-2 -right-2 bg-red-500 rounded-full text-white p-0.5">
+                              <X className="w-3 h-3" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+                <div className="flex justify-end gap-2 pt-2">
+                  <button type="button" onClick={() => setIsAddingReview(false)} className="px-4 py-2 border border-gray-500/30 text-gray-400 rounded text-xs font-bold">Cancel</button>
+                  <button type="button" onClick={handleAddReview} className="px-4 py-2 bg-gold-500 text-black rounded text-xs font-bold uppercase tracking-wide hover:bg-gold-400">Save Review</button>
+                </div>
+              </div>
+            )}
+
+            <div className="space-y-3">
+              {formCustomerReviews.map(review => (
+                <div key={review.id} className="flex items-start justify-between border border-gold-500/10 bg-black/20 p-4 rounded">
+                  <div className="space-y-1 w-full">
+                    <div className="flex items-center gap-2">
+                      <div className="flex">
+                        {Array.from({length: 5}).map((_, i) => (
+                          <Star key={i} className={`w-3 h-3 ${i < review.rating ? 'fill-gold-500 text-gold-500' : 'text-gray-600'}`} />
+                        ))}
+                      </div>
+                      <span className="text-xs text-gray-500">{review.date}</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-sm font-bold text-white uppercase">{review.name}</span>
+                      {review.verified && <span className="px-1.5 py-0.5 bg-gold-500/20 text-gold-500 text-[9px] rounded font-bold">Verified</span>}
+                    </div>
+                    {review.title && <p className="text-sm font-bold text-gray-300 uppercase mt-1">{review.title}</p>}
+                    <p className="text-sm text-gray-400 italic">"{review.text}"</p>
+                    {review.images && review.images.length > 0 && (
+                      <div className="flex gap-2 mt-2 flex-wrap">
+                        {review.images.map((img, i) => (
+                           <div key={i} className="relative w-12 h-12 border border-gold-500/20 bg-black">
+                            <Image src={img} alt="Review img" fill className="object-cover" />
+                           </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  <button type="button" onClick={() => handleRemoveReview(review.id)} className="p-2 hover:bg-red-500/20 text-red-400 hover:text-red-300 rounded shrink-0">
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              ))}
+              {formCustomerReviews.length === 0 && !isAddingReview && (
+                <div className="text-center py-6 border border-dashed border-gray-600/30 rounded text-gray-500 text-sm">
+                  No reviews yet. Click "Add Review" to create one.
+                </div>
+              )}
             </div>
           </div>
 

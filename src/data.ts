@@ -1,3 +1,14 @@
+export interface CustomerReview {
+  id: string;
+  name: string;
+  rating: number;
+  date: string;
+  title: string;
+  text: string;
+  verified: boolean;
+  images?: string[];
+}
+
 export interface Product {
   id: string;
   name: string;
@@ -18,6 +29,7 @@ export interface Product {
   sortOrder?: number;
   colors?: string[];
   discountExpiresAt?: string;
+  customerReviews?: CustomerReview[];
 }
 
 // Products are managed entirely via the Admin Panel and stored in Supabase.

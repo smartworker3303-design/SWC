@@ -18,8 +18,9 @@ import {
   Sparkles,
   Eye,
   ArrowRight,
-  ShoppingBag,
+  User,
   CheckCircle2,
+  ShoppingBag,
   X,
   Loader2
 } from "lucide-react";
