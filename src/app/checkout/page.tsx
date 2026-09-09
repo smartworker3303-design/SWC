@@ -28,6 +28,7 @@ import { useProducts } from "../../context/ProductsContext";
 import { useOrders } from "../../context/OrdersContext";
 import { useAuth } from "../../context/AuthContext";
 import { Order, OrderItem, ShippingDetails } from "../../supabase";
+import { getActiveDiscount } from "../../utils/discount";
 
 const PAKISTAN_CITIES = [
   "Karachi",
@@ -796,7 +797,7 @@ function CheckoutContent() {
                       <span className="font-serif text-sm font-extrabold text-gold-400">
                         Rs. {product.price.toLocaleString()}
                       </span>
-                      {product.originalPrice && product.originalPrice > product.price && (
+                      {getActiveDiscount(product).hasDiscount && product.originalPrice && product.originalPrice > product.price && (
                         <span className="text-gray-500 line-through text-[11px] font-mono">
                           Rs. {product.originalPrice.toLocaleString()}
                         </span>

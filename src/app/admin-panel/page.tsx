@@ -44,6 +44,7 @@ import {
 import { useProducts, getProductGroupKey } from "../../context/ProductsContext";
 import { useOrders } from "../../context/OrdersContext";
 import { Product } from "../../data";
+import { getActiveDiscount } from "../../utils/discount";
 
 const COLOR_PRESETS = [
   { name: "Black", bg: "#111111", border: "#444444" },
@@ -1097,13 +1098,10 @@ export default function AdminPanelPage() {
               </div>
               
               <div className="flex gap-2">
-                <button
-                  onClick={() => openAddModal("hand-watches")}
-                  className="gold-gradient-bg text-black font-extrabold text-xs tracking-widest uppercase px-4 py-2.5 hover:opacity-90 flex items-center gap-1 cursor-pointer"
-                >
+                <Link href="/admin-panel/product?action=add&category=hand-watches" className="gold-gradient-bg text-black font-extrabold text-xs tracking-widest uppercase px-4 py-2.5 hover:opacity-90 flex items-center gap-1 cursor-pointer">
                   <Plus className="w-4 h-4" />
                   Add Watch
-                </button>
+                </Link>
               </div>
             </div>
 
@@ -1290,14 +1288,14 @@ export default function AdminPanelPage() {
                     </span>
 
                     {/* Discount Badge */}
-                    {(p.discount || (p.originalPrice && p.originalPrice > p.price)) && (
+                    {getActiveDiscount(p).hasDiscount && (
                       <span className="absolute top-3 left-20 bg-gradient-to-r from-red-600 to-amber-600 text-white text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-sm shadow-md border border-red-400/30 z-10">
-                        {p.discount || `${Math.round(((p.originalPrice! - p.price) / p.originalPrice!) * 100)}% OFF`}
+                        {getActiveDiscount(p).discountText || `${Math.round(((p.originalPrice! - p.price) / p.originalPrice!) * 100)}% OFF`}
                       </span>
                     )}
                     {/* Overlay Tag */}
                     {p.tag && (
-                      <span className={`absolute top-3 ${(p.discount || (p.originalPrice && p.originalPrice > p.price)) ? "left-40" : "left-20"} bg-gold-500 text-black text-[9px] font-black uppercase tracking-widest px-2.5 py-0.5 rounded-sm shadow-md z-10`}>
+                      <span className={`absolute top-3 ${getActiveDiscount(p).hasDiscount ? "left-40" : "left-20"} bg-gold-500 text-black text-[9px] font-black uppercase tracking-widest px-2.5 py-0.5 rounded-sm shadow-md z-10`}>
                         {p.tag}
                       </span>
                     )}
@@ -1358,7 +1356,7 @@ export default function AdminPanelPage() {
                       <span className="text-sm font-extrabold text-gold-400 font-sans">
                         Rs. {p.price.toLocaleString()}
                       </span>
-                      {p.originalPrice && p.originalPrice > p.price && (
+                      {getActiveDiscount(p).hasDiscount && p.originalPrice && p.originalPrice > p.price && (
                         <span className="text-xs text-gray-500 line-through font-mono">
                           Rs. {p.originalPrice.toLocaleString()}
                         </span>
@@ -1366,13 +1364,9 @@ export default function AdminPanelPage() {
                     </div>
                     
                     <div className="flex gap-2">
-                      <button
-                        onClick={() => openEditModal(p)}
-                        className="p-2 border border-gold-500/20 text-gold-400 hover:bg-gold-500 hover:text-black transition-colors rounded cursor-pointer"
-                        title="Edit Timepiece"
-                      >
+                      <Link href={`/admin-panel/product?action=edit&id=${p.id}`} className="p-2 border border-gold-500/20 text-gold-400 hover:bg-gold-500 hover:text-black transition-colors rounded cursor-pointer inline-flex items-center justify-center" title="Edit Timepiece">
                         <Edit className="w-3.5 h-3.5" />
-                      </button>
+                      </Link>
                       <button
                         onClick={() => handleDelete(p.id)}
                         className="p-2 border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white transition-colors rounded cursor-pointer"
@@ -1401,13 +1395,10 @@ export default function AdminPanelPage() {
               </div>
               
               <div className="flex gap-2">
-                <button
-                  onClick={() => openAddModal("wall-clocks")}
-                  className="gold-gradient-bg text-black font-extrabold text-xs tracking-widest uppercase px-4 py-2.5 hover:opacity-90 flex items-center gap-1 cursor-pointer"
-                >
+                <Link href="/admin-panel/product?action=add&category=wall-clocks" className="gold-gradient-bg text-black font-extrabold text-xs tracking-widest uppercase px-4 py-2.5 hover:opacity-90 flex items-center gap-1 cursor-pointer">
                   <Plus className="w-4 h-4" />
                   Add Clock
-                </button>
+                </Link>
               </div>
             </div>
 
@@ -1490,14 +1481,14 @@ export default function AdminPanelPage() {
                     </span>
 
                     {/* Discount Badge */}
-                    {(p.discount || (p.originalPrice && p.originalPrice > p.price)) && (
+                    {getActiveDiscount(p).hasDiscount && (
                       <span className="absolute top-3 left-20 bg-gradient-to-r from-red-600 to-amber-600 text-white text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-sm shadow-md border border-red-400/30 z-10">
-                        {p.discount || `${Math.round(((p.originalPrice! - p.price) / p.originalPrice!) * 100)}% OFF`}
+                        {getActiveDiscount(p).discountText || `${Math.round(((p.originalPrice! - p.price) / p.originalPrice!) * 100)}% OFF`}
                       </span>
                     )}
                     {/* Overlay Tag */}
                     {p.tag && (
-                      <span className={`absolute top-3 ${(p.discount || (p.originalPrice && p.originalPrice > p.price)) ? "left-40" : "left-20"} bg-gold-500 text-black text-[9px] font-black uppercase tracking-widest px-2.5 py-0.5 rounded-sm shadow-md z-10`}>
+                      <span className={`absolute top-3 ${getActiveDiscount(p).hasDiscount ? "left-40" : "left-20"} bg-gold-500 text-black text-[9px] font-black uppercase tracking-widest px-2.5 py-0.5 rounded-sm shadow-md z-10`}>
                         {p.tag}
                       </span>
                     )}
@@ -1558,7 +1549,7 @@ export default function AdminPanelPage() {
                       <span className="text-sm font-extrabold text-gold-400 font-sans">
                         Rs. {p.price.toLocaleString()}
                       </span>
-                      {p.originalPrice && p.originalPrice > p.price && (
+                      {getActiveDiscount(p).hasDiscount && p.originalPrice && p.originalPrice > p.price && (
                         <span className="text-xs text-gray-500 line-through font-mono">
                           Rs. {p.originalPrice.toLocaleString()}
                         </span>
@@ -1566,13 +1557,9 @@ export default function AdminPanelPage() {
                     </div>
                     
                     <div className="flex gap-2">
-                      <button
-                        onClick={() => openEditModal(p)}
-                        className="p-2 border border-gold-500/20 text-gold-400 hover:bg-gold-500 hover:text-black transition-colors rounded cursor-pointer"
-                        title="Edit Timepiece"
-                      >
+                      <Link href={`/admin-panel/product?action=edit&id=${p.id}`} className="p-2 border border-gold-500/20 text-gold-400 hover:bg-gold-500 hover:text-black transition-colors rounded cursor-pointer inline-flex items-center justify-center" title="Edit Timepiece">
                         <Edit className="w-3.5 h-3.5" />
-                      </button>
+                      </Link>
                       <button
                         onClick={() => handleDelete(p.id)}
                         className="p-2 border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white transition-colors rounded cursor-pointer"
@@ -2126,695 +2113,6 @@ export default function AdminPanelPage() {
         )}
 
       </main>
-
-      {/* CRUD MODAL OVERLAY */}
-      {isModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4 overflow-y-auto">
-          <div className="glass-panel border border-gold-500/15 max-w-2xl w-full bg-neutral-950 p-6 sm:p-8 space-y-6 max-h-[90vh] overflow-y-auto shadow-2xl relative text-left">
-            
-            {/* Modal Close Button */}
-            <button
-              onClick={() => setIsModalOpen(false)}
-              className="absolute top-4 right-4 text-gray-500 hover:text-gold-500 transition-colors"
-            >
-              <X className="w-5 h-5" />
-            </button>
-
-            {/* Modal Header */}
-            <div>
-              <h3 className="font-serif text-xl font-bold">
-                {modalType === "add" ? "Insert New Timepiece" : `Modify Timepiece: ${formName}`}
-              </h3>
-              <p className="text-[10px] text-gray-500 font-light mt-0.5">Specify layout elements and pricing coefficients.</p>
-            </div>
-
-            {/* Form */}
-            <form onSubmit={handleFormSubmit} className="space-y-5">
-              
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {modalType === "edit" ? (
-                  /* ID input (Read-only on edit) */
-                  <div className="space-y-1">
-                    <label htmlFor="form-id" className="text-[9px] text-gray-400 uppercase tracking-widest font-semibold block">Product ID (Read-Only)</label>
-                    <input
-                      id="form-id"
-                      type="text"
-                      disabled
-                      value={formId}
-                      className="w-full bg-neutral-900 border border-gold-500/15 text-gold-400 py-2 px-3 text-xs opacity-75 cursor-not-allowed font-mono"
-                    />
-                  </div>
-                ) : (
-                  /* Auto-generated ID Info badge for Add mode */
-                  <div className="space-y-1">
-                    <label className="text-[9px] text-gray-400 uppercase tracking-widest font-semibold block">Product ID</label>
-                    <div className="w-full bg-neutral-900/80 border border-gold-500/20 text-gold-400 py-2 px-3 text-xs italic flex items-center gap-1.5 rounded-sm">
-                      <span className="font-mono text-[10px] text-gold-500">✨ Auto-assigned upon save</span>
-                    </div>
-                  </div>
-                )}
-
-                {/* Name Input */}
-                <div className="space-y-1">
-                  <label htmlFor="form-name" className="text-[9px] text-gray-400 uppercase tracking-widest font-semibold block">Timepiece Name (Required)</label>
-                  <input
-                    id="form-name"
-                    type="text"
-                    required
-                    value={formName}
-                    onChange={(e) => setFormName(e.target.value)}
-                    placeholder="e.g. Navigator Chronograph"
-                    className="w-full bg-black border border-gold-500/15 text-white py-2 px-3 focus:outline-none focus:border-gold-500 text-xs"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                {/* Category select */}
-                <div className="space-y-1">
-                  <label htmlFor="form-category" className="text-[9px] text-gray-400 uppercase tracking-widest font-semibold block">Category</label>
-                  <select
-                    id="form-category"
-                    value={formCategory}
-                    onChange={(e) => setFormCategory(e.target.value as "hand-watches" | "wall-clocks")}
-                    className="w-full bg-black border border-gold-500/15 text-white py-2 px-3 focus:outline-none focus:border-gold-500 text-xs"
-                  >
-                    <option value="hand-watches">Hand Watch</option>
-                    <option value="wall-clocks">Wall Clock</option>
-                  </select>
-                </div>
-
-                {/* Subcategory select (only for hand-watches) */}
-                {formCategory === "hand-watches" && (
-                  <>
-                    <div className="space-y-1">
-                      <label htmlFor="form-subcategory" className="text-[9px] text-gray-400 uppercase tracking-widest font-semibold block">Subcategory</label>
-                      <select
-                        id="form-subcategory"
-                        value={formSubcategory}
-                        onChange={(e) => setFormSubcategory(e.target.value as "mens" | "womens" | "")}
-                        className="w-full bg-black border border-gold-500/15 text-white py-2 px-3 focus:outline-none focus:border-gold-500 text-xs"
-                      >
-                        <option value="">None / Unisex</option>
-                        <option value="mens">Men&apos;s Watches</option>
-                        <option value="womens">Women&apos;s Watches</option>
-                      </select>
-                    </div>
-
-                    {/* Brand select (only for hand-watches) */}
-                    <div className="space-y-1">
-                      <label htmlFor="form-brand" className="text-[9px] text-gray-400 uppercase tracking-widest font-semibold block">Brand</label>
-                      <select
-                        id="form-brand"
-                        value={formBrand}
-                        onChange={(e) => setFormBrand(e.target.value)}
-                        className="w-full bg-black border border-gold-500/15 text-white py-2 px-3 focus:outline-none focus:border-gold-500 text-xs"
-                      >
-                        <option value="">None / Unbranded</option>
-                        <option value="Rolex">Rolex</option>
-                        <option value="Patek Philippe">Patek Philippe</option>
-                        <option value="Cartier">Cartier</option>
-                        <option value="Audemars Piguet">Audemars Piguet</option>
-                        <option value="Omega">Omega</option>
-                      </select>
-                    </div>
-                  </>
-                )}
-
-                {/* Selling Price input */}
-                <div className="space-y-1">
-                  <label htmlFor="form-price" className="text-[9px] text-gray-400 uppercase tracking-widest font-semibold block">
-                    Selling Price (PKR Rs.) <span className="text-gold-500">*</span>
-                  </label>
-                  <input
-                    id="form-price"
-                    type="number"
-                    required
-                    min={0}
-                    value={formPrice}
-                    onChange={(e) => handlePriceChange(Number(e.target.value))}
-                    className="w-full bg-black border border-gold-500/15 text-white py-2 px-3 focus:outline-none focus:border-gold-500 text-xs"
-                    placeholder="e.g. 1000"
-                  />
-                </div>
-
-                {/* Original / Strike-through Price input */}
-                <div className="space-y-1">
-                  <label htmlFor="form-orig-price" className="text-[9px] text-gray-400 uppercase tracking-widest font-semibold block">
-                    Original Price (Strike-through)
-                  </label>
-                  <input
-                    id="form-orig-price"
-                    type="number"
-                    min={0}
-                    value={formOriginalPrice}
-                    onChange={(e) => handleOriginalPriceChange(e.target.value === "" ? "" : Number(e.target.value))}
-                    placeholder="e.g. 1500 (Shown crossed-out)"
-                    className="w-full bg-black border border-gold-500/15 text-gray-300 py-2 px-3 focus:outline-none focus:border-gold-500 text-xs"
-                  />
-                </div>
-
-                {/* Discount Badge input */}
-                <div className="space-y-1">
-                  <label htmlFor="form-discount" className="text-[9px] text-gray-400 uppercase tracking-widest font-semibold block">
-                    Discount Badge Tag
-                  </label>
-                  <input
-                    id="form-discount"
-                    type="text"
-                    value={formDiscount}
-                    onChange={(e) => setFormDiscount(e.target.value)}
-                    placeholder="e.g. 33% OFF, SAVE 500"
-                    className="w-full bg-black border border-gold-500/15 text-gold-400 py-2 px-3 focus:outline-none focus:border-gold-500 text-xs font-semibold"
-                  />
-                </div>
-
-                {/* Tag Input */}
-                <div className="space-y-1">
-                  <label htmlFor="form-tag" className="text-[9px] text-gray-400 uppercase tracking-widest font-semibold block">Catalog Overlay Tag</label>
-                  <input
-                    id="form-tag"
-                    type="text"
-                    value={formTag}
-                    onChange={(e) => setFormTag(e.target.value)}
-                    placeholder="e.g. Signature, Bestseller"
-                    className="w-full bg-black border border-gold-500/15 text-white py-2 px-3 focus:outline-none focus:border-gold-500 text-xs"
-                  />
-                </div>
-
-                {/* Display Position / Sorting Input */}
-                <div className="space-y-1">
-                  <div className="flex items-center justify-between">
-                    <label htmlFor="form-sort-order" className="text-[9px] text-gray-400 uppercase tracking-widest font-semibold block">
-                      Display Position (Rank) <span className="text-gold-500">*</span>
-                    </label>
-                    <span className="text-[9px] font-mono text-gold-400">
-                      1 to {currentMaxPosition}
-                    </span>
-                  </div>
-                  <select
-                    id="form-sort-order"
-                    value={Math.min(Math.max(1, formSortOrder), currentMaxPosition)}
-                    onChange={(e) => setFormSortOrder(Number(e.target.value))}
-                    className="w-full bg-black border border-gold-500/20 text-gold-300 py-2 px-3 focus:outline-none focus:border-gold-500 text-xs font-mono appearance-none cursor-pointer"
-                    style={{
-                      backgroundImage: `url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23D4AF37' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'></polyline></svg>")`,
-                      backgroundRepeat: 'no-repeat',
-                      backgroundPosition: 'right 10px center',
-                      backgroundSize: '14px'
-                    }}
-                  >
-                    {Array.from({ length: currentMaxPosition }, (_, i) => i + 1).map((pos) => (
-                      <option key={pos} value={pos}>
-                        Position #{pos} {pos === 1 ? "(Top / First in List)" : pos === currentMaxPosition ? `(Position ${pos} - End of List)` : `(Position ${pos})`}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              {/* ========================================================================= */}
-              {/* INTUITIVE PRODUCT IMAGES MANAGER (Main Cover + Secondary Gallery) */}
-              {/* ========================================================================= */}
-              <div className="space-y-4 border border-gold-500/20 bg-black/40 p-4 sm:p-5 rounded-lg text-left">
-                
-                {/* Header */}
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-gold-500/10 pb-3">
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <h4 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-gold-400 font-serif">
-                        Product Images ({formImages.filter(img => img && img.trim()).length}/5 Total)
-                      </h4>
-                      {isProcessingImages && (
-                        <span className="inline-flex items-center gap-1 text-[10px] text-gold-300 font-mono animate-pulse">
-                          <Loader2 className="w-3 h-3 animate-spin" /> Optimizing high-res...
-                        </span>
-                      )}
-                    </div>
-                    <p className="text-[10px] text-gray-400 font-light mt-0.5">
-                      The 1st image is the Main Cover shown in catalogs. Additional images (up to 4) appear in the product detail gallery.
-                    </p>
-                  </div>
-
-                  {/* URL / Path Toggle */}
-                  <button
-                    type="button"
-                    onClick={() => setIsAddingUrl(!isAddingUrl)}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-semibold tracking-wider text-gray-300 hover:text-gold-400 border border-gold-500/20 hover:border-gold-500/50 bg-black/60 rounded transition-colors self-start sm:self-auto cursor-pointer"
-                  >
-                    <LinkIcon className="w-3 h-3 text-gold-500" />
-                    {isAddingUrl ? "Hide URL Input" : "Paste Image URL / Path"}
-                  </button>
-                </div>
-
-                {/* Optional URL Input Popover */}
-                {isAddingUrl && (
-                  <div className="bg-neutral-900/95 border border-gold-500/25 p-3 rounded space-y-2 animate-fade-in-up">
-                    <label className="text-[9px] text-gold-400 uppercase tracking-wider font-bold block">
-                      Add Image via Local Path or Web URL (e.g. /images/hero_luxury_watch.png or https://...)
-                    </label>
-                    <div className="flex gap-2">
-                      <input
-                        type="text"
-                        value={urlInput}
-                        onChange={(e) => setUrlInput(e.target.value)}
-                        placeholder="/images/products/swc_product_1.webp or https://..."
-                        className="flex-1 bg-black border border-gold-500/30 text-white px-3 py-2 text-xs font-mono focus:outline-none focus:border-gold-500"
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter") {
-                            e.preventDefault();
-                            handleAddUrl();
-                          }
-                        }}
-                      />
-                      <button
-                        type="button"
-                        onClick={() => handleAddUrl()}
-                        disabled={!urlInput.trim() || formImages.filter(img => img && img.trim()).length >= 5}
-                        className="px-4 py-2 gold-gradient-bg text-black text-xs font-extrabold uppercase tracking-wider disabled:opacity-50 cursor-pointer"
-                      >
-                        Add
-                      </button>
-                    </div>
-                  </div>
-                )}
-
-                {/* MAIN COVER & GALLERY GRID LAYOUT */}
-                <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-start">
-                  
-                  {/* SECTION 1: PRIMARY / MAIN STOREFRONT IMAGE (5 cols) */}
-                  <div className="md:col-span-5 bg-neutral-950/80 border-2 border-gold-500/40 rounded-lg p-3.5 space-y-2.5 relative">
-                    <div className="flex items-center justify-between">
-                      <span className="text-[10px] font-black uppercase tracking-widest bg-gold-500 text-black px-2 py-0.5 rounded-sm">
-                        ★ Main Cover Image
-                      </span>
-                      <span className="text-[9px] text-gold-400/80 font-mono">Image #1</span>
-                    </div>
-
-                    {/* Main Image Box */}
-                    <div className="relative h-44 w-full bg-black rounded border border-gold-500/20 overflow-hidden flex items-center justify-center group">
-                      {formImages[0] && formImages[0].trim() ? (
-                        <>
-                          <Image
-                            src={formImages[0]}
-                            alt="Main Product Cover"
-                            fill
-                            className="object-contain p-2"
-                          />
-                          {/* Quick Hover Actions */}
-                          <div className="absolute inset-0 bg-black/75 opacity-0 group-hover:opacity-100 flex items-center justify-center gap-2 transition-opacity">
-                            <button
-                              type="button"
-                              onClick={() => document.getElementById("main-image-input")?.click()}
-                              className="px-3 py-1.5 bg-gold-500 text-black font-bold text-[10px] uppercase tracking-wider rounded hover:bg-gold-400 transition-colors cursor-pointer"
-                            >
-                              Change File
-                            </button>
-                            {formImages.length > 1 && (
-                              <button
-                                type="button"
-                                onClick={() => handleRemoveImage(0)}
-                                className="p-1.5 bg-red-950/90 text-red-300 border border-red-500/40 rounded hover:bg-red-600 hover:text-white transition-colors cursor-pointer"
-                                title="Remove Main Image"
-                              >
-                                <Trash2 className="w-3.5 h-3.5" />
-                              </button>
-                            )}
-                          </div>
-                        </>
-                      ) : (
-                        <div 
-                          onClick={() => document.getElementById("main-image-input")?.click()}
-                          className="text-center p-4 cursor-pointer hover:text-gold-400 transition-colors w-full h-full flex flex-col items-center justify-center"
-                        >
-                          <UploadCloud className="w-8 h-8 text-gold-500/70 mb-2 animate-bounce" />
-                          <p className="text-[11px] font-bold text-gray-300 uppercase tracking-wider">Click to Upload Main Image</p>
-                          <p className="text-[9px] text-gray-500 mt-1">High resolution supported (JPEG, PNG, WebP)</p>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Direct Upload Button for Main */}
-                    <button
-                      type="button"
-                      onClick={() => document.getElementById("main-image-input")?.click()}
-                      className="w-full py-2 px-3 border border-gold-500/40 bg-gold-500/10 text-gold-400 hover:bg-gold-500 hover:text-black font-bold text-xs uppercase tracking-wider rounded transition-all flex items-center justify-center gap-2 cursor-pointer"
-                    >
-                      <UploadCloud className="w-4 h-4" />
-                      {formImages[0] && formImages[0].trim() ? "Change Main Image File" : "Upload Main Image File"}
-                    </button>
-
-                    {/* Hidden File Input for Main Image */}
-                    <input
-                      type="file"
-                      id="main-image-input"
-                      accept="image/*"
-                      onChange={handleMainImageUpload}
-                      className="hidden"
-                    />
-                  </div>
-
-                  {/* SECTION 2: SECONDARY GALLERY IMAGES (7 cols) */}
-                  <div className="md:col-span-7 bg-neutral-950/60 border border-gold-500/15 rounded-lg p-3.5 space-y-3">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <span className="text-[10px] font-bold uppercase tracking-wider text-gray-300 block">
-                          Gallery Views (Images #2 - #5)
-                        </span>
-                        <span className="text-[9px] text-gray-500">
-                          {formImages.slice(1).filter(img => img && img.trim()).length} / 4 secondary images added
-                        </span>
-                      </div>
-
-                      {/* Multi-file Upload Button for Gallery */}
-                      {formImages.filter(img => img && img.trim()).length < 5 && (
-                        <button
-                          type="button"
-                          onClick={() => document.getElementById("gallery-multi-input")?.click()}
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 gold-gradient-bg text-black font-extrabold text-[10px] uppercase tracking-wider rounded hover:opacity-90 transition-opacity cursor-pointer shadow"
-                        >
-                          <Plus className="w-3.5 h-3.5 stroke-[3px]" />
-                          + Upload Multiple Images
-                        </button>
-                      )}
-                    </div>
-
-                    {/* Hidden Multi-file Input for Gallery */}
-                    <input
-                      type="file"
-                      id="gallery-multi-input"
-                      accept="image/*"
-                      multiple
-                      onChange={handleGalleryMultipleUpload}
-                      className="hidden"
-                    />
-
-                    {/* Secondary Images Grid */}
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-                      {formImages.slice(1).map((imgUrl, sliceIdx) => {
-                        const actualIdx = sliceIdx + 1;
-                        if (!imgUrl || !imgUrl.trim()) return null;
-
-                        return (
-                          <div
-                            key={actualIdx}
-                            className="relative h-32 bg-black rounded-lg border border-gold-500/20 overflow-hidden flex flex-col group transition-all hover:border-gold-500 shadow"
-                          >
-                            {/* Image Preview */}
-                            <div className="relative w-full h-full">
-                              <Image
-                                src={imgUrl}
-                                alt={`Gallery view #${actualIdx + 1}`}
-                                fill
-                                className="object-contain p-1.5"
-                              />
-                            </div>
-
-                            {/* Position Badge */}
-                            <span className="absolute top-1.5 left-1.5 text-[8px] font-bold bg-black/80 text-gold-400 border border-gold-500/30 px-1.5 py-0.5 rounded">
-                              #{actualIdx + 1}
-                            </span>
-
-                            {/* Top Right Remove Button */}
-                            <button
-                              type="button"
-                              onClick={() => handleRemoveImage(actualIdx)}
-                              className="absolute top-1.5 right-1.5 p-1 bg-red-950/90 text-red-300 border border-red-500/40 rounded-full hover:bg-red-600 hover:text-white transition-colors cursor-pointer"
-                              title="Remove this image"
-                            >
-                              <X className="w-2.5 h-2.5" />
-                            </button>
-
-                            {/* Bottom Make-Main Promotion Button */}
-                            <button
-                              type="button"
-                              onClick={() => handleMakeMainImage(actualIdx)}
-                              className="w-full py-1 bg-neutral-900/95 hover:bg-gold-500 text-gray-300 hover:text-black text-[9px] font-bold uppercase tracking-wider border-t border-gold-500/20 transition-colors flex items-center justify-center gap-1 cursor-pointer"
-                              title="Promote this image to primary main cover"
-                            >
-                              <Star className="w-2.5 h-2.5" />
-                              Make Main
-                            </button>
-                          </div>
-                        );
-                      })}
-
-                      {/* Empty Add Slot Box (if under 5 images total) */}
-                      {formImages.filter(img => img && img.trim()).length < 5 && (
-                        <div
-                          onClick={() => document.getElementById("gallery-multi-input")?.click()}
-                          className="h-32 border-2 border-dashed border-gold-500/25 hover:border-gold-500/60 bg-gold-500/5 hover:bg-gold-500/10 rounded-lg flex flex-col items-center justify-center p-2 text-center cursor-pointer transition-all group"
-                        >
-                          <Plus className="w-6 h-6 text-gold-500/70 group-hover:text-gold-400 mb-1 group-hover:scale-110 transition-transform" />
-                          <span className="text-[10px] font-bold text-gray-300 group-hover:text-gold-400 uppercase tracking-wider">
-                            + Add Image
-                          </span>
-                          <span className="text-[8px] text-gray-500 mt-0.5">Select files</span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                </div>
-              </div>
-
-              {/* Grid for Rating and Reviews metadata */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-
-                {/* Rating input */}
-                <div className="space-y-1">
-                  <label htmlFor="form-rating" className="text-[9px] text-gray-400 uppercase tracking-widest font-semibold block">Rating (1.0 - 5.0)</label>
-                  <input
-                    id="form-rating"
-                    type="number"
-                    step="0.1"
-                    min="1"
-                    max="5"
-                    required
-                    value={formRating}
-                    onChange={(e) => setFormRating(Number(e.target.value))}
-                    className="w-full bg-black border border-gold-500/15 text-white py-2 px-3 focus:outline-none focus:border-gold-500 text-xs"
-                  />
-                </div>
-
-                {/* Reviews input */}
-                <div className="space-y-1">
-                  <label htmlFor="form-reviews" className="text-[9px] text-gray-400 uppercase tracking-widest font-semibold block">Reviews Count</label>
-                  <input
-                    id="form-reviews"
-                    type="number"
-                    required
-                    min={0}
-                    value={formReviews}
-                    onChange={(e) => setFormReviews(Number(e.target.value))}
-                    className="w-full bg-black border border-gold-500/15 text-white py-2 px-3 focus:outline-none focus:border-gold-500 text-xs"
-                  />
-                </div>
-              </div>
-
-              {/* Available Colours Section */}
-              <div className="space-y-3 border border-gold-500/15 bg-black/30 p-4 rounded-lg text-left">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 border-b border-gold-500/10 pb-2">
-                  <div>
-                    <label className="text-[10px] font-bold text-gold-400 uppercase tracking-widest block font-serif">
-                      Available Watch Colours / Variations
-                    </label>
-                    <p className="text-[9px] text-gray-400 font-light">
-                      Add color choices for this timepiece (e.g. Black, Blue, Gold). Live buyers can view and select their preferred color on the website.
-                    </p>
-                  </div>
-                  <span className="text-[9px] font-mono text-gray-400">
-                    {formColors.length} {formColors.length === 1 ? "color" : "colors"} selected
-                  </span>
-                </div>
-
-                {/* Quick Presets */}
-                <div className="space-y-1.5">
-                  <span className="text-[8px] text-gray-500 uppercase tracking-wider font-semibold">Quick Presets (Click to add):</span>
-                  <div className="flex flex-wrap gap-1.5">
-                    {COLOR_PRESETS.map((preset) => {
-                      const isSelected = formColors.some(c => c.toLowerCase() === preset.name.toLowerCase());
-                      return (
-                        <button
-                          key={preset.name}
-                          type="button"
-                          onClick={() => {
-                            if (isSelected) {
-                              setFormColors(formColors.filter(c => c.toLowerCase() !== preset.name.toLowerCase()));
-                            } else {
-                              setFormColors([...formColors, preset.name]);
-                            }
-                          }}
-                          className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-[10px] rounded-full border transition-all cursor-pointer ${
-                            isSelected 
-                              ? "bg-gold-500 text-black border-gold-400 font-bold shadow-[0_0_10px_rgba(212,175,55,0.3)]" 
-                              : "bg-black/60 text-gray-300 border-gold-500/20 hover:border-gold-500/50 hover:text-white"
-                          }`}
-                        >
-                          <span 
-                            className="w-2.5 h-2.5 rounded-full border border-black/40 inline-block flex-shrink-0"
-                            style={{ background: preset.bg, borderColor: preset.border }}
-                          />
-                          <span>{preset.name}</span>
-                          {isSelected && <span className="text-[9px] ml-0.5 font-bold">✓</span>}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                {/* Custom Color Input */}
-                <div className="flex gap-2 items-center pt-1">
-                  <input
-                    type="text"
-                    value={customColorInput}
-                    onChange={(e) => setCustomColorInput(e.target.value)}
-                    placeholder="Type custom color (e.g. Midnight Blue, Matte Black) and click + Add"
-                    className="flex-1 bg-black border border-gold-500/20 text-white py-1.5 px-3 focus:outline-none focus:border-gold-500 text-xs"
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") {
-                        e.preventDefault();
-                        handleAddCustomColor();
-                      }
-                    }}
-                  />
-                  <button
-                    type="button"
-                    onClick={handleAddCustomColor}
-                    disabled={!customColorInput.trim()}
-                    className="px-3 py-1.5 bg-gold-500 hover:bg-gold-400 text-black font-extrabold text-[10px] uppercase tracking-wider rounded disabled:opacity-40 transition-colors cursor-pointer"
-                  >
-                    + Add Color
-                  </button>
-                </div>
-
-                {/* Selected Colors Tag Strip */}
-                {formColors.length > 0 && (
-                  <div className="flex flex-wrap gap-2 pt-2 border-t border-gray-900">
-                    {formColors.map((colorName, idx) => {
-                      const matchedPreset = COLOR_PRESETS.find(p => p.name.toLowerCase() === colorName.toLowerCase());
-                      return (
-                        <span 
-                          key={idx}
-                          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-neutral-900 border border-gold-500/30 text-white text-xs"
-                        >
-                          <span 
-                            className="w-2.5 h-2.5 rounded-full border border-gold-500/40 inline-block flex-shrink-0"
-                            style={{ background: matchedPreset ? matchedPreset.bg : '#777' }}
-                          />
-                          <span className="font-medium text-gold-300">{colorName}</span>
-                          <button
-                            type="button"
-                            onClick={() => setFormColors(formColors.filter((_, i) => i !== idx))}
-                            className="ml-1 text-gray-500 hover:text-red-400 p-0.5 rounded transition-colors"
-                            title="Remove color"
-                          >
-                            <X className="w-3 h-3" />
-                          </button>
-                        </span>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-
-              {/* Description Input */}
-              <div className="space-y-1">
-                <label htmlFor="form-description" className="text-[9px] text-gray-400 uppercase tracking-widest font-semibold block">Item Description (Required)</label>
-                <textarea
-                  id="form-description"
-                  required
-                  rows={3}
-                  value={formDescription}
-                  onChange={(e) => setFormDescription(e.target.value)}
-                  placeholder="Detail timepiece caliber complications..."
-                  className="w-full bg-black border border-gold-500/15 text-white py-2 px-3 focus:outline-none focus:border-gold-500 text-xs"
-                />
-              </div>
-
-              {/* Specs Editor */}
-              <div className="space-y-2">
-                <div className="flex justify-between items-center border-b border-gray-900 pb-1.5">
-                  <label className="text-[9px] text-gray-400 uppercase tracking-widest font-semibold">Technical Specifications</label>
-                  <button
-                    type="button"
-                    onClick={addSpecRow}
-                    className="text-[9px] text-gold-400 hover:text-gold-500 font-extrabold uppercase flex items-center gap-1 border border-gold-500/20 px-2 py-1 bg-gold-500/5 hover:bg-gold-500/10"
-                  >
-                    <Plus className="w-3 h-3" /> Add Spec Row
-                  </button>
-                </div>
-
-                <div className="space-y-2 max-h-[150px] overflow-y-auto pr-1">
-                  {formSpecs.map((spec, idx) => (
-                    <div key={idx} className="flex gap-2 items-center">
-                      <input
-                        type="text"
-                        placeholder="Spec Key (e.g. Movement)"
-                        value={spec.key}
-                        onChange={(e) => handleSpecChange(idx, "key", e.target.value)}
-                        className="flex-grow bg-black border border-gold-500/10 text-white py-1.5 px-3 focus:outline-none focus:border-gold-500 text-xs"
-                      />
-                      <input
-                        type="text"
-                        placeholder="Spec Value (e.g. Automatic)"
-                        value={spec.value}
-                        onChange={(e) => handleSpecChange(idx, "value", e.target.value)}
-                        className="flex-grow bg-black border border-gold-500/10 text-white py-1.5 px-3 focus:outline-none focus:border-gold-500 text-xs"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => removeSpecRow(idx)}
-                        className="p-1.5 border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white transition-colors"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  ))}
-                  {formSpecs.length === 0 && (
-                    <p className="text-[10px] text-gray-600 italic text-center py-2">No custom specs added. Default specs are empty.</p>
-                  )}
-                </div>
-              </div>
-
-              {formError && (
-                <div className="bg-red-500/10 border border-red-500/30 p-3 text-center text-xs text-red-400 font-medium font-mono">
-                  {formError}
-                </div>
-              )}
-
-              {/* Submit Buttons */}
-              <div className="flex gap-4 pt-2 justify-end border-t border-gray-900">
-                <button
-                  type="button"
-                  onClick={() => setIsModalOpen(false)}
-                  className="border border-gold-500/20 text-gray-400 hover:border-gold-500/50 hover:text-white text-xs font-bold uppercase tracking-widest px-4 py-2.5"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={isSaving}
-                  className="gold-gradient-bg text-black font-extrabold text-xs tracking-widest uppercase px-5 py-2.5 hover:opacity-90 flex items-center gap-1.5 shadow-md disabled:opacity-60 disabled:cursor-not-allowed"
-                >
-                  {isSaving ? (
-                    <>
-                      <span className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin" />
-                      Saving to Database...
-                    </>
-                  ) : (
-                    <>
-                      <Save className="w-4 h-4" />
-                      Save Changes
-                    </>
-                  )}
-                </button>
-              </div>
-
-            </form>
-          </div>
-        </div>
-      )}
 
     </div>
   );

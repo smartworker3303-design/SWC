@@ -27,6 +27,8 @@ import { useProducts } from "../../../context/ProductsContext";
 import { useWishlist } from "../../../context/WishlistContext";
 import { useAuth } from "../../../context/AuthContext";
 import { useOrders } from "../../../context/OrdersContext";
+import { getActiveDiscount } from "../../../utils/discount";
+import CountdownTimer from "../../../components/CountdownTimer";
 import { Order } from "../../../supabase";
 
 interface ProductPageProps {
@@ -148,13 +150,13 @@ export default function ProductDetailPage({ params }: ProductPageProps) {
               sizes="(max-width: 1024px) 100vw, 800px"
             />
             {/* Discount Badge */}
-            {(product.discount || (product.originalPrice && product.originalPrice > product.price)) && (
+            {getActiveDiscount(product).hasDiscount && (
               <span className="absolute top-4 left-4 bg-gradient-to-r from-red-600 to-amber-600 text-white text-xs font-black tracking-wider uppercase px-3.5 py-1.5 z-10 shadow-xl rounded-sm border border-red-400/40">
-                {product.discount || `${Math.round(((product.originalPrice! - product.price) / product.originalPrice!) * 100)}% OFF`}
+                {getActiveDiscount(product).discountText || `${Math.round(((product.originalPrice! - product.price) / product.originalPrice!) * 100)}% OFF`}
               </span>
             )}
             {product.tag && (
-              <span className={`absolute top-4 ${(product.discount || (product.originalPrice && product.originalPrice > product.price)) ? "left-28 sm:left-32" : "left-4"} bg-gold-600 text-black text-[9px] font-black tracking-widest uppercase px-3 py-1.5 z-10 shadow-lg`}>
+              <span className={`absolute top-4 ${getActiveDiscount(product).hasDiscount ? "left-28 sm:left-32" : "left-4"} bg-gold-600 text-black text-[9px] font-black tracking-widest uppercase px-3 py-1.5 z-10 shadow-lg`}>
                 {product.tag}
               </span>
             )}
@@ -272,11 +274,11 @@ export default function ProductDetailPage({ params }: ProductPageProps) {
             <div className="flex flex-col space-y-1">
               <div className="flex items-center gap-2">
                 <span className="text-[10px] text-gray-500 uppercase tracking-widest">
-                  {product.originalPrice && product.originalPrice > product.price ? "Promotional Sale Price" : "Premium Price"}
+                  {getActiveDiscount(product).hasDiscount && product.originalPrice && product.originalPrice > product.price ? "Promotional Sale Price" : "Premium Price"}
                 </span>
-                {(product.discount || (product.originalPrice && product.originalPrice > product.price)) && (
+                {getActiveDiscount(product).hasDiscount && (
                   <span className="bg-red-500/20 text-red-400 border border-red-500/40 text-[10px] font-extrabold px-2 py-0.5 rounded uppercase">
-                    {product.discount || `${Math.round(((product.originalPrice! - product.price) / product.originalPrice!) * 100)}% OFF`}
+                    {getActiveDiscount(product).discountText || `${Math.round(((product.originalPrice! - product.price) / product.originalPrice!) * 100)}% OFF`}
                   </span>
                 )}
               </div>
@@ -284,13 +286,13 @@ export default function ProductDetailPage({ params }: ProductPageProps) {
                 <span className="font-serif text-3xl sm:text-4xl font-extrabold text-gold-400">
                   Rs. {product.price.toLocaleString()}
                 </span>
-                {product.originalPrice && product.originalPrice > product.price && (
+                {getActiveDiscount(product).hasDiscount && product.originalPrice && product.originalPrice > product.price && (
                   <span className="text-gray-500 line-through text-lg font-mono">
                     Rs. {product.originalPrice.toLocaleString()}
                   </span>
                 )}
               </div>
-              {product.originalPrice && product.originalPrice > product.price && (
+              {getActiveDiscount(product).hasDiscount && product.originalPrice && product.originalPrice > product.price && (
                 <p className="text-xs text-green-400 font-semibold flex items-center gap-1 pt-0.5">
                   <span>⚡ Special Savings:</span>
                   <span>Rs. {(product.originalPrice - product.price).toLocaleString()} ({Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)}% discount)</span>
@@ -443,9 +445,9 @@ export default function ProductDetailPage({ params }: ProductPageProps) {
                   className="glass-panel glass-panel-hover overflow-hidden flex flex-col group relative"
                 >
                   {/* Discount Badge */}
-                  {(relProduct.discount || (relProduct.originalPrice && relProduct.originalPrice > relProduct.price)) && (
+                  {getActiveDiscount(relProduct).hasDiscount && (
                     <span className="absolute top-4 left-4 bg-gradient-to-r from-red-600 to-amber-600 text-white text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-sm shadow-md border border-red-400/30 z-20">
-                      {relProduct.discount || `${Math.round(((relProduct.originalPrice! - relProduct.price) / relProduct.originalPrice!) * 100)}% OFF`}
+                      {getActiveDiscount(relProduct).discountText || `${Math.round(((relProduct.originalPrice! - relProduct.price) / relProduct.originalPrice!) * 100)}% OFF`}
                     </span>
                   )}
 
@@ -483,7 +485,7 @@ export default function ProductDetailPage({ params }: ProductPageProps) {
                         <span className="text-gold-400 text-sm font-serif font-bold">
                           Rs. {relProduct.price.toLocaleString()}
                         </span>
-                        {relProduct.originalPrice && relProduct.originalPrice > relProduct.price && (
+                        {getActiveDiscount(relProduct).hasDiscount && relProduct.originalPrice && relProduct.originalPrice > relProduct.price && (
                           <span className="text-gray-500 line-through text-xs font-mono">
                             Rs. {relProduct.originalPrice.toLocaleString()}
                           </span>

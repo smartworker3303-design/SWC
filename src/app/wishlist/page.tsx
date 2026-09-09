@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { useProducts } from "../../context/ProductsContext";
 import { useWishlist } from "../../context/WishlistContext";
+import { getActiveDiscount } from "../../utils/discount";
 
 export default function WishlistPage() {
   const { products, isLoading } = useProducts();
@@ -109,9 +110,9 @@ export default function WishlistPage() {
                 >
                   
                   {/* Discount Badge */}
-                  {(product.discount || (product.originalPrice && product.originalPrice > product.price)) && (
+                  {getActiveDiscount(product).hasDiscount && (
                     <span className="absolute top-4 left-4 bg-gradient-to-r from-red-600 to-amber-600 text-white text-[10px] font-black tracking-wider uppercase px-2.5 py-1 z-20 shadow-lg rounded-sm border border-red-400/30">
-                      {product.discount || `${Math.round(((product.originalPrice! - product.price) / product.originalPrice!) * 100)}% OFF`}
+                      {getActiveDiscount(product).discountText || `${Math.round(((product.originalPrice! - product.price) / product.originalPrice!) * 100)}% OFF`}
                     </span>
                   )}
 
@@ -157,7 +158,7 @@ export default function WishlistPage() {
                         <span className="font-serif text-lg font-bold text-gold-400">
                           Rs. {product.price.toLocaleString()}
                         </span>
-                        {product.originalPrice && product.originalPrice > product.price && (
+                        {getActiveDiscount(product).hasDiscount && product.originalPrice && product.originalPrice > product.price && (
                           <span className="text-gray-500 line-through text-xs font-mono">
                             Rs. {product.originalPrice.toLocaleString()}
                           </span>

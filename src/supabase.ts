@@ -44,6 +44,7 @@ export async function fetchSupabaseProducts(): Promise<Product[] | null> {
       delete cleanSpecs.__images;
       delete cleanSpecs.__original_price;
       delete cleanSpecs.__discount;
+      delete cleanSpecs.__discount_expires_at;
       delete cleanSpecs.__sort_order;
       delete cleanSpecs.__colors;
       
@@ -65,7 +66,8 @@ export async function fetchSupabaseProducts(): Promise<Product[] | null> {
         featured: p.featured,
         tag: p.tag || undefined,
         sortOrder: sortOrderNum,
-        colors: colorsList
+        colors: colorsList,
+        discountExpiresAt: cleanSpecs.__discount_expires_at || undefined
       };
     });
   } catch (err) {
@@ -94,6 +96,7 @@ export async function upsertSupabaseProduct(product: Product): Promise<boolean> 
         __images: product.images && product.images.length > 0 ? product.images : [product.image],
         __original_price: product.originalPrice ? product.originalPrice : undefined,
         __discount: product.discount ? product.discount : undefined,
+        __discount_expires_at: product.discountExpiresAt ? product.discountExpiresAt : undefined,
         __sort_order: product.sortOrder,
         __colors: product.colors
       },

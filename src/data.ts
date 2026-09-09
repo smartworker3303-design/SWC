@@ -17,6 +17,7 @@ export interface Product {
   tag?: string;
   sortOrder?: number;
   colors?: string[];
+  discountExpiresAt?: string;
 }
 
 // Products are managed entirely via the Admin Panel and stored in Supabase.
