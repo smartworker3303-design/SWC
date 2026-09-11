@@ -6,7 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import { 
   ChevronLeft, Plus, Trash2, Link as LinkIcon, 
-  UploadCloud, Star, Save, X, Loader2 
+  UploadCloud, Star, Save, X, Loader2, CheckCircle2
 } from "lucide-react";
 import { useProducts, getProductGroupKey } from "../../../context/ProductsContext";
 import { Product, CustomerReview } from "../../../data";

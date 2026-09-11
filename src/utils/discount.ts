@@ -14,10 +14,10 @@ export function getActiveDiscount(product: Product): {
     const expiryTime = new Date(product.discountExpiresAt).getTime();
     if (expiryTime <= now) {
       // Timer expired! Discount is no longer valid.
-      // We fall back to the regular price, hiding the original price and discount badge.
+      // We fall back to the regular price (which was the original price), hiding the strike-through and discount badge.
       return {
         hasDiscount: false,
-        price: product.price,
+        price: product.originalPrice && product.originalPrice > product.price ? product.originalPrice : product.price,
         isTimerActive: false
       };
     } else {
