@@ -1354,7 +1354,7 @@ export default function AdminPanelPage() {
                   <div className="px-5 pb-5 pt-3.5 flex justify-between items-center gap-3 border-t border-gold-500/5 bg-black/10">
                     <div className="flex items-baseline gap-1.5">
                       <span className="text-sm font-extrabold text-gold-400 font-sans">
-                        Rs. {p.price.toLocaleString()}
+                        Rs. {getActiveDiscount(p).price.toLocaleString()}
                       </span>
                       {getActiveDiscount(p).hasDiscount && p.originalPrice && p.originalPrice > p.price && (
                         <span className="text-xs text-gray-500 line-through font-mono">
@@ -1547,7 +1547,7 @@ export default function AdminPanelPage() {
                   <div className="px-5 pb-5 pt-3.5 flex justify-between items-center gap-3 border-t border-gold-500/5 bg-black/10">
                     <div className="flex items-baseline gap-1.5">
                       <span className="text-sm font-extrabold text-gold-400 font-sans">
-                        Rs. {p.price.toLocaleString()}
+                        Rs. {getActiveDiscount(p).price.toLocaleString()}
                       </span>
                       {getActiveDiscount(p).hasDiscount && p.originalPrice && p.originalPrice > p.price && (
                         <span className="text-xs text-gray-500 line-through font-mono">

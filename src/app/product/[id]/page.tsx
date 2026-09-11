@@ -326,7 +326,7 @@ export default function ProductDetailPage({ params }: ProductPageProps) {
               </div>
               <div className="flex items-baseline gap-3">
                 <span className="font-serif text-3xl sm:text-4xl font-extrabold text-gold-400">
-                  Rs. {product.price.toLocaleString()}
+                  Rs. {getActiveDiscount(product).price.toLocaleString()}
                 </span>
                 {getActiveDiscount(product).hasDiscount && product.originalPrice && product.originalPrice > product.price && (
                   <span className="text-gray-500 line-through text-lg font-mono">
@@ -525,7 +525,7 @@ export default function ProductDetailPage({ params }: ProductPageProps) {
                       </h4>
                       <div className="flex items-baseline gap-2 pt-0.5">
                         <span className="text-gold-400 text-sm font-serif font-bold">
-                          Rs. {relProduct.price.toLocaleString()}
+                          Rs. {getActiveDiscount(relProduct).price.toLocaleString()}
                         </span>
                         {getActiveDiscount(relProduct).hasDiscount && relProduct.originalPrice && relProduct.originalPrice > relProduct.price && (
                           <span className="text-gray-500 line-through text-xs font-mono">

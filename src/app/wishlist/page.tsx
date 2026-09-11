@@ -156,7 +156,7 @@ export default function WishlistPage() {
                       </Link>
                       <div className="flex items-baseline gap-2 pt-1">
                         <span className="font-serif text-lg font-bold text-gold-400">
-                          Rs. {product.price.toLocaleString()}
+                          Rs. {getActiveDiscount(product).price.toLocaleString()}
                         </span>
                         {getActiveDiscount(product).hasDiscount && product.originalPrice && product.originalPrice > product.price && (
                           <span className="text-gray-500 line-through text-xs font-mono">

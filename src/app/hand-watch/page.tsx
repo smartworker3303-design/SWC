@@ -332,7 +332,7 @@ function HandWatchContent() {
                       {getActiveDiscount(product).hasDiscount && product.originalPrice && product.originalPrice > product.price ? "Special Offer" : "Price starting at"}
                     </span>
                     <div className="flex items-baseline gap-2">
-                      <span className="font-serif text-xl font-bold text-gold-400">Rs. {product.price.toLocaleString()}</span>
+                      <span className="font-serif text-xl font-bold text-gold-400">Rs. {getActiveDiscount(product).price.toLocaleString()}</span>
                       {getActiveDiscount(product).hasDiscount && product.originalPrice && product.originalPrice > product.price && (
                         <span className="text-gray-500 line-through text-xs font-mono">Rs. {product.originalPrice.toLocaleString()}</span>
                       )}
