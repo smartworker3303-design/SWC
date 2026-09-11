@@ -425,9 +425,11 @@ function ProductFormContent() {
           payload.id = generateUniqueProductId(formCategory, formName);
         }
         await addProduct(payload);
+        window.scrollTo(0, 0);
         setFormSuccess("Product added successfully! Returning to dashboard...");
       } else {
         await updateProduct(payload);
+        window.scrollTo(0, 0);
         setFormSuccess("Product updated successfully! Returning to dashboard...");
       }
       

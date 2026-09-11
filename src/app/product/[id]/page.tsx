@@ -342,6 +342,15 @@ export default function ProductDetailPage({ params }: ProductPageProps) {
               )}
             </div>
             
+            {getActiveDiscount(product).isTimerActive && getActiveDiscount(product).expiresAt && (
+              <div className="pt-2 sm:pt-0 sm:ml-auto">
+                <CountdownTimer 
+                  expiresAt={getActiveDiscount(product).expiresAt!} 
+                  onExpire={() => window.location.reload()} 
+                />
+              </div>
+            )}
+            
             {/* Wishlist Button */}
             <button 
               onClick={() => toggleWishlist(product.id)}
