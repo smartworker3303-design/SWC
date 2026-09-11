@@ -102,6 +102,7 @@ function ProductFormContent() {
     { key: "Water Resistance", value: "50m (5 ATM)" }
   ]);
   const [formError, setFormError] = useState("");
+  const [formSuccess, setFormSuccess] = useState("");
   const [isSaving, setIsSaving] = useState(false);
 
   const [hasInitialized, setHasInitialized] = useState(false);
@@ -424,17 +425,20 @@ function ProductFormContent() {
           payload.id = generateUniqueProductId(formCategory, formName);
         }
         await addProduct(payload);
+        setFormSuccess("Product added successfully! Returning to dashboard...");
       } else {
         await updateProduct(payload);
+        setFormSuccess("Product updated successfully! Returning to dashboard...");
       }
       
-      // Navigate back to admin panel
-      router.push('/admin-panel');
+      // Navigate back to admin panel after a brief delay
+      setTimeout(() => {
+        router.push('/admin-panel');
+      }, 1500);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Failed to save product. Please try again.";
       setFormError(msg);
       window.scrollTo(0, 0);
-    } finally {
       setIsSaving(false);
     }
   };
@@ -460,8 +464,16 @@ function ProductFormContent() {
         </div>
 
         {formError && (
-          <div className="bg-red-500/10 border border-red-500/30 p-4 mb-6 rounded text-sm text-red-400 font-medium">
+          <div className="bg-red-500/10 border border-red-500/30 p-4 mb-6 rounded text-sm text-red-400 font-medium flex items-center gap-2">
+            <span className="font-bold text-lg leading-none shrink-0">!</span>
             {formError}
+          </div>
+        )}
+
+        {formSuccess && (
+          <div className="bg-green-500/10 border border-green-500/30 p-4 mb-6 rounded text-sm text-green-400 font-medium flex items-center gap-2">
+            <CheckCircle2 className="w-5 h-5 text-green-400" />
+            {formSuccess}
           </div>
         )}
 

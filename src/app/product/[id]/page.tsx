@@ -240,6 +240,47 @@ export default function ProductDetailPage({ params }: ProductPageProps) {
             </div>
           )}
 
+
+          {/* Customer Reviews Section */}
+          {product.customerReviews && product.customerReviews.length > 0 && (
+            <div className="pt-8 space-y-6">
+              <div className="text-left space-y-1 border-b border-gray-900 pb-2">
+                 <p className="text-gold-500 text-[10px] tracking-widest uppercase font-semibold">Client Endorsements</p>
+                 <h2 className="font-serif text-xl font-bold">Customer Reviews</h2>
+              </div>
+              <div className="flex flex-col gap-4">
+                {product.customerReviews.map((review) => (
+                  <div key={review.id} className="glass-panel p-5 text-left flex flex-col space-y-3 relative">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <h4 className="font-bold text-white text-xs uppercase tracking-wider flex items-center gap-2">
+                          {review.name}
+                          {review.verified && <span className="bg-gold-500/20 text-gold-400 text-[8px] px-1.5 py-0.5 rounded border border-gold-500/30">Verified</span>}
+                        </h4>
+                        <p className="text-[9px] text-gray-500">{review.date}</p>
+                      </div>
+                      <div className="flex text-gold-500">
+                        {[...Array(5)].map((_, i) => (
+                          <Star key={i} className={`w-3 h-3 ${i < review.rating ? 'fill-gold-500' : 'text-gray-700'}`} />
+                        ))}
+                      </div>
+                    </div>
+                    {review.title && <h5 className="font-serif font-bold text-gold-400 text-xs">{review.title}</h5>}
+                    <p className="text-gray-300 text-xs italic leading-relaxed">&quot;{review.text}&quot;</p>
+                    {review.images && review.images.length > 0 && (
+                      <div className="flex gap-2 pt-2 mt-auto">
+                        {review.images.map((img, idx) => (
+                          <div key={idx} className="relative w-10 h-10 border border-gold-500/20 rounded overflow-hidden">
+                            <Image src={img} alt="Review image" fill className="object-cover" sizes="40px" />
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Right Details Column */}
@@ -428,47 +469,6 @@ export default function ProductDetailPage({ params }: ProductPageProps) {
         </div>
 
       </div>
-
-      {/* Customer Reviews Section */}
-      {product.customerReviews && product.customerReviews.length > 0 && (
-        <section className="border-t border-gray-900 pt-16 space-y-8">
-          <div className="text-left space-y-2">
-             <p className="text-gold-500 text-xs tracking-widest uppercase font-semibold">Client Endorsements</p>
-             <h2 className="font-serif text-2xl font-bold">Customer Reviews (Admin Override)</h2>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {product.customerReviews.map((review) => (
-              <div key={review.id} className="glass-panel p-6 text-left flex flex-col space-y-4 relative">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <h4 className="font-bold text-white text-sm uppercase tracking-wider flex items-center gap-2">
-                      {review.name}
-                      {review.verified && <span className="bg-gold-500/20 text-gold-400 text-[9px] px-1.5 py-0.5 rounded border border-gold-500/30">Verified</span>}
-                    </h4>
-                    <p className="text-[10px] text-gray-500">{review.date}</p>
-                  </div>
-                  <div className="flex text-gold-500">
-                    {[...Array(5)].map((_, i) => (
-                      <Star key={i} className={`w-3 h-3 ${i < review.rating ? "fill-gold-500" : "text-gray-700"}`} />
-                    ))}
-                  </div>
-                </div>
-                {review.title && <h5 className="font-serif font-bold text-gold-400 text-sm">{review.title}</h5>}
-                <p className="text-gray-300 text-xs italic leading-relaxed">&quot;{review.text}&quot;</p>
-                {review.images && review.images.length > 0 && (
-                  <div className="flex gap-2 pt-2 mt-auto">
-                    {review.images.map((img, idx) => (
-                      <div key={idx} className="relative w-12 h-12 border border-gold-500/20 rounded overflow-hidden">
-                        <Image src={img} alt="Review image" fill className="object-cover" sizes="48px" />
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        </section>
-      )}
 
       {/* Related Products Grid */}
       {relatedProducts.length > 0 && (

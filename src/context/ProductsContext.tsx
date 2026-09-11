@@ -38,9 +38,24 @@ interface ProductsContextType {
 
 const ProductsContext = createContext<ProductsContextType | undefined>(undefined);
 
-export function ProductsProvider({ children, initialProducts = [] }: { children: React.ReactNode; initialProducts?: Product[] }) {
-  const [products, setProducts] = useState<Product[]>(initialProducts);
-  const [isLoading, setIsLoading] = useState(initialProducts.length === 0);
+let initialCachedProducts: Product[] = [];
+let hasInitialCache = false;
+if (typeof window !== "undefined") {
+  try {
+    const cached = localStorage.getItem("swc_products_catalog_cache_v2");
+    if (cached) {
+      const parsed = JSON.parse(cached);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        initialCachedProducts = parsed;
+        hasInitialCache = true;
+      }
+    }
+  } catch {}
+}
+
+export function ProductsProvider({ children }: { children: React.ReactNode }) {
+  const [products, setProducts] = useState<Product[]>(initialCachedProducts);
+  const [isLoading, setIsLoading] = useState(!hasInitialCache);
   const isSupabaseConnected = !!supabase;
 
   const refreshProducts = useCallback(async () => {
@@ -133,16 +148,19 @@ export function ProductsProvider({ children, initialProducts = [] }: { children:
     } catch {}
 
     if (isSupabaseConnected) {
-      const success = await upsertMultipleSupabaseProducts(updatedGroup);
-      if (!success) {
-        throw new Error("Failed to save product to Supabase. The image may be too large — please use a smaller image.");
-      }
-      fetchSupabaseProducts().then(dbProducts => {
-        if (dbProducts !== null) {
-          setProducts(dbProducts);
-          try {
-            localStorage.setItem("swc_products_catalog_cache_v2", JSON.stringify(dbProducts));
-          } catch {}
+      // Run sync in background to make adding products instantly fast
+      upsertMultipleSupabaseProducts(updatedGroup).then(success => {
+        if (!success) {
+          console.error("Failed to save product to Supabase in background sync.");
+        } else {
+          fetchSupabaseProducts().then(dbProducts => {
+            if (dbProducts !== null) {
+              setProducts(dbProducts);
+              try {
+                localStorage.setItem("swc_products_catalog_cache_v2", JSON.stringify(dbProducts));
+              } catch {}
+            }
+          });
         }
       });
     }
@@ -210,16 +228,19 @@ export function ProductsProvider({ children, initialProducts = [] }: { children:
     } catch {}
 
     if (isSupabaseConnected) {
-      const success = await upsertMultipleSupabaseProducts(allAffectedProductsToSave);
-      if (!success) {
-        throw new Error("Failed to update product in Supabase. The image may be too large — please use a smaller image.");
-      }
-      fetchSupabaseProducts().then(dbProducts => {
-        if (dbProducts !== null) {
-          setProducts(dbProducts);
-          try {
-            localStorage.setItem("swc_products_catalog_cache_v2", JSON.stringify(dbProducts));
-          } catch {}
+      // Run sync in background to make updating products instantly fast
+      upsertMultipleSupabaseProducts(allAffectedProductsToSave).then(success => {
+        if (!success) {
+          console.error("Failed to update product in Supabase in background sync.");
+        } else {
+          fetchSupabaseProducts().then(dbProducts => {
+            if (dbProducts !== null) {
+              setProducts(dbProducts);
+              try {
+                localStorage.setItem("swc_products_catalog_cache_v2", JSON.stringify(dbProducts));
+              } catch {}
+            }
+          });
         }
       });
     }

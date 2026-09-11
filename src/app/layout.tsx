@@ -5,7 +5,6 @@ import { WishlistProvider } from "../context/WishlistContext";
 import { ProductsProvider } from "../context/ProductsContext";
 import { AuthProvider } from "../context/AuthContext";
 import { OrdersProvider } from "../context/OrdersContext";
-import { fetchSupabaseProducts } from "../supabase";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 
@@ -60,13 +59,11 @@ export const metadata: Metadata = {
   },
 };
 
-export default async function RootLayout({
+export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const initialProducts = await fetchSupabaseProducts() || [];
-
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "JewelryStore",
@@ -104,7 +101,7 @@ export default async function RootLayout({
         </video>
         <div className="relative z-10 flex flex-col min-h-screen">
           <AuthProvider>
-            <ProductsProvider initialProducts={initialProducts}>
+            <ProductsProvider>
               <OrdersProvider>
                 <WishlistProvider>
                   <Header />
