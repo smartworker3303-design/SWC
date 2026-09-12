@@ -17,7 +17,7 @@ export default function Header() {
   const { wishlist } = useWishlist();
   const { user, logout } = useAuth();
   const pathname = usePathname();
-  if (pathname === "/admin-panel") return null;
+  if (pathname && pathname.startsWith("/admin-panel")) return null;
 
   const isLinkActive = (path: string) => {
     return pathname === path;

@@ -15,7 +15,7 @@ export default function Footer() {
   const pathname = usePathname();
   
   // Exclude footer on admin panel
-  if (pathname === "/admin-panel") return null;
+  if (pathname && pathname.startsWith("/admin-panel")) return null;
 
   return (
     <footer className="relative bg-gradient-to-b from-[#0a0a0a] to-[#030303] border-t border-gold-500/10 py-16 px-4 sm:px-6 lg:px-8 overflow-hidden text-left">
