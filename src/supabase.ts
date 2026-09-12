@@ -28,6 +28,7 @@ export async function fetchSupabaseProducts(): Promise<Product[] | null> {
       const galleryImages = cleanSpecs.__images || p.images || (p.image ? [p.image] : []);
       const origPrice = p.original_price ?? p.originalPrice ?? (cleanSpecs.__original_price ? Number(cleanSpecs.__original_price) : undefined);
       const discountText = p.discount ?? cleanSpecs.__discount ?? undefined;
+      const discountExpiresAtText = cleanSpecs.__discount_expires_at ?? undefined;
       const rawSortOrder = p.sort_order ?? p.sortOrder ?? cleanSpecs.__sort_order;
       const sortOrderNum = rawSortOrder !== undefined && rawSortOrder !== null && rawSortOrder !== "" ? Number(rawSortOrder) : undefined;
       let colorsList: string[] | undefined = undefined;
@@ -69,7 +70,7 @@ export async function fetchSupabaseProducts(): Promise<Product[] | null> {
         tag: p.tag || undefined,
         sortOrder: sortOrderNum,
         colors: colorsList,
-        discountExpiresAt: cleanSpecs.__discount_expires_at || undefined,
+        discountExpiresAt: discountExpiresAtText,
         customerReviews: Array.isArray(customerReviews) ? customerReviews : undefined
       };
     });
