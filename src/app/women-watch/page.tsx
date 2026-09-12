@@ -19,6 +19,7 @@ import { useProducts } from "../../context/ProductsContext";
 import { useWishlist } from "../../context/WishlistContext";
 import MouseTrail from "../../components/MouseTrail";
 import { getActiveDiscount } from "../../utils/discount";
+import CountdownTimer from "../../components/CountdownTimer";
 
 export default function WomenWatchPage() {
   const { products, isLoading } = useProducts();

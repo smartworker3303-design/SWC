@@ -16,6 +16,7 @@ import {
 import { useProducts } from "../../context/ProductsContext";
 import { useWishlist } from "../../context/WishlistContext";
 import { getActiveDiscount } from "../../utils/discount";
+import CountdownTimer from "../../components/CountdownTimer";
 
 export default function WallClockPage() {
   const { products, isLoading } = useProducts();
