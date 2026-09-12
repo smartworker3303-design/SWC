@@ -28,7 +28,7 @@ export function getActiveDiscount(product: Product): {
         discountText: product.discount,
         originalPrice: product.originalPrice,
         price: product.price,
-        isTimerActive: hasConfiguredDiscount,
+        isTimerActive: true, // Always show timer if it's set and not expired
         expiresAt: product.discountExpiresAt
       };
     }

@@ -242,19 +242,21 @@ function HandWatchContent() {
               className="glass-panel glass-panel-hover overflow-hidden flex flex-col group relative"
             >
               {/* Discount Badge */}
-              {getActiveDiscount(product).hasDiscount && (
-                <div className="absolute top-4 left-4 z-20 flex flex-col gap-1.5 items-start">
-                  <span className="bg-gradient-to-r from-red-600 to-amber-600 text-white text-[10px] font-black tracking-wider uppercase px-2.5 py-1 shadow-lg rounded-sm border border-red-400/30">
+                {getActiveDiscount(product).hasDiscount && (
+                  <span className="absolute top-4 left-4 z-20 bg-gradient-to-r from-red-600 to-amber-600 text-white text-[10px] font-black tracking-wider uppercase px-2.5 py-1 shadow-lg rounded-sm border border-red-400/30">
                     {getActiveDiscount(product).discountText || `${Math.round(((product.originalPrice! - product.price) / product.originalPrice!) * 100)}% OFF`}
                   </span>
-                  {getActiveDiscount(product).isTimerActive && getActiveDiscount(product).expiresAt && (
+                )}
+
+                {/* Countdown Timer */}
+                {getActiveDiscount(product).isTimerActive && getActiveDiscount(product).expiresAt && (
+                  <div className="absolute top-4 right-14 sm:right-16 z-20">
                     <CountdownTimer 
                       expiresAt={getActiveDiscount(product).expiresAt!} 
                       onExpire={() => window.location.reload()} 
                     />
-                  )}
-                </div>
-              )}
+                  </div>
+                )}
 
               {/* Tag Overlay */}
               {product.tag && (

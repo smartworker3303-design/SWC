@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
 import { Product } from "../data";
+import { setIndexedDBCache, getIndexedDBCache } from "../utils/indexedDB";
 import { 
   supabase, 
   fetchSupabaseProducts, 
@@ -40,22 +41,10 @@ const ProductsContext = createContext<ProductsContextType | undefined>(undefined
 
 let initialCachedProducts: Product[] = [];
 let hasInitialCache = false;
-if (typeof window !== "undefined") {
-  try {
-    const cached = localStorage.getItem("swc_products_catalog_cache_v2");
-    if (cached) {
-      const parsed = JSON.parse(cached);
-      if (Array.isArray(parsed) && parsed.length > 0) {
-        initialCachedProducts = parsed;
-        hasInitialCache = true;
-      }
-    }
-  } catch {}
-}
 
 export function ProductsProvider({ children }: { children: React.ReactNode }) {
   const [products, setProducts] = useState<Product[]>(initialCachedProducts);
-  const [isLoading, setIsLoading] = useState(!hasInitialCache);
+  const [isLoading, setIsLoading] = useState(true);
   const isSupabaseConnected = !!supabase;
 
   const refreshProducts = useCallback(async () => {
@@ -64,40 +53,41 @@ export function ProductsProvider({ children }: { children: React.ReactNode }) {
       if (dbProducts !== null) {
         setProducts(dbProducts);
         try {
-          localStorage.setItem("swc_products_catalog_cache_v2", JSON.stringify(dbProducts));
+          await setIndexedDBCache("swc_products_catalog_cache_v3", dbProducts);
         } catch {}
         return;
       }
     }
   }, [isSupabaseConnected]);
 
-  // Load products on mount with instant localStorage caching + background Supabase fetch
+  // Load products on mount with async IndexedDB caching + background Supabase fetch
   useEffect(() => {
     let isMounted = true;
 
-    // 1. Instant Cache Hydration — makes website load in 0ms on repeat visits
-    try {
-      const cached = localStorage.getItem("swc_products_catalog_cache_v2");
-      if (cached) {
-        const parsed = JSON.parse(cached);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          setProducts(parsed);
-          setIsLoading(false);
-        }
-      }
-    } catch {}
-
-    // 2. Fetch fresh data from Supabase in background
     async function load() {
+      // 1. Fast Cache Hydration
+      let hasCache = false;
+      try {
+        const cached = await getIndexedDBCache("swc_products_catalog_cache_v3");
+        if (cached && Array.isArray(cached) && cached.length > 0) {
+          if (isMounted) {
+            setProducts(cached);
+            setIsLoading(false);
+            hasCache = true;
+          }
+        }
+      } catch (err) {
+        console.warn("Failed to read cache", err);
+      }
+
+      // 2. Fetch fresh data from Supabase in background
       if (isSupabaseConnected) {
         try {
           const dbProducts = await fetchSupabaseProducts();
           if (dbProducts !== null && isMounted) {
             setProducts(dbProducts);
-            try {
-              localStorage.setItem("swc_products_catalog_cache_v2", JSON.stringify(dbProducts));
-            } catch {}
             setIsLoading(false);
+            await setIndexedDBCache("swc_products_catalog_cache_v3", dbProducts);
             return;
           }
         } catch (err) {
@@ -105,7 +95,7 @@ export function ProductsProvider({ children }: { children: React.ReactNode }) {
         }
       }
 
-      if (isMounted) {
+      if (isMounted && !hasCache) {
         setIsLoading(false);
       }
     }
@@ -144,7 +134,7 @@ export function ProductsProvider({ children }: { children: React.ReactNode }) {
     // Optimistic local state update + cache
     setProducts(nextAllProducts);
     try {
-      localStorage.setItem("swc_products_catalog_cache_v2", JSON.stringify(nextAllProducts));
+      setIndexedDBCache("swc_products_catalog_cache_v3", nextAllProducts);
     } catch {}
 
     if (isSupabaseConnected) {
@@ -153,11 +143,11 @@ export function ProductsProvider({ children }: { children: React.ReactNode }) {
         if (!success) {
           console.error("Failed to save product to Supabase in background sync.");
         } else {
-          fetchSupabaseProducts().then(dbProducts => {
+          fetchSupabaseProducts().then(async (dbProducts) => {
             if (dbProducts !== null) {
               setProducts(dbProducts);
               try {
-                localStorage.setItem("swc_products_catalog_cache_v2", JSON.stringify(dbProducts));
+                await setIndexedDBCache("swc_products_catalog_cache_v3", dbProducts);
               } catch {}
             }
           });
@@ -224,7 +214,7 @@ export function ProductsProvider({ children }: { children: React.ReactNode }) {
     // Optimistic local state update + cache
     setProducts(nextAllProducts);
     try {
-      localStorage.setItem("swc_products_catalog_cache_v2", JSON.stringify(nextAllProducts));
+      setIndexedDBCache("swc_products_catalog_cache_v3", nextAllProducts);
     } catch {}
 
     if (isSupabaseConnected) {
@@ -233,11 +223,11 @@ export function ProductsProvider({ children }: { children: React.ReactNode }) {
         if (!success) {
           console.error("Failed to update product in Supabase in background sync.");
         } else {
-          fetchSupabaseProducts().then(dbProducts => {
+          fetchSupabaseProducts().then(async (dbProducts) => {
             if (dbProducts !== null) {
               setProducts(dbProducts);
               try {
-                localStorage.setItem("swc_products_catalog_cache_v2", JSON.stringify(dbProducts));
+                await setIndexedDBCache("swc_products_catalog_cache_v3", dbProducts);
               } catch {}
             }
           });
@@ -271,7 +261,7 @@ export function ProductsProvider({ children }: { children: React.ReactNode }) {
     // Optimistic local state update + cache
     setProducts(nextAllProducts);
     try {
-      localStorage.setItem("swc_products_catalog_cache_v2", JSON.stringify(nextAllProducts));
+      setIndexedDBCache("swc_products_catalog_cache_v3", nextAllProducts);
     } catch {}
 
     if (isSupabaseConnected) {
@@ -282,11 +272,11 @@ export function ProductsProvider({ children }: { children: React.ReactNode }) {
       if (updatedGroup.length > 0) {
         await upsertMultipleSupabaseProducts(updatedGroup);
       }
-      fetchSupabaseProducts().then(dbProducts => {
+      fetchSupabaseProducts().then(async (dbProducts) => {
         if (dbProducts !== null) {
           setProducts(dbProducts);
           try {
-            localStorage.setItem("swc_products_catalog_cache_v2", JSON.stringify(dbProducts));
+            await setIndexedDBCache("swc_products_catalog_cache_v3", dbProducts);
           } catch {}
         }
       });
