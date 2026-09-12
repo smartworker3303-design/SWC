@@ -497,9 +497,17 @@ export default function ProductDetailPage({ params }: ProductPageProps) {
                 >
                   {/* Discount Badge */}
                   {getActiveDiscount(relProduct).hasDiscount && (
-                    <span className="absolute top-4 left-4 bg-gradient-to-r from-red-600 to-amber-600 text-white text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-sm shadow-md border border-red-400/30 z-20">
-                      {getActiveDiscount(relProduct).discountText || `${Math.round(((relProduct.originalPrice! - relProduct.price) / relProduct.originalPrice!) * 100)}% OFF`}
-                    </span>
+                    <div className="absolute top-4 left-4 z-20 flex flex-col gap-1.5 items-start">
+                      <span className="bg-gradient-to-r from-red-600 to-amber-600 text-white text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-sm shadow-md border border-red-400/30">
+                        {getActiveDiscount(relProduct).discountText || `${Math.round(((relProduct.originalPrice! - relProduct.price) / relProduct.originalPrice!) * 100)}% OFF`}
+                      </span>
+                      {getActiveDiscount(relProduct).isTimerActive && getActiveDiscount(relProduct).expiresAt && (
+                        <CountdownTimer 
+                          expiresAt={getActiveDiscount(relProduct).expiresAt!} 
+                          onExpire={() => window.location.reload()} 
+                        />
+                      )}
+                    </div>
                   )}
 
                   <button 

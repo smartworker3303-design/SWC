@@ -17,6 +17,7 @@ import {
 import { useProducts } from "../../context/ProductsContext";
 import { useWishlist } from "../../context/WishlistContext";
 import { getActiveDiscount } from "../../utils/discount";
+import CountdownTimer from "../../components/CountdownTimer";
 
 function HandWatchContent() {
   const { products, isLoading } = useProducts();
@@ -242,9 +243,17 @@ function HandWatchContent() {
             >
               {/* Discount Badge */}
               {getActiveDiscount(product).hasDiscount && (
-                <span className="absolute top-4 left-4 bg-gradient-to-r from-red-600 to-amber-600 text-white text-[10px] font-black tracking-wider uppercase px-2.5 py-1 z-20 shadow-lg rounded-sm border border-red-400/30">
-                  {getActiveDiscount(product).discountText || `${Math.round(((product.originalPrice! - product.price) / product.originalPrice!) * 100)}% OFF`}
-                </span>
+                <div className="absolute top-4 left-4 z-20 flex flex-col gap-1.5 items-start">
+                  <span className="bg-gradient-to-r from-red-600 to-amber-600 text-white text-[10px] font-black tracking-wider uppercase px-2.5 py-1 shadow-lg rounded-sm border border-red-400/30">
+                    {getActiveDiscount(product).discountText || `${Math.round(((product.originalPrice! - product.price) / product.originalPrice!) * 100)}% OFF`}
+                  </span>
+                  {getActiveDiscount(product).isTimerActive && getActiveDiscount(product).expiresAt && (
+                    <CountdownTimer 
+                      expiresAt={getActiveDiscount(product).expiresAt!} 
+                      onExpire={() => window.location.reload()} 
+                    />
+                  )}
+                </div>
               )}
 
               {/* Tag Overlay */}
