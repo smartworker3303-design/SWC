@@ -1300,6 +1300,11 @@ export default function AdminPanelPage() {
                         {p.tag}
                       </span>
                     )}
+                    {getActiveDiscount(p).hasDiscount && p.discountExpiresAt && (
+                      <div className="absolute top-10 right-2 z-20 pointer-events-none transform scale-75 origin-top-right">
+                        <CountdownTimer expiresAt={p.discountExpiresAt} />
+                      </div>
+                    )}
                     {/* Category Tag */}
                     <span className="absolute top-3 right-3 text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded border bg-blue-500/20 text-blue-300 border-blue-500/30">
                       Watch
@@ -1492,6 +1497,11 @@ export default function AdminPanelPage() {
                       <span className={`absolute top-3 ${getActiveDiscount(p).hasDiscount ? "left-40" : "left-20"} bg-gold-500 text-black text-[9px] font-black uppercase tracking-widest px-2.5 py-0.5 rounded-sm shadow-md z-10`}>
                         {p.tag}
                       </span>
+                    )}
+                    {getActiveDiscount(p).hasDiscount && p.discountExpiresAt && (
+                      <div className="absolute top-10 right-2 z-20 pointer-events-none transform scale-75 origin-top-right">
+                        <CountdownTimer expiresAt={p.discountExpiresAt} />
+                      </div>
                     )}
                     {/* Category Tag */}
                     <span className="absolute top-3 right-3 text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded border bg-purple-500/20 text-purple-300 border-purple-500/30">

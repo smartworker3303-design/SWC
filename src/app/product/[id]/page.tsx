@@ -167,6 +167,12 @@ export default function ProductDetailPage({ params }: ProductPageProps) {
               </span>
             )}
             
+            {getActiveDiscount(product).hasDiscount && product.discountExpiresAt && (
+              <div className="absolute top-4 right-4 z-20 pointer-events-none transform scale-90 origin-top-right">
+                <CountdownTimer expiresAt={product.discountExpiresAt} />
+              </div>
+            )}
+            
             {/* Prev/Next Image Navigation Overlay */}
             {galleryImages.length > 1 && (
               <>
