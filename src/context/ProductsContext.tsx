@@ -39,6 +39,25 @@ interface ProductsContextType {
 
 const ProductsContext = createContext<ProductsContextType | undefined>(undefined);
 
+const LOCAL_STORAGE_KEY = "swc_products_catalog_cache_v3";
+
+function saveToLocalStorage(data: Product[]) {
+  try {
+    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(data));
+  } catch {}
+}
+
+function loadFromLocalStorage(): Product[] | null {
+  try {
+    const raw = localStorage.getItem(LOCAL_STORAGE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    }
+  } catch {}
+  return null;
+}
+
 let initialCachedProducts: Product[] = [];
 let hasInitialCache = false;
 
@@ -47,11 +66,21 @@ export function ProductsProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   const isSupabaseConnected = !!supabase;
 
+  // 1. Instant 0ms hydration from localStorage on client mount
+  useEffect(() => {
+    const local = loadFromLocalStorage();
+    if (local) {
+      setProducts(local);
+      setIsLoading(false);
+    }
+  }, []);
+
   const refreshProducts = useCallback(async () => {
     if (isSupabaseConnected) {
       const dbProducts = await fetchSupabaseProducts();
       if (dbProducts !== null) {
         setProducts(dbProducts);
+        saveToLocalStorage(dbProducts);
         try {
           await setIndexedDBCache("swc_products_catalog_cache_v3", dbProducts);
         } catch {}
@@ -64,8 +93,13 @@ export function ProductsProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     let isMounted = true;
 
+    // Safety timeout: never leave isLoading = true for more than 2.5s
+    const timeoutId = setTimeout(() => {
+      if (isMounted) setIsLoading(false);
+    }, 2500);
+
     async function load() {
-      // 1. Fast Cache Hydration
+      // Fast Cache Hydration from IndexedDB if localStorage was empty
       let hasCache = false;
       try {
         const cached = await getIndexedDBCache("swc_products_catalog_cache_v3");
@@ -74,19 +108,21 @@ export function ProductsProvider({ children }: { children: React.ReactNode }) {
             setProducts(cached);
             setIsLoading(false);
             hasCache = true;
+            saveToLocalStorage(cached);
           }
         }
       } catch (err) {
         console.warn("Failed to read cache", err);
       }
 
-      // 2. Fetch fresh data from Supabase in background
+      // Fetch fresh data from Supabase in background
       if (isSupabaseConnected) {
         try {
           const dbProducts = await fetchSupabaseProducts();
           if (dbProducts !== null && isMounted) {
             setProducts(dbProducts);
             setIsLoading(false);
+            saveToLocalStorage(dbProducts);
             await setIndexedDBCache("swc_products_catalog_cache_v3", dbProducts);
             return;
           }
@@ -104,6 +140,7 @@ export function ProductsProvider({ children }: { children: React.ReactNode }) {
 
     return () => {
       isMounted = false;
+      clearTimeout(timeoutId);
     };
   }, [isSupabaseConnected]);
 
@@ -133,6 +170,7 @@ export function ProductsProvider({ children }: { children: React.ReactNode }) {
 
     // Optimistic local state update + cache
     setProducts(nextAllProducts);
+    saveToLocalStorage(nextAllProducts);
     try {
       setIndexedDBCache("swc_products_catalog_cache_v3", nextAllProducts);
     } catch {}
@@ -213,6 +251,7 @@ export function ProductsProvider({ children }: { children: React.ReactNode }) {
 
     // Optimistic local state update + cache
     setProducts(nextAllProducts);
+    saveToLocalStorage(nextAllProducts);
     try {
       setIndexedDBCache("swc_products_catalog_cache_v3", nextAllProducts);
     } catch {}
@@ -260,6 +299,7 @@ export function ProductsProvider({ children }: { children: React.ReactNode }) {
 
     // Optimistic local state update + cache
     setProducts(nextAllProducts);
+    saveToLocalStorage(nextAllProducts);
     try {
       setIndexedDBCache("swc_products_catalog_cache_v3", nextAllProducts);
     } catch {}

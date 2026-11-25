@@ -20,8 +20,12 @@ import { reviews } from "../data";
 import { useProducts } from "../context/ProductsContext";
 import { useWishlist } from "../context/WishlistContext";
 import MouseTrail from "../components/MouseTrail";
+import ProductCardSkeleton from "../components/ProductCardSkeleton";
 import { getActiveDiscount } from "../utils/discount";
 import CountdownTimer from "../components/CountdownTimer";
+
+// Cycling animation directions: left → right → top (repeats every 3 cards = 1 row)
+const CARD_DIRECTIONS = ["card-animate-left", "card-animate-right", "card-animate-top"] as const;
 
 export default function Home() {
   const { products, isLoading } = useProducts();
@@ -90,9 +94,24 @@ export default function Home() {
 
   if (isLoading) {
     return (
-      <div className="min-h-[70vh] flex flex-col items-center justify-center space-y-4">
-        <div className="w-12 h-12 rounded-full border-t-2 border-r-2 border-gold-500 animate-spin" />
-        <p className="text-gray-400 text-xs tracking-widest uppercase">Loading Men&apos;s Watches...</p>
+      <div className="min-h-screen bg-transparent text-white font-sans py-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-12">
+        <section className="space-y-10 text-left">
+          <div className="space-y-3">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-gold-500/20 bg-gold-500/5 text-gold-400 text-xs tracking-wider font-semibold uppercase">
+              <Award className="w-3.5 h-3.5" />
+              Men&apos;s Luxury Timepiece Collection
+            </div>
+            <h1 className="font-serif text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight">
+              Executive <span className="gold-gradient-text">Men&apos;s Watches</span>
+            </h1>
+          </div>
+          <div className="border-b border-gray-900 pb-6">
+            <div className="h-7 w-48 rounded skeleton-shimmer bg-luxury-charcoal" />
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+            <ProductCardSkeleton count={6} />
+          </div>
+        </section>
       </div>
     );
   }
@@ -210,12 +229,15 @@ export default function Home() {
 
         {/* Product Cards Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-          {mensProducts.map((product) => {
+          {mensProducts.map((product, index) => {
             const favorite = isInWishlist(product.id);
+            const directionClass = CARD_DIRECTIONS[index % CARD_DIRECTIONS.length];
+            const delay = `${Math.min(index * 0.07, 0.6)}s`;
             return (
               <div 
                 key={product.id}
-                className="glass-panel glass-panel-hover overflow-hidden flex flex-col group relative"
+                className={`glass-panel glass-panel-hover overflow-hidden flex flex-col group relative ${directionClass}`}
+                style={{ animationDelay: delay }}
               >
                 {/* Discount Badge */}
                 {getActiveDiscount(product).hasDiscount && (

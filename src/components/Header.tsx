@@ -1,23 +1,67 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { 
   ShoppingCart,
   ShoppingBag,
   User,
-  LogOut
+  LogOut,
+  Package
 } from "lucide-react";
 import { useWishlist } from "../context/WishlistContext";
 import { useAuth } from "../context/AuthContext";
+import { useOrders } from "../context/OrdersContext";
 
 export default function Header() {
   const [profileOpen, setProfileOpen] = useState(false);
+  const profileRef = useRef<HTMLDivElement>(null);
   const { wishlist } = useWishlist();
   const { user, logout } = useAuth();
+  const { orders: allOrders } = useOrders();
   const pathname = usePathname();
   if (pathname && pathname.startsWith("/admin-panel")) return null;
+
+  const userOrders = (allOrders || []).filter(o => 
+    user && (
+      o.user_id === user.id || 
+      o.user_id === user.email || 
+      (user.phone && o.phone === user.phone)
+    )
+  );
+
+  // Close profile dropdown when clicking outside or pressing Escape
+  useEffect(() => {
+    if (!profileOpen) return;
+
+    const handleClickOutside = (event: MouseEvent | TouchEvent) => {
+      if (profileRef.current && !profileRef.current.contains(event.target as Node)) {
+        setProfileOpen(false);
+      }
+    };
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setProfileOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("touchstart", handleClickOutside, { passive: true });
+    document.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("touchstart", handleClickOutside);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [profileOpen]);
+
+  // Close profile dropdown whenever route changes
+  useEffect(() => {
+    setProfileOpen(false);
+  }, [pathname]);
 
   const isLinkActive = (path: string) => {
     return pathname === path;
@@ -97,37 +141,66 @@ export default function Header() {
                 title="My Orders"
               >
                 <ShoppingBag className="w-5 h-5 text-gray-300 group-hover:text-gold-500 transition-colors" />
+                {userOrders.length > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-gold-600 text-black text-[10px] font-extrabold w-5 h-5 rounded-full flex items-center justify-center shadow-md">
+                    {userOrders.length}
+                  </span>
+                )}
               </Link>
               
-              <div className="relative">
+              <div className="relative" ref={profileRef}>
                 <button 
-                  onClick={() => setProfileOpen(!profileOpen)}
-                  className="relative cursor-pointer group p-2 rounded-full hover:bg-gold-500/10 transition-colors"
+                  onClick={() => setProfileOpen((prev) => !prev)}
+                  className={`relative cursor-pointer group p-2 rounded-full transition-colors ${
+                    profileOpen ? "bg-gold-500/20 text-gold-500" : "hover:bg-gold-500/10 text-gray-300"
+                  }`}
                   aria-label="Profile"
+                  aria-expanded={profileOpen}
                 >
-                  <User className="w-5 h-5 text-gray-300 group-hover:text-gold-500 transition-colors" />
+                  <User className={`w-5 h-5 transition-colors ${profileOpen ? "text-gold-500" : "group-hover:text-gold-500"}`} />
                 </button>
 
                 {profileOpen && (
-                  <div className="absolute right-0 mt-2 w-56 bg-black/95 backdrop-blur-md border border-gold-500/20 shadow-2xl py-4 px-4 flex flex-col gap-3 z-50">
+                  <div className="absolute right-0 mt-2 w-60 max-w-[calc(100vw-2rem)] bg-black/95 backdrop-blur-md border border-gold-500/30 shadow-2xl py-4 px-4 flex flex-col gap-3 z-50 rounded-sm">
                     <div className="flex flex-col border-b border-gray-800 pb-3">
-                      <span className="text-[10px] text-gray-500 uppercase tracking-wider mb-1">Email</span>
-                      <span className="text-xs text-gray-200 truncate font-medium">{user.email}</span>
+                      <span className="text-[10px] text-gray-500 uppercase tracking-wider mb-1 font-semibold">Email</span>
+                      <span className="text-xs text-gray-200 truncate font-medium" title={user.email}>{user.email}</span>
                     </div>
                     {user.phone && (
                       <div className="flex flex-col border-b border-gray-800 pb-3">
-                        <span className="text-[10px] text-gray-500 uppercase tracking-wider mb-1">Phone</span>
+                        <span className="text-[10px] text-gray-500 uppercase tracking-wider mb-1 font-semibold">Phone</span>
                         <span className="text-xs text-gray-200 font-medium">{user.phone}</span>
                       </div>
                     )}
+
+                    {/* My Orders Button */}
+                    <Link 
+                      href="/my-orders"
+                      onClick={() => setProfileOpen(false)}
+                      className="flex items-center justify-between w-full py-2.5 px-3 bg-gold-500 text-black hover:bg-gold-400 transition-all duration-200 text-xs font-bold uppercase tracking-wider rounded-sm shadow-[0_0_12px_rgba(212,175,55,0.25)] group"
+                    >
+                      <div className="flex items-center gap-2">
+                        <Package className="w-4 h-4 transition-transform group-hover:scale-110" />
+                        <span>My Orders</span>
+                      </div>
+                      {userOrders.length > 0 ? (
+                        <span className="bg-black text-gold-400 text-[10px] font-black px-1.5 py-0.5 rounded-full">
+                          {userOrders.length}
+                        </span>
+                      ) : (
+                        <span className="text-black/70 group-hover:translate-x-0.5 transition-transform text-xs">→</span>
+                      )}
+                    </Link>
+
+                    {/* Sign Out Button */}
                     <button 
                       onClick={() => {
                         logout();
                         setProfileOpen(false);
                       }}
-                      className="flex items-center justify-center gap-2 mt-1 w-full py-2 bg-gold-500/10 text-gold-500 hover:bg-gold-500 hover:text-black transition-colors text-xs font-bold uppercase tracking-widest rounded-sm"
+                      className="flex items-center justify-center gap-2 w-full py-2 bg-gold-500/10 text-gold-500 hover:bg-gold-500 hover:text-black border border-gold-500/20 hover:border-gold-500 transition-colors text-xs font-bold uppercase tracking-widest rounded-sm"
                     >
-                      <LogOut className="w-3 h-3" />
+                      <LogOut className="w-3.5 h-3.5" />
                       Sign Out
                     </button>
                   </div>

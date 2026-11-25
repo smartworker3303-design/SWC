@@ -17,6 +17,9 @@ import { useProducts } from "../../context/ProductsContext";
 import { useWishlist } from "../../context/WishlistContext";
 import { getActiveDiscount } from "../../utils/discount";
 import CountdownTimer from "../../components/CountdownTimer";
+import ProductCardSkeleton from "../../components/ProductCardSkeleton";
+
+const CARD_DIRECTIONS = ["card-animate-left", "card-animate-right", "card-animate-top"] as const;
 
 export default function WallClockPage() {
   const { products, isLoading } = useProducts();
@@ -71,9 +74,31 @@ export default function WallClockPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-[70vh] flex flex-col items-center justify-center space-y-4">
-        <div className="w-12 h-12 rounded-full border-t-2 border-r-2 border-gold-500 animate-spin" />
-        <p className="text-gray-400 text-xs tracking-widest uppercase">Loading Curation...</p>
+      <div className="min-h-screen bg-transparent text-white font-sans py-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-12">
+        <div className="text-left">
+          <Link 
+            href="/" 
+            className="inline-flex items-center gap-1 text-xs text-gray-500 hover:text-gold-400 font-bold uppercase transition-colors"
+          >
+            <ChevronLeft className="w-4 h-4" />
+            Back to Home
+          </Link>
+        </div>
+        <div className="glass-panel p-8 sm:p-12 relative overflow-hidden border border-gold-500/15 flex flex-col items-start justify-center space-y-4 text-left">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-gold-500/20 bg-gold-500/5 text-gold-400 text-xs font-semibold uppercase tracking-wider">
+            {icon}
+            Exclusive Curation
+          </div>
+          <h1 className="font-serif text-3xl sm:text-5xl font-bold tracking-tight text-white leading-tight">
+            {title}
+          </h1>
+        </div>
+        <div className="border-b border-gray-900 pb-6">
+          <div className="h-7 w-48 rounded skeleton-shimmer bg-luxury-charcoal" />
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+          <ProductCardSkeleton count={6} />
+        </div>
       </div>
     );
   }
@@ -179,12 +204,15 @@ export default function WallClockPage() {
 
       {/* Product Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-        {categoryProducts.map((product) => {
+        {categoryProducts.map((product, index) => {
           const favorite = isInWishlist(product.id);
+          const directionClass = CARD_DIRECTIONS[index % CARD_DIRECTIONS.length];
+          const delay = `${Math.min(index * 0.07, 0.6)}s`;
           return (
             <div 
               key={product.id}
-              className="glass-panel glass-panel-hover overflow-hidden flex flex-col group relative"
+              className={`glass-panel glass-panel-hover overflow-hidden flex flex-col group relative ${directionClass}`}
+              style={{ animationDelay: delay }}
             >
               {/* Discount Badge */}
                 {getActiveDiscount(product).hasDiscount && (
